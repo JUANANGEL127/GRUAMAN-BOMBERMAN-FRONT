@@ -33,6 +33,7 @@ function Administrador() {
     );
   });
 
+  
   return (
     <div className="app-container">
       <h2>Panel Administrador</h2>
