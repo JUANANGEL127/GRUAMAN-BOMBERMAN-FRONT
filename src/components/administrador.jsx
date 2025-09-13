@@ -11,7 +11,7 @@ function Administrador() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${API_URL}/registros-todos-resumen`);
+        const res = await axios.get(`${API_URL}/formulario1/registros-todos-resumen`);
         setRegistros(res.data);
       } catch (err) {
         setRegistros([]);
@@ -59,6 +59,7 @@ function Administrador() {
                 <li key={idx} style={{ background: "#f7fbff", marginBottom: 18, padding: 14, borderRadius: 8 }}>
                   <div><strong>Fecha:</strong> {r.fecha ? r.fecha.slice(0, 10) : ""}</div>
                   <div><strong>Nombre:</strong> {r.nombre}</div>
+                  <div><strong>Número de identificación:</strong> {r.numero_identificacion}</div>
                   <div><strong>Empresa:</strong> {r.empresa}</div>
                   <div><strong>Nombre de obra:</strong> {r.obra}</div>
                   <div><strong>Horas trabajadas usuario:</strong> {r.horas_usuario}</div>

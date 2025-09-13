@@ -1,56 +1,93 @@
-import { Routes, Route, useNavigate } from "react-router-dom";
-import Formulario1 from "./components/formulario1";
-import Administrador from "./components/administrador";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./App.css";
-
-function Bienvenida() {
-  const navigate = useNavigate();
-  return (
-    <div className="app-container">
-      <h2>Bienvenido</h2>
-      <p className="app-label" style={{ marginBottom: 32 }}>
-        Selecciona el formulario que deseas usar:
-      </p>
-      <button
-        className="app-boton"
-        style={{ maxWidth: 320 }}
-        onClick={() => navigate("/formulario1")}
-      >
-        Formulario de llegada y salida
-      </button>
-      <button
-        className="app-boton"
-        style={{ maxWidth: 320, marginTop: 18 }}
-        onClick={() => navigate("/administrador")}
-      >
-        Panel Administrador
-      </button>
-    </div>
-  );
-}
-
+import axios from "axios";
 
 function App() {
+  const [nombreTrabajador, setNombreTrabajador] = useState("");
+  const [empresa, setEmpresa] = useState("");
+  const [obra, setObra] = useState("");
+  const [numeroIdentificacion, setNumeroIdentificacion] = useState("");
+  const [mensaje, setMensaje] = useState("");
+  const navigate = useNavigate();
+
+  const handleGuardar = async () => {
+    try {
+      await axios.post("http://localhost:3000/datos-basicos", {
+        nombre: nombreTrabajador,
+        empresa,
+        obra,
+        numero_identificacion: numeroIdentificacion,
+      });
+      localStorage.setItem("nombreTrabajador", nombreTrabajador);
+      localStorage.setItem("empresa", empresa);
+      localStorage.setItem("obra", obra);
+      localStorage.setItem("numeroIdentificacion", numeroIdentificacion);
+      setMensaje("Datos guardados correctamente.");
+      setTimeout(() => {
+        navigate("/eleccion");
+      }, 500);
+    } catch (err) {
+      setMensaje("Error al guardar datos");
+    }
+  };
+
   return (
-    <>
-      <Routes>
-        <Route path="/" element={<Bienvenida />} />
-        <Route path="/formulario1" element={<Formulario1 />} />
-        <Route path="/administrador" element={<Administrador />} />
-      </Routes>
-      <footer className="app-footer">
-        <img
-          src="../public/logopiegye.png"
-          alt="Logo GYE"
-          className="footer-logo"
+    <div className="app-container">
+      <h2>Ingresa tus datos</h2>
+      <div className="app-group">
+        <label className="app-label">Nombre</label>
+        <input
+          className="app-input"
+          type="text"
+          value={nombreTrabajador}
+          onChange={e => setNombreTrabajador(e.target.value)}
         />
-        <img
-          src="../public/logopieaica.png"
-          alt="Logo AIC"
-          className="footer-logo"
+      </div>
+      <div className="app-group">
+        <label className="app-label">Número de identificación</label>
+        <input
+          className="app-input"
+          type="text"
+          value={numeroIdentificacion}
+          onChange={e => setNumeroIdentificacion(e.target.value)}
         />
-      </footer>
-    </>
+      </div>
+      <div className="app-group">
+        <label className="app-label">Empresa</label>
+      </div>
+      <div className="app-group" style={{ flexDirection: "row", justifyContent: "center", gap: "16px" }}>
+        <button
+          type="button"
+          className={`app-boton empresa-boton${empresa === "GyE" ? " selected" : ""}`}
+          style={{ maxWidth: "80px", padding: 0, background: empresa === "GyE" ? "#1976d2" : undefined, border: empresa === "GyE" ? "2px solid #1976d2" : "2px solid #90caf9" }}
+          onClick={() => setEmpresa("GyE")}
+        >
+          <img src="/botongye.png" alt="GyE" className="empresa-img" />
+        </button>
+        <button
+          type="button"
+          className={`app-boton empresa-boton${empresa === "AIC" ? " selected" : ""}`}
+          style={{ maxWidth: "80px", padding: 0, background: empresa === "AIC" ? "#ffa726" : undefined, border: empresa === "AIC" ? "2px solid #ffa726" : "2px solid #90caf9" }}
+          onClick={() => setEmpresa("AIC")}
+        >
+          <img src="/botonaic.png" alt="AIC" className="empresa-img" />
+        </button>
+      </div>
+      <div className="app-group">
+        <label className="app-label">Nombre de obra:</label>
+        <input
+          className="app-input"
+          type="text"
+          value={obra}
+          onChange={e => setObra(e.target.value)}
+        />
+      </div>
+      <button className="app-boton" onClick={handleGuardar} disabled={!nombreTrabajador || !empresa || !obra || !numeroIdentificacion}>
+        Guardar
+      </button>
+      <p className="app-mensaje">{mensaje}</p>
+    </div>
   );
 }
 
