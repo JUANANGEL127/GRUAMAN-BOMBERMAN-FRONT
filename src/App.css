@@ -174,10 +174,10 @@ body {
     margin-bottom: 18px;
   }
   .empresa-boton {
-    height: 48px;
-    width: 70px;
-    min-width: 60px;
-    max-width: 70px;
+    height: 70px;
+    width: 100px;
+    min-width: 70px;
+    max-width: 100px;
   }
   .empresa-img {
     height: 38px;
@@ -187,8 +187,8 @@ body {
     font-size: 18px;
     padding: 13px;
     border-radius: 8px;
-    width: 90vw;
-    max-width: 90vw;
+    width: 190vw;
+    max-width: 190vw;
     margin-left: 5vw;
     margin-right: 5vw;
   }
