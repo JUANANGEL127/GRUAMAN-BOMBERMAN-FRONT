@@ -81,6 +81,24 @@ function App() {
       return;
     }
     try {
+      // Guardar todos los datos en localStorage
+      localStorage.setItem("nombreTrabajador", nombreTrabajador);
+      localStorage.setItem("empresa", empresa);
+      localStorage.setItem("empresa_id", empresa === "GyE" ? 1 : empresa === "AIC" ? 2 : "");
+      localStorage.setItem("obra_id", obraIdSeleccionada);
+      localStorage.setItem("obra", obraBusqueda);
+      localStorage.setItem("numeroIdentificacion", numeroIdentificacion);
+      localStorage.setItem("lat", ubicacion.lat);
+      localStorage.setItem("lon", ubicacion.lon);
+
+      // Enviar datos básicos al backend con los nuevos campos requeridos
+      await axios.post("http://localhost:3000/datos-basicos", {
+        nombre: nombreTrabajador,
+        empresa,
+        empresa_id: empresa === "GyE" ? 1 : empresa === "AIC" ? 2 : null,
+        obra_id: obraIdSeleccionada,
+        numero_identificacion: numeroIdentificacion,
+      });
       const resp = await axios.post("http://localhost:3000/validar-ubicacion", {
         obraId: obraIdSeleccionada,
         lat: ubicacion.lat,
@@ -227,6 +245,9 @@ function App() {
         <p className="app-mensaje" style={{ color: "red", marginBottom: "32px" }}>{faltanDatosMensaje}</p>
       )}
       <p className="app-mensaje">{mensaje}</p>
+      {/* Si usas imágenes de pie de página, usa rutas como estas: */}
+      {/* <img src="/logopiegye.png" alt="Logo Pie GYE" /> */}
+      {/* <img src="/logopieaica.png" alt="Logo Pie AIC" /> */}
     </div>
   );
 }
