@@ -1,8 +1,7 @@
 import { Routes, Route, useNavigate } from "react-router-dom";
 import Formulario1 from "./formulario1";
-import Administrador from "./administrador";
-import Epps from "./epps";
-import "../App.css";
+import Administrador from "../administrador";
+import "../../App.css";
 
 function Eleccion() {
   return (
@@ -10,7 +9,6 @@ function Eleccion() {
       <Route path="/" element={<Bienvenida />} />
       <Route path="/formulario1" element={<Formulario1 />} />
       <Route path="/administrador" element={<Administrador />} />
-      <Route path="/epps" element={<Epps />} />
     </Routes>
   );
 }
@@ -29,13 +27,6 @@ function Bienvenida() {
         onClick={() => navigate("/formulario1")}
       >
         Formulario de llegada y salida
-      </button>
-      <button
-        className="app-boton"
-        style={{ maxWidth: 320, marginTop: 18 }}
-        onClick={() => navigate("/epps")}
-      >
-        Checklist EPPs
       </button>
       <button
         className="app-boton"

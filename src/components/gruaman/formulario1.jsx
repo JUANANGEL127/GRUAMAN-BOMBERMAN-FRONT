@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../styles/formulario1.css";
-
+import "../../styles/formulario1.css";
 
 function Formulario1() {
   const navigate = useNavigate();
