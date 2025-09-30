@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import "../../styles/bomberman/planillabombeo.css";
 
-const filasTabla = 11;
-
 function PlanillaBombeo() {
   // Estado para los datos del formulario
   const [datos, setDatos] = useState({
@@ -13,14 +11,13 @@ function PlanillaBombeo() {
     bomba: "",
     horaLlegadaObra: "",
     horaSalidaObra: "",
-    remisiones: Array.from({ length: filasTabla }, () => ({
-      remision: "",
-      horaLlegada: "",
-      horaInicial: "",
-      horaFinal: "",
-      metros: "",
-      observaciones: ""
-    })),
+    // Solo una remisión
+    remision: "",
+    horaLlegada: "",
+    horaInicial: "",
+    horaFinal: "",
+    metros: "",
+    observaciones: "",
     acpmInicio: "",
     acpmFinal: "",
     horometroInicial: "",
@@ -35,6 +32,18 @@ function PlanillaBombeo() {
   // Estado para la lista de nombres auxiliares
   const [listaNombres, setListaNombres] = useState([]);
   const [busquedaAuxiliar, setBusquedaAuxiliar] = useState("");
+
+  // Estado para las remisiones
+  const [remisiones, setRemisiones] = useState([]);
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [remisionActual, setRemisionActual] = useState({
+    remision: "",
+    horaLlegada: "",
+    horaInicial: "",
+    horaFinal: "",
+    metros: "",
+    observaciones: ""
+  });
 
   // Obtener nombre operador de localStorage (igual que nombre proyecto)
   const nombreOperador = localStorage.getItem("nombreTrabajador") || "";
@@ -72,11 +81,25 @@ function PlanillaBombeo() {
     setDatos({ ...datos, [e.target.name]: e.target.value });
   };
 
-  const handleRemisionChange = (idx, field, value) => {
-    const nuevasRemisiones = datos.remisiones.map((r, i) =>
-      i === idx ? { ...r, [field]: value } : r
-    );
-    setDatos({ ...datos, remisiones: nuevasRemisiones });
+  const handleRemisionChange = (e) => {
+    setRemisionActual({ ...remisionActual, [e.target.name]: e.target.value });
+  };
+
+  const abrirModalRemision = () => {
+    setRemisionActual({
+      remision: "",
+      horaLlegada: "",
+      horaInicial: "",
+      horaFinal: "",
+      metros: "",
+      observaciones: ""
+    });
+    setModalAbierto(true);
+  };
+
+  const guardarRemision = () => {
+    setRemisiones([...remisiones, remisionActual]);
+    setModalAbierto(false);
   };
 
   const handleGuardar = async (e) => {
@@ -90,24 +113,24 @@ function PlanillaBombeo() {
 
     const toStringOrEmpty = (val) => (val === undefined || val === null ? "" : String(val));
 
-    // Incluye todos los campos requeridos por la tabla, aunque estén vacíos
+    // Incluye todas las remisiones en el payload
     const payload = {
-      nombre_cliente: toStringOrEmpty(datos.cliente),
-      nombre_proyecto: toStringOrEmpty(datos.proyecto),
-      fecha_servicio: toStringOrEmpty(datos.fecha),
-      bomba_numero: toStringOrEmpty(datos.bomba),
-      hora_llegada_obra: toStringOrEmpty(datos.horaLlegadaObra),
-      hora_salida_obra: toStringOrEmpty(datos.horaSalidaObra),
-      hora_inicio_acpm: toNumberOrZero(datos.acpmInicio),
-      hora_final_acpm: toNumberOrZero(datos.acpmFinal),
-      horometro_inicial: toNumberOrZero(datos.horometroInicial),
-      horometro_final: toNumberOrZero(datos.horometroFinal),
-      nombre_operador: toStringOrEmpty(datos.operador),
-      nombre_auxiliar: toStringOrEmpty(datos.auxiliar),
-      total_metros_cubicos_bombeados: toNumberOrZero(datos.totalMetros),
-      // Si el backend requiere estos campos, agrégalos también:
-      nombre_cliente_aceptacion: toStringOrEmpty(datos.clienteNombre),
-      cc_cliente_aceptacion: toStringOrEmpty(datos.clienteCC)
+      nombre_cliente: datos.cliente,
+      nombre_proyecto: datos.proyecto,
+      fecha_servicio: datos.fecha,
+      bomba_numero: datos.bomba,
+      hora_llegada_obra: datos.horaLlegadaObra,
+      hora_salida_obra: datos.horaSalidaObra,
+      remisiones: remisiones, // array de remisiones
+      hora_inicio_acpm: datos.acpmInicio,
+      hora_final_acpm: datos.acpmFinal,
+      horometro_inicial: datos.horometroInicial,
+      horometro_final: datos.horometroFinal,
+      nombre_operador: datos.operador,
+      nombre_auxiliar: datos.auxiliar,
+      total_metros_cubicos_bombeados: datos.totalMetros,
+      nombre_cliente_aceptacion: datos.clienteNombre,
+      cc_cliente_aceptacion: datos.clienteCC
     };
 
     console.log("Payload enviado:", payload);
@@ -231,76 +254,23 @@ function PlanillaBombeo() {
             </div>
           </div>
         </div>
-        {/*<div className="app-group" style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th>N°</th>
-                <th>N° Remisión</th>
-                <th>Hora Llegada</th>
-                <th>Hora Inicial</th>
-                <th>Hora Final</th>
-                <th>M³</th>
-                <th>Observaciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {datos.remisiones.map((r, idx) => (
-                <tr key={idx}>
-                  <td>{idx + 1}</td>
-                  <td>
-                    <input
-                      className="app-input"
-                      style={{ minWidth: 60 }}
-                      value={r.remision}
-                      onChange={e => handleRemisionChange(idx, "remision", e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="app-input"
-                      style={{ minWidth: 80 }}
-                      value={r.horaLlegada}
-                      onChange={e => handleRemisionChange(idx, "horaLlegada", e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="app-input"
-                      style={{ minWidth: 80 }}
-                      value={r.horaInicial}
-                      onChange={e => handleRemisionChange(idx, "horaInicial", e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="app-input"
-                      style={{ minWidth: 80 }}
-                      value={r.horaFinal}
-                      onChange={e => handleRemisionChange(idx, "horaFinal", e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="app-input"
-                      style={{ minWidth: 60 }}
-                      value={r.metros}
-                      onChange={e => handleRemisionChange(idx, "metros", e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="app-input"
-                      style={{ minWidth: 100 }}
-                      value={r.observaciones}
-                      onChange={e => handleRemisionChange(idx, "observaciones", e.target.value)}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div> */}
+        {/* Remisiones */}
+        <div className="app-group">
+          <h3 style={{ color: "#1976d2", marginBottom: "12px" }}>Remisiones</h3>
+          {remisiones.map((r, idx) => (
+            <div key={idx} style={{ marginBottom: "8px", fontWeight: "bold", color: "#1976d2" }}>
+              Remisión {idx + 1}
+            </div>
+          ))}
+          <button
+            type="button"
+            className="app-button"
+            style={{ maxWidth: 220, marginBottom: 8 }}
+            onClick={abrirModalRemision}
+          >
+            Agregar remisión
+          </button>
+        </div>
         <div className="app-group" style={{ display: "flex", gap: 8 }}>
           <div style={{ flex: 1 }}>
             <label className="app-label">Inicio ACPM</label>
@@ -370,9 +340,60 @@ function PlanillaBombeo() {
           </button>
         </div>
       </form>
+      {/* Modal para agregar remisión */}
+      {modalAbierto && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0,0,0,0.25)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <div
+            className="modal-remision"
+          >
+            <h3 style={{ color: "#1976d2", textAlign: "center" }}>Agregar Remisión</h3>
+            <label className="app-label">N° Remisión</label>
+            <input className="app-input" name="remision" value={remisionActual.remision} onChange={handleRemisionChange} />
+            <label className="app-label">Hora Llegada</label>
+            <input className="app-input" name="horaLlegada" value={remisionActual.horaLlegada} onChange={handleRemisionChange} />
+            <label className="app-label">Hora Inicial</label>
+            <input className="app-input" name="horaInicial" value={remisionActual.horaInicial} onChange={handleRemisionChange} />
+            <label className="app-label">Hora Final</label>
+            <input className="app-input" name="horaFinal" value={remisionActual.horaFinal} onChange={handleRemisionChange} />
+            <label className="app-label">M³</label>
+            <input className="app-input" name="metros" value={remisionActual.metros} onChange={handleRemisionChange} />
+            <label className="app-label">Observaciones</label>
+            <input className="app-input" name="observaciones" value={remisionActual.observaciones} onChange={handleRemisionChange} />
+            <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
+              <button
+                type="button"
+                className="app-button"
+                style={{ flex: 1 }}
+                onClick={guardarRemision}
+              >
+                Guardar
+              </button>
+              <button
+                type="button"
+                className="app-button"
+                style={{ flex: 1, background: "#eee", color: "#1976d2" }}
+                onClick={() => setModalAbierto(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default PlanillaBombeo;
+
 

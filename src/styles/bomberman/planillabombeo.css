@@ -168,6 +168,31 @@ body {
   outline: none;
 }
 
+.modal-remision {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 18px;
+  max-width: 360px;
+  width: 96vw;
+  box-shadow: 0 4px 24px rgba(33,150,243,0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  align-items: stretch;
+  margin-left: auto;
+  margin-right: auto;
+  overflow-x: hidden;
+}
+
+.modal-remision .app-input {
+  max-width: 100%;
+  width: calc(100% - 4px); /* Añade espacio a ambos lados */
+  box-sizing: border-box;
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
 @media (max-width: 600px) {
   .app-container {
     max-width: 98vw;
@@ -215,6 +240,19 @@ body {
   }
   .app-label {
     font-size: 1em;
+  }
+  .modal-remision {
+    max-width: 96vw;
+    width: 96vw;
+    padding: 16px 8px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .modal-remision .app-input {
+    max-width: 100vw;
+    width: calc(100% - 4px);
+    margin-left: 2px;
+    margin-right: 2px;
   }
 }
 

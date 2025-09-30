@@ -92,13 +92,14 @@ function App() {
       localStorage.setItem("lon", ubicacion.lon);
 
       // Enviar datos básicos al backend con los nuevos campos requeridos
-      await axios.post("http://localhost:3000/datos-basicos", {
+      const payload = {
         nombre: nombreTrabajador,
         empresa,
         empresa_id: empresa === "GyE" ? 1 : empresa === "AIC" ? 2 : null,
-        obra_id: obraIdSeleccionada,
+        obra_id: obraIdSeleccionada, // <-- CAMBIO: obra_id
         numero_identificacion: numeroIdentificacion,
-      });
+      };
+      await axios.post("http://localhost:3000/datos-basicos", payload);
       const resp = await axios.post("http://localhost:3000/validar-ubicacion", {
         obraId: obraIdSeleccionada,
         lat: ubicacion.lat,
@@ -116,7 +117,12 @@ function App() {
         }, 500);
       }
     } catch (err) {
-      if (err.response && err.response.status === 403) {
+      if (err.response && err.response.status === 400) {
+        // Mostrar qué parámetro falta y el payload enviado
+        setMensaje(
+          `Error 400: ${err.response.data?.mensaje || "Falta parámetro obligatorio."}\nPayload enviado: ${JSON.stringify(err.config.data)}`
+        );
+      } else if (err.response && err.response.status === 403) {
         alert(err.response.data?.mensaje || "No autorizado para registrar ubicación.");
       } else if (err.response && err.response.data?.mensaje) {
         setMensaje(err.response.data.mensaje);
