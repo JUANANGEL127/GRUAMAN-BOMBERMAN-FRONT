@@ -65,6 +65,23 @@ function App() {
     }
   };
 
+  // Función para formatear hora a "HH:MM"
+  function formatHora(valor) {
+    if (!valor) return "";
+    // Si ya está en formato HH:MM o HH:MM:SS, lo dejamos igual
+    if (/^\d{2}:\d{2}(:\d{2})?$/.test(valor)) return valor;
+    // Si es un número como "123", lo convertimos a "01:23"
+    if (/^\d{3,4}$/.test(valor)) {
+      let v = valor.padStart(4, "0");
+      return `${v.slice(0,2)}:${v.slice(2,4)}`;
+    }
+    // Si es un número como "9", lo convertimos a "09:00"
+    if (/^\d{1,2}$/.test(valor)) {
+      return valor.padStart(2, "0") + ":00";
+    }
+    return valor; // Si no, lo dejamos igual
+  }
+
   const handleGuardar = async () => {
     if (faltanCampos) {
       setFaltanDatosMensaje("Por favor completa todos los campos obligatorios.");
@@ -96,8 +113,12 @@ function App() {
         nombre: nombreTrabajador,
         empresa,
         empresa_id: empresa === "GyE" ? 1 : empresa === "AIC" ? 2 : null,
-        obra_id: obraIdSeleccionada, // <-- CAMBIO: obra_id
+        obra_id: obraIdSeleccionada,
         numero_identificacion: numeroIdentificacion,
+        hora_llegada_obra: formatHora(hora_llegada_obra),      // SOLO estos dos como TIME
+        hora_salida_obra: formatHora(hora_salida_obra),        // SOLO estos dos como TIME
+        hora_inicio_acpm: Number(hora_inicio_acpm), // <-- convertir a número
+        hora_final_acpm: Number(hora_final_acpm),   // <-- convertir a número
       };
       await axios.post("http://localhost:3000/datos-basicos", payload);
       const resp = await axios.post("http://localhost:3000/validar-ubicacion", {
@@ -153,26 +174,6 @@ function App() {
   return (
     <div className="app-container">
       <h2>Déjanos conocerte</h2>
-      {/* Mover este bloque arriba */}
-      <div className="app-group">
-        <label className="app-label">
-          Catedral 
-          {!obraIdSeleccionada && <span style={{ color: "red", marginLeft: 4 }}>*</span>}
-        </label>
-        <input
-          className="app-input"
-          list="lista-obras"
-          placeholder="Buscar o selecciona la obra"
-          value={obraBusqueda}
-          onChange={handleObraChange}
-        />
-        <datalist id="lista-obras">
-          {obrasFiltradas.map((obra) => (
-            <option key={obra.id} value={obra.nombreobra}></option>
-          ))}
-        </datalist>
-      </div>
-      {/* Luego sigue el bloque de nombre */}
       <div className="app-group">
         <label className="app-label">
           ¿Cuál es tu nombre?
@@ -245,6 +246,24 @@ function App() {
           </button>
           <span className="app-label" style={{ marginTop: "8px" }}>BomberMan</span>
         </div>
+      </div>
+      <div className="app-group">
+        <label className="app-label">
+          ¿En qué obra estás trabajando?
+          {!obraIdSeleccionada && <span style={{ color: "red", marginLeft: 4 }}>*</span>}
+        </label>
+        <input
+          className="app-input"
+          list="lista-obras"
+          placeholder="Buscar o selecciona la obra"
+          value={obraBusqueda}
+          onChange={handleObraChange}
+        />
+        <datalist id="lista-obras">
+          {obrasFiltradas.map((obra) => (
+            <option key={obra.id} value={obra.nombreobra}></option>
+          ))}
+        </datalist>
       </div>
       <button className="app-boton" onClick={handleGuardar}>
         Guardar

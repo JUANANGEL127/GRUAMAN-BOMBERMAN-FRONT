@@ -4,7 +4,6 @@ function Footer() {
   return (
     <footer className="app-footer">
       <img src="../public/logopiegye.png" alt="Logo GYE" className="footer-logo" />
-      <img src="../public/logopieaica.png" alt="Logo AIC" className="footer-logo" />
     </footer>
   );
 }
