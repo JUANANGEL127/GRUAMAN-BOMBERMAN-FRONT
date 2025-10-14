@@ -1,28 +1,27 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-
-function Administrador() {
-  const [registros, setRegistros] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [busqueda, setBusqueda] = useState("");
-  const API_URL = "http://localhost:3000";
+function administrador() {
+  const [registros, set_registros] = useState([]);
+  const [loading, set_loading] = useState(true);
+  const [busqueda, set_busqueda] = useState("");
+  const api_url = "http://localhost:3000";
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetch_data = async () => {
       try {
-        const res = await axios.get(`${API_URL}/formulario1/registros-todos-resumen`);
-        setRegistros(res.data);
+        const res = await axios.get(`${api_url}/formulario_1/registros_todos_resumen`);
+        set_registros(res.data);
       } catch (err) {
-        setRegistros([]);
+        set_registros([]);
       }
-      setLoading(false);
+      set_loading(false);
     };
-    fetchData();
+    fetch_data();
   }, []);
 
   // Filtrar registros por nombre, obra, empresa o fecha
-  const registrosFiltrados = registros.filter(r => {
+  const registros_filtrados = registros.filter(r => {
     if (!busqueda) return true;
     const valor = busqueda.toLowerCase();
     return (
@@ -33,7 +32,6 @@ function Administrador() {
     );
   });
 
-  
   return (
     <div className="app-container">
       <h2>Panel Administrador</h2>
@@ -43,7 +41,7 @@ function Administrador() {
           className="app-input"
           type="text"
           value={busqueda}
-          onChange={e => setBusqueda(e.target.value)}
+          onChange={e => set_busqueda(e.target.value)}
           placeholder="Ejemplo: Juan, GyE, Obra1, 2025-09-10"
         />
       </div>
@@ -51,11 +49,11 @@ function Administrador() {
         <p className="app-label">Cargando datos...</p>
       ) : (
         <div style={{ marginTop: 32, width: "100%" }}>
-          {registrosFiltrados.length === 0 ? (
+          {registros_filtrados.length === 0 ? (
             <p className="app-label">No hay registros disponibles.</p>
           ) : (
             <ul style={{ listStyle: "none", padding: 0 }}>
-              {registrosFiltrados.map((r, idx) => (
+              {registros_filtrados.map((r, idx) => (
                 <li key={idx} style={{ background: "#f7fbff", marginBottom: 18, padding: 14, borderRadius: 8 }}>
                   <div><strong>Fecha:</strong> {r.fecha ? r.fecha.slice(0, 10) : ""}</div>
                   <div><strong>Nombre:</strong> {r.nombre}</div>
@@ -76,4 +74,4 @@ function Administrador() {
   );
 }
 
-export default Administrador;
+export default administrador;

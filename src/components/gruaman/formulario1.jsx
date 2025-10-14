@@ -3,85 +3,85 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../styles/formulario1.css";
 
-function Formulario1() {
+function formulario_1() {
   const navigate = useNavigate();
-  const [horaSeleccionada, setHoraSeleccionada] = useState("");
-  const [minutoSeleccionado, setMinutoSeleccionado] = useState("");
-  const [ampmSeleccionado, setAmpmSeleccionado] = useState("");
-  const [mensaje, setMensaje] = useState("");
-  const [trabajadorId, setTrabajadorId] = useState(null);
+  const [hora_seleccionada, set_hora_seleccionada] = useState("");
+  const [minuto_seleccionado, set_minuto_seleccionado] = useState("");
+  const [ampm_seleccionado, set_ampm_seleccionado] = useState("");
+  const [mensaje, set_mensaje] = useState("");
+  const [trabajador_id, set_trabajador_id] = useState(null);
 
-  const nombreTrabajador = localStorage.getItem("nombreTrabajador") || "";
+  const nombre_trabajador = localStorage.getItem("nombre_trabajador") || "";
   const empresa = localStorage.getItem("empresa") || "";
   const obra = localStorage.getItem("obra") || "";
-  const numeroIdentificacion = localStorage.getItem("numeroIdentificacion") || "";
+  const numero_identificacion = localStorage.getItem("numero_identificacion") || "";
 
-  const API_URL = "http://localhost:3000/formulario1";
+  const api_url = "http://localhost:3000/formulario_1";
 
   useEffect(() => {
-    const fetchTrabajadorId = async () => {
-      if (nombreTrabajador && empresa && obra && numeroIdentificacion) {
+    const fetch_trabajador_id = async () => {
+      if (nombre_trabajador && empresa && obra && numero_identificacion) {
         try {
           const res = await axios.get(
             `http://localhost:3000/trabajador-id?nombre=${encodeURIComponent(
-              nombreTrabajador
+              nombre_trabajador
             )}&empresa=${encodeURIComponent(empresa)}&obra=${encodeURIComponent(
               obra
-            )}&numero_identificacion=${encodeURIComponent(numeroIdentificacion)}`
+            )}&numero_identificacion=${encodeURIComponent(numero_identificacion)}`
           );
-          setTrabajadorId(res.data.trabajadorId);
+          set_trabajador_id(res.data.trabajador_id);
         } catch (err) {
-          setTrabajadorId(null);
+          set_trabajador_id(null);
         }
       }
     };
-    fetchTrabajadorId();
-  }, [nombreTrabajador, empresa, obra, numeroIdentificacion]);
+    fetch_trabajador_id();
+  }, [nombre_trabajador, empresa, obra, numero_identificacion]);
 
-  const horasOpciones = Array.from({ length: 12 }, (_, i) =>
+  const horas_opciones = Array.from({ length: 12 }, (_, i) =>
     String(i === 0 ? 12 : i).padStart(2, "0")
   );
-  const minutosOpciones = Array.from({ length: 60 }, (_, i) =>
+  const minutos_opciones = Array.from({ length: 60 }, (_, i) =>
     String(i).padStart(2, "0")
   );
 
   // Enviar registro
-  const guardarRegistro = async () => {
+  const guardar_registro = async () => {
     // Convertir a formato 24 horas
-    let hora24 = "";
+    let hora_24 = "";
     let tipo = "";
-    if (horaSeleccionada && minutoSeleccionado && ampmSeleccionado) {
-      let horaNum = parseInt(horaSeleccionada, 10);
-      if (ampmSeleccionado === "PM" && horaNum !== 12) {
-        horaNum += 12;
-      } else if (ampmSeleccionado === "AM" && horaNum === 12) {
-        horaNum = 0;
+    if (hora_seleccionada && minuto_seleccionado && ampm_seleccionado) {
+      let hora_num = parseInt(hora_seleccionada, 10);
+      if (ampm_seleccionado === "PM" && hora_num !== 12) {
+        hora_num += 12;
+      } else if (ampm_seleccionado === "AM" && hora_num === 12) {
+        hora_num = 0;
       }
-      hora24 =
-        String(horaNum).padStart(2, "0") +
+      hora_24 =
+        String(hora_num).padStart(2, "0") +
         ":" +
-        minutoSeleccionado +
+        minuto_seleccionado +
         ":00";
-      tipo = ampmSeleccionado === "AM" ? "entrada" : "salida";
+      tipo = ampm_seleccionado === "AM" ? "entrada" : "salida";
     }
-    if (!trabajadorId) {
-      setMensaje(
-        "No se pudo obtener el trabajadorId. Verifica tus datos básicos."
+    if (!trabajador_id) {
+      set_mensaje(
+        "No se pudo obtener el trabajador_id. Verifica tus datos básicos."
       );
       return;
     }
     try {
-      await axios.post(`${API_URL}/registros`, {
-        trabajadorId,
-        hora_usuario: hora24,
+      await axios.post(`${api_url}/registros`, {
+        trabajador_id,
+        hora_usuario: hora_24,
         tipo,
       });
-      setMensaje(`Registro de ${tipo} guardado correctamente.`);
-      setHoraSeleccionada("");
-      setMinutoSeleccionado("");
-      setAmpmSeleccionado("");
+      set_mensaje(`Registro de ${tipo} guardado correctamente.`);
+      set_hora_seleccionada("");
+      set_minuto_seleccionado("");
+      set_ampm_seleccionado("");
     } catch (err) {
-      setMensaje("Error al guardar registro");
+      set_mensaje("Error al guardar registro");
       console.error(err);
     }
   };
@@ -117,12 +117,12 @@ function Formulario1() {
         >
           <select
             className="app-select app-hora-select"
-            value={horaSeleccionada}
-            onChange={(e) => setHoraSeleccionada(e.target.value)}
+            value={hora_seleccionada}
+            onChange={(e) => set_hora_seleccionada(e.target.value)}
             style={{ maxWidth: "90px" }}
           >
             <option value="">Hora</option>
-            {horasOpciones.map((h) => (
+            {horas_opciones.map((h) => (
               <option key={h} value={h}>
                 {h}
               </option>
@@ -139,12 +139,12 @@ function Formulario1() {
           </span>
           <select
             className="app-select app-minuto-select"
-            value={minutoSeleccionado}
-            onChange={(e) => setMinutoSeleccionado(e.target.value)}
+            value={minuto_seleccionado}
+            onChange={(e) => set_minuto_seleccionado(e.target.value)}
             style={{ maxWidth: "90px" }}
           >
             <option value="">Minuto</option>
-            {minutosOpciones.map((m) => (
+            {minutos_opciones.map((m) => (
               <option key={m} value={m}>
                 {m}
               </option>
@@ -152,8 +152,8 @@ function Formulario1() {
           </select>
           <select
             className="app-select app-ampm-select"
-            value={ampmSeleccionado}
-            onChange={(e) => setAmpmSeleccionado(e.target.value)}
+            value={ampm_seleccionado}
+            onChange={(e) => set_ampm_seleccionado(e.target.value)}
             style={{ maxWidth: "70px" }}
           >
             <option value="">AM/PM</option>
@@ -162,7 +162,7 @@ function Formulario1() {
           </select>
         </div>
       </div>
-      <button className="app-boton" onClick={guardarRegistro}>
+      <button className="app-boton" onClick={guardar_registro}>
         Guardar Registro
       </button>
       <p className="app-mensaje">{mensaje}</p>
@@ -170,4 +170,4 @@ function Formulario1() {
   );
 }
 
-export default Formulario1;
+export default formulario_1;

@@ -1,19 +1,19 @@
 import { Routes, Route, useNavigate } from "react-router-dom";
-import Formulario1 from "./formulario1";
-import Administrador from "../administrador";
+import formulario_1 from "./formulario1";
+import administrador from "../administrador";
 import "../../App.css";
 
-function Eleccion() {
+function eleccion() {
   return (
     <Routes>
-      <Route path="/" element={<Bienvenida />} />
-      <Route path="/formulario1" element={<Formulario1 />} />
-      <Route path="/administrador" element={<Administrador />} />
+      <Route path="/" element={<bienvenida />} />
+      <Route path="/formulario_1" element={<formulario_1 />} />
+      <Route path="/administrador" element={<administrador />} />
     </Routes>
   );
 }
 
-function Bienvenida() {
+function bienvenida() {
   const navigate = useNavigate();
   return (
     <div className="app-container">
@@ -24,7 +24,7 @@ function Bienvenida() {
       <button
         className="app-boton"
         style={{ maxWidth: 320 }}
-        onClick={() => navigate("/formulario1")}
+        onClick={() => navigate("/formulario_1")}
       >
         Formulario de llegada y salida
       </button>
@@ -39,4 +39,4 @@ function Bienvenida() {
   );
 }
 
-export default Eleccion;
+export default eleccion;
