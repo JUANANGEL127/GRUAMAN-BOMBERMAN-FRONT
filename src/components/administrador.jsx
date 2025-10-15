@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
+// Componente principal para el panel administrador
 function administrador() {
+  // Estado para registros, carga y búsqueda
   const [registros, set_registros] = useState([]);
   const [loading, set_loading] = useState(true);
   const [busqueda, set_busqueda] = useState("");
   const api_url = "http://localhost:3000";
 
+  // Cargar registros desde el backend al montar el componente
   useEffect(() => {
     const fetch_data = async () => {
       try {
@@ -32,6 +35,7 @@ function administrador() {
     );
   });
 
+  // Renderizado del panel administrador
   return (
     <div className="app-container">
       <h2>Panel Administrador</h2>

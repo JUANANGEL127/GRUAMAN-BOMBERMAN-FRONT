@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import "../../styles/bomberman/checklist.css";
 
+// Componente principal para el checklist de inspección de bomba
 function Checklist() {
+  // Estado para los datos generales del encabezado
   const [datos, setDatos] = useState({
     nombre_cliente: "",
     nombre_proyecto: "",
@@ -11,20 +13,21 @@ function Checklist() {
     nombre_operador: "",
   });
 
+  // Estado para la lista de bombas
   const [lista_bombas, set_lista_bombas] = useState([]);
+  // Estado para los ítems del checklist
   const [estadoItems, setEstadoItems] = useState({});
+  // Estado para envío y mensaje de resultado
   const [enviando, setEnviando] = useState(false);
   const [mensajeEnvio, setMensajeEnvio] = useState("");
 
+  // Obtener datos de operador y obra desde localStorage
   const nombre_operador_local = localStorage.getItem("nombre_trabajador") || "";
   const nombre_obra_local = localStorage.getItem("obra") || "";
 
-  // ---------------------------
-  // Cargar datos del encabezado
-  // ---------------------------
+  // Cargar datos del encabezado desde backend y localStorage
   useEffect(() => {
     const fecha_hoy = new Date().toISOString().slice(0, 10);
-
     axios
       .get("http://localhost:3000/obras")
       .then((res) => {
@@ -35,7 +38,6 @@ function Checklist() {
           (o) => o.nombre_obra === nombre_obra_local
         );
         const constructora = obra_encontrada ? obra_encontrada.constructora : "";
-
         setDatos((prev) => ({
           ...prev,
           nombre_cliente: constructora,
@@ -55,9 +57,7 @@ function Checklist() {
       });
   }, [nombre_operador_local, nombre_obra_local]);
 
-  // ---------------------------
-  // Cargar lista de bombas
-  // ---------------------------
+  // Cargar lista de bombas desde backend
   useEffect(() => {
     axios
       .get("http://localhost:3000/bombas")
@@ -70,9 +70,7 @@ function Checklist() {
       .catch(() => set_lista_bombas([]));
   }, []);
 
-  // ---------------------------
-  // Definición de secciones e ítems
-  // ---------------------------
+  // Definición de secciones e ítems del checklist
   const secciones = [
     {
       titulo: "SECCIÓN: CHASIS",
@@ -194,7 +192,7 @@ function Checklist() {
     },
   ];
 
-  // Inicializar estado de ítems
+  // Inicializar estado de ítems del checklist
   useEffect(() => {
     const inicial = secciones.reduce((acc, seccion) => {
       seccion.items.forEach((item) => (acc[item] = ""));
@@ -203,23 +201,22 @@ function Checklist() {
     setEstadoItems(inicial);
   }, []);
 
+  // Manejar cambios en los campos generales
   const handle_change = (e) => {
     const { name, value } = e.target;
     setDatos((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Manejar cambios en los radios de cada ítem
   const handleItemChange = (item, valor) => {
     setEstadoItems((prev) => ({ ...prev, [item]: valor }));
   };
 
-  // ---------------------------
-  // Envío de checklist al backend
-  // ---------------------------
+  // Enviar checklist al backend y mostrar mensaje de resultado
   const handleSubmit = async (e) => {
     e.preventDefault();
     setEnviando(true);
     setMensajeEnvio("");
-
     const payload = {
       ...datos,
       checklist: Object.fromEntries(
@@ -229,7 +226,6 @@ function Checklist() {
         ])
       ),
     };
-
     try {
       await axios.post("http://localhost:3000/bomberman/checklist", payload);
       setMensajeEnvio("✅ Checklist guardado correctamente.");
@@ -246,10 +242,10 @@ function Checklist() {
     }
   };
 
+  // Renderizado del formulario checklist
   return (
     <div className="checklist-container">
       <h2>Checklist de Inspección de Bomba</h2>
-
       <form onSubmit={handleSubmit} className="checklist-form">
         {/* Encabezado */}
         <div className="encabezado">
@@ -286,8 +282,7 @@ function Checklist() {
             </div>
           ))}
         </div>
-
-        {/* Secciones */}
+        {/* Secciones del checklist */}
         {secciones.map((seccion, idx) => (
           <div key={idx} className="seccion">
             <h3>{seccion.titulo}</h3>
@@ -311,11 +306,9 @@ function Checklist() {
             ))}
           </div>
         ))}
-
         <button type="submit" disabled={enviando} className="btn-guardar">
           {enviando ? "Guardando..." : "Guardar Checklist"}
         </button>
-
         {mensajeEnvio && <p className="mensaje-envio">{mensajeEnvio}</p>}
       </form>
     </div>

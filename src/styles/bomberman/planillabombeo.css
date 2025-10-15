@@ -1,5 +1,4 @@
-/* Inspirado en formulario1.css, optimizado para móvil y formato planilla */
-
+/* Estilos base y responsivos para el formulario de planilla de bombeo */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
 body {
@@ -8,10 +7,11 @@ body {
   font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
 }
 
+/* Contenedor principal del formulario */
 .app-container {
   max-width: 420px;
   margin: 40px auto 0 auto;
-  padding: 32px 18px 180px 18px; /* Aumenta el padding-bottom para evitar que el footer tape contenido */
+  padding: 32px 18px 180px 18px;
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 6px 24px rgba(33,150,243,0.08);
@@ -21,6 +21,7 @@ body {
   animation: fadeIn 0.7s;
 }
 
+/* Título y etiquetas */
 .app-container h2 {
   text-align: center;
   margin-bottom: 32px;
@@ -29,7 +30,6 @@ body {
   font-size: 2.2em;
   letter-spacing: 1px;
 }
-
 .app-container h2,
 .app-label,
 .planilla-bombeo-table th {
@@ -43,6 +43,7 @@ body {
   box-sizing: border-box;
 }
 
+/* Grupo de campos */
 .app-group {
   width: 100%;
   max-width: 380px;
@@ -57,6 +58,7 @@ body {
   border: none;
 }
 
+/* Etiqueta de campo */
 .app-label {
   font-size: 1.1em;
   color: #ffa726;
@@ -65,6 +67,7 @@ body {
   margin-bottom: 8px;
 }
 
+/* Input de campo */
 .app-input {
   width: 100%;
   max-width: 380px;
@@ -77,12 +80,12 @@ body {
   color: #222;
   margin: 0 0 6px 0;
 }
-
 .app-input:focus {
   border-color: #ffa726;
   box-shadow: 0 0 0 2px #fff17655;
 }
 
+/* Tabla de planilla de bombeo */
 .planilla-bombeo-table {
   width: 100%;
   border-collapse: separate;
@@ -98,7 +101,6 @@ body {
   margin-left: 0;
   margin-right: 0;
 }
-
 .planilla-bombeo-table th,
 .planilla-bombeo-table td {
   border: none;
@@ -106,7 +108,6 @@ body {
   text-align: center;
   font-size: 1em;
 }
-
 .planilla-bombeo-table th {
   background: linear-gradient(90deg, #1976d2 60%, #ffa726 100%);
   color: #fff;
@@ -116,15 +117,12 @@ body {
   border-top-right-radius: 10px;
   text-align: center !important;
 }
-
 .planilla-bombeo-table tr {
   background: #fff;
 }
-
 .planilla-bombeo-table tr:nth-child(even) {
   background: #f7fbff;
 }
-
 .planilla-bombeo-table input {
   width: 100%;
   min-width: 48px;
@@ -136,13 +134,13 @@ body {
   color: #222;
   box-sizing: border-box;
 }
-
 .planilla-bombeo-table input:focus {
   border: 1.5px solid #1976d2;
   outline: none;
   background: #e3f2fd;
 }
 
+/* Botón principal */
 .app-button {
   width: 100%;
   max-width: 380px;
@@ -160,7 +158,6 @@ body {
   margin-bottom: 8px;
   letter-spacing: 0.5px;
 }
-
 .app-button:hover,
 .app-button:focus {
   background: linear-gradient(90deg, #1565c0 60%, #fb8c00 100%);
@@ -168,6 +165,7 @@ body {
   outline: none;
 }
 
+/* Modal de remisión */
 .modal-remision {
   background: #fff;
   border-radius: 12px;
@@ -184,20 +182,20 @@ body {
   margin-right: auto;
   overflow-x: hidden;
 }
-
 .modal-remision .app-input {
   max-width: 100%;
-  width: calc(100% - 4px); /* Añade espacio a ambos lados */
+  width: calc(100% - 4px);
   box-sizing: border-box;
   margin-left: 2px;
   margin-right: 2px;
 }
 
+/* Responsividad para pantallas pequeñas */
 @media (max-width: 600px) {
   .app-container {
     max-width: 98vw;
     margin: 18px auto 0 auto;
-    padding: 12px 2vw 210px 2vw; /* Más espacio inferior en móvil */
+    padding: 12px 2vw 210px 2vw;
     border-radius: 12px;
     box-shadow: 0 4px 16px rgba(33,150,243,0.07);
   }
@@ -256,6 +254,7 @@ body {
   }
 }
 
+/* Animación de entrada */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }

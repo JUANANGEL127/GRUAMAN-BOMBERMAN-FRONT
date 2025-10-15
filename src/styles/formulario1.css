@@ -1,7 +1,6 @@
-/* Importando fuente Poppins de Google Fonts */
+/* Estilos base y responsivos para el formulario de registro de jornada */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
-/* Fondo general y contenedor */
 body {
   background: #fff;
   min-height: 100vh;
@@ -13,8 +12,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  animation: fadeIn 0.7s;
 }
-
 
 .app-container h2 {
   text-align: center;
@@ -98,23 +97,18 @@ body {
   letter-spacing: 0.5px;
 }
 
-/* Animación de entrada */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.app-container {
-  animation: fadeIn 0.7s;
-}
 
-/* Estilos para móviles */
+/* Responsividad para móviles */
 @media (max-width: 600px) {
   body {
     display: block;
     min-height: 100vh;
     background: #fff;
   }
- 
   .app-group {
     width: 100%;
     max-width: 98vw;

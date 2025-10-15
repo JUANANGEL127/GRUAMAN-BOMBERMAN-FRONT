@@ -5,6 +5,7 @@ import InventariosObra from "./inventariosobra";
 import Administrador from "../administrador";
 import "../../App.css";
 
+// Componente principal para la selección de formularios AIC
 function EleccionAIC() {
   return (
     <Routes>
@@ -17,6 +18,7 @@ function EleccionAIC() {
   );
 }
 
+// Pantalla de bienvenida y navegación a los formularios
 function BienvenidaAIC() {
   const navigate = useNavigate();
   return (

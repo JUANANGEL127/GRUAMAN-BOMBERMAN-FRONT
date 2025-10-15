@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./App.css";
 import axios from "axios";
 
+// Componente principal para la portada y registro de datos básicos
 function app() {
   const [nombre_trabajador, set_nombre_trabajador] = useState("");
   const [lista_nombres, set_lista_nombres] = useState([]);
@@ -18,6 +19,7 @@ function app() {
   const [ubicacion, set_ubicacion] = useState({ lat: null, lon: null });
   const navigate = useNavigate();
 
+  // Cargar lista de nombres desde backend
   useEffect(() => {
     axios.get("http://localhost:3000/nombres_trabajadores")
       .then(res => {
@@ -33,6 +35,7 @@ function app() {
       .catch(() => set_lista_nombres([]));
   }, []);
 
+  // Cargar lista de obras desde backend
   useEffect(() => {
     axios.get("http://localhost:3000/obras")
       .then(res => {
@@ -45,14 +48,13 @@ function app() {
       .catch(() => set_lista_obras([]));
   }, []);
 
-  // Cuando el usuario selecciona una obra, busca el id y pide la ubicación
+  // Al seleccionar obra, buscar id y pedir ubicación
   const handle_obra_change = e => {
     const nombre_obra = e.target.value;
     set_obra_busqueda(nombre_obra);
     const obra_obj = lista_obras.find(o => o.nombre_obra === nombre_obra);
     if (obra_obj) {
       set_obra_id_seleccionada(obra_obj.id);
-      // Obtener ubicación
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           pos => set_ubicacion({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
@@ -65,6 +67,7 @@ function app() {
     }
   };
 
+  // Guardar datos básicos y ubicación en backend y localStorage
   const handle_guardar = async () => {
     if (faltan_campos) {
       set_faltan_datos_mensaje("Por favor completa todos los campos obligatorios.");
@@ -81,7 +84,6 @@ function app() {
       return;
     }
     try {
-      // Guardar todos los datos en localStorage
       localStorage.setItem("nombre_trabajador", nombre_trabajador);
       localStorage.setItem("empresa", empresa);
       localStorage.setItem("empresa_id", empresa === "GyE" ? 1 : empresa === "AIC" ? 2 : "");
@@ -91,7 +93,6 @@ function app() {
       localStorage.setItem("lat", ubicacion.lat);
       localStorage.setItem("lon", ubicacion.lon);
 
-      // Enviar datos básicos al backend con los nuevos campos requeridos
       const payload = {
         nombre: nombre_trabajador,
         empresa,
@@ -131,6 +132,7 @@ function app() {
     }
   };
 
+  // Validación de campos obligatorios
   const campos_obligatorios = {
     nombre_trabajador,
     numero_identificacion,
@@ -139,16 +141,15 @@ function app() {
   };
   const faltan_campos = Object.values(campos_obligatorios).some(v => !v);
 
-  // Filtrar nombres según el texto de búsqueda
+  // Filtrar nombres y obras según búsqueda
   const nombres_filtrados = (Array.isArray(lista_nombres) ? lista_nombres : []).filter(nombre =>
     nombre.toLowerCase().includes(filtro_nombre.toLowerCase())
   );
-
-  // Filtrar obras según el texto de búsqueda
   const obras_filtradas = (Array.isArray(lista_obras) ? lista_obras : []).filter(
     obra => obra && obra.nombre_obra && obra.nombre_obra.toLowerCase().includes(obra_busqueda.toLowerCase())
   );
 
+  // Renderizado del formulario principal
   return (
     <div className="app-container">
       <h2>Déjanos conocerte</h2>
@@ -250,9 +251,6 @@ function app() {
         <p className="app-mensaje" style={{ color: "red", marginBottom: "32px" }}>{faltan_datos_mensaje}</p>
       )}
       <p className="app-mensaje">{mensaje}</p>
-      {/* Si usas imágenes de pie de página, usa rutas como estas: */}
-      {/* <img src="/logopiegye.png" alt="Logo Pie GYE" /> */}
-      {/* <img src="/logopieaica.png" alt="Logo Pie AIC" /> */}
     </div>
   );
 }

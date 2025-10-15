@@ -1,5 +1,6 @@
 import React from "react";
 
+// Componente Footer con logo de la empresa
 function Footer() {
   return (
     <footer className="app-footer">

@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../styles/bomberman/planillabombeo.css";
 
+// Componente principal para el formulario de control de bombeo
 function planillabombeo() {
-  // Estado para los datos del formulario
+  // Estado para los datos generales del formulario
   const [datos, setDatos] = useState({
     nombre_cliente: "",
     nombre_proyecto: "",
@@ -20,7 +21,7 @@ function planillabombeo() {
     observaciones: "",
     galones_inicio_acpm: "",
     galones_final_acpm: "",
-    galones_pinpina: "", // Nuevo campo
+    galones_pinpina: "",
     horometro_inicial: "",
     horometro_final: "",
     nombre_operador: "",
@@ -30,11 +31,11 @@ function planillabombeo() {
     cc_cliente_aceptacion: ""
   });
 
-  // Estado para la lista de nombres auxiliares
+  // Estado para la lista de nombres auxiliares y búsqueda
   const [lista_nombres, set_lista_nombres] = useState([]);
   const [busqueda_auxiliar, set_busqueda_auxiliar] = useState("");
 
-  // Estado para las remisiones
+  // Estado para remisiones y modal de remisión
   const [remisiones, set_remisiones] = useState([]);
   const [modal_abierto, set_modal_abierto] = useState(false);
   const [remision_actual, set_remision_actual] = useState({
@@ -44,22 +45,21 @@ function planillabombeo() {
     hora_final: "",
     metros: "",
     observaciones: "",
-    manguera: "3" // Valor por defecto
+    manguera: "3"
   });
 
   // Estado para la lista de bombas
   const [lista_bombas, set_lista_bombas] = useState([]);
 
-  // Obtener nombre operador de localStorage (igual que nombre proyecto)
+  // Obtener nombre operador de localStorage
   const nombre_operador_local = localStorage.getItem("nombre_trabajador") || "";
 
-  // Al cargar, autollenar campos desde localStorage
+  // Autollenado de campos generales al cargar el componente
   useEffect(() => {
     const nombre_obra = localStorage.getItem("obra") || "";
     const fecha_hoy = new Date().toISOString().slice(0, 10);
     const hora_llegada_obra = localStorage.getItem("hora_llegada_obra") || "";
     const hora_salida_obra = localStorage.getItem("hora_salida_obra") || "";
-
     setDatos(prev => ({
       ...prev,
       nombre_proyecto: nombre_obra,
@@ -70,7 +70,7 @@ function planillabombeo() {
     }));
   }, [nombre_operador_local]);
 
-  // Cargar lista de nombres desde el backend
+  // Cargar lista de nombres auxiliares desde el backend
   useEffect(() => {
     axios.get("http://localhost:3000/nombres_trabajadores")
       .then(res => {
@@ -94,18 +94,16 @@ function planillabombeo() {
         if (Array.isArray(res.data.obras)) {
           obras = res.data.obras;
         }
-        // Busca la obra seleccionada en localStorage y extrae constructora
         const nombre_obra = localStorage.getItem("obra") || "";
         const obra_seleccionada = obras.find(o => o.nombre_obra === nombre_obra);
         const constructora = obra_seleccionada ? obra_seleccionada.constructora : "";
         const fecha_hoy = new Date().toISOString().slice(0, 10);
-
         setDatos(prev => ({
           ...prev,
           nombre_proyecto: nombre_obra,
           fecha_servicio: fecha_hoy,
           nombre_operador: nombre_operador_local,
-          nombre_cliente: constructora // Mostrar constructora en campo cliente
+          nombre_cliente: constructora
         }));
       })
       .catch(() => {
@@ -131,36 +129,37 @@ function planillabombeo() {
       .catch(() => set_lista_bombas([]));
   }, []);
 
-  // Guardar hora_llegada_obra y hora_salida_obra en localStorage cada vez que cambian
+  // Guardar hora llegada y salida en localStorage cada vez que cambian
   useEffect(() => {
     localStorage.setItem("hora_llegada_obra", datos.hora_llegada_obra || "");
   }, [datos.hora_llegada_obra]);
-
   useEffect(() => {
     localStorage.setItem("hora_salida_obra", datos.hora_salida_obra || "");
   }, [datos.hora_salida_obra]);
 
-  // Registrar hora y guardar en localStorage inmediatamente
+  // Registrar hora actual en los campos de llegada/salida
   const registrar_hora_llegada_obra = () => {
     const hora = get_hora_actual();
     localStorage.setItem("hora_llegada_obra", hora);
     setDatos(prev => ({ ...prev, hora_llegada_obra: hora }));
   };
-
   const registrar_hora_salida_obra = () => {
     const hora = get_hora_actual();
     localStorage.setItem("hora_salida_obra", hora);
     setDatos(prev => ({ ...prev, hora_salida_obra: hora }));
   };
 
+  // Manejar cambios en los inputs generales
   const handle_change = (e) => {
     setDatos({ ...datos, [e.target.name]: e.target.value });
   };
 
+  // Manejar cambios en los inputs del modal de remisión
   const handle_remision_change = (e) => {
     set_remision_actual({ ...remision_actual, [e.target.name]: e.target.value });
   };
 
+  // Abrir modal para agregar nueva remisión
   const abrir_modal_remision = () => {
     const numero_remision = (remisiones.length + 1).toString();
     set_remision_actual({
@@ -170,40 +169,39 @@ function planillabombeo() {
       hora_final: "",
       metros: "",
       observaciones: "",
-      manguera: "3" // Valor por defecto
+      manguera: "3"
     });
     set_modal_abierto(true);
   };
 
-  // Validación en el input de galones (inicio/final acpm y pinpina)
+  // Validación para galones (solo números, máximo 30)
   const handle_galones_change = (e) => {
-    let val = e.target.value.replace(/\D/g, ""); // Solo números
+    let val = e.target.value.replace(/\D/g, "");
     if (val.length > 0 && (Number(val) > 30)) val = "30";
     setDatos({ ...datos, [e.target.name]: val });
   };
 
-  // Validación en el input de metros cúbicos en el modal
+  // Validación para metros cúbicos en el modal (solo números y punto, máximo 12)
   const handle_metros_change = (e) => {
-    let val = e.target.value.replace(/[^0-9.]/g, ""); // Solo números y punto
+    let val = e.target.value.replace(/[^0-9.]/g, "");
     if (val && Number(val) > 12) val = "12";
     set_remision_actual({ ...remision_actual, metros: val });
   };
 
-  // Validación en el input de horómetros
+  // Validación para horómetros (solo números, máximo 4 dígitos)
   const handle_horometro_change = (e) => {
-    let val = e.target.value.replace(/\D/g, ""); // Solo números
+    let val = e.target.value.replace(/\D/g, "");
     if (val.length > 4) val = val.slice(0, 4);
     setDatos({ ...datos, [e.target.name]: val });
   };
 
+  // Guardar remisión en la lista y actualizar total de metros bombeados
   const guardar_remision = () => {
-    // Validar metros antes de guardar
     if (!remision_actual.metros || Number(remision_actual.metros) > 12) {
       alert("El valor de metros cúbicos debe ser menor o igual a 12 y puede tener decimales.");
       return;
     }
     const nuevas_remisiones = [...remisiones, remision_actual];
-    // Sumar todos los metros de las remisiones guardadas
     const total_metros = nuevas_remisiones.reduce(
       (acc, r) => acc + (parseFloat(r.metros) || 0),
       0
@@ -218,10 +216,11 @@ function planillabombeo() {
 
   const navigate = useNavigate();
 
+  // Guardar el formulario principal y enviar al backend
   const handle_guardar = async (e) => {
     e.preventDefault();
 
-    // Validar galones de combustible
+    // Validaciones de campos obligatorios y formato
     if (
       !datos.galones_inicio_acpm ||
       !datos.galones_final_acpm ||
@@ -239,8 +238,6 @@ function planillabombeo() {
       alert("Los galones (Inicio/Final ACPM y Pinpina) deben ser números enteros entre 0 y 30, sin decimales.");
       return;
     }
-
-    // Validar horómetros
     if (
       !datos.horometro_inicial ||
       !datos.horometro_final ||
@@ -250,8 +247,10 @@ function planillabombeo() {
       alert("Los horómetros deben tener máximo 4 dígitos.");
       return;
     }
-
-    // Validar remisiones: todos los campos requeridos y formato de hora
+    if (!Array.isArray(remisiones) || remisiones.length === 0) {
+      alert("Debes agregar al menos una remisión antes de guardar.");
+      return;
+    }
     const remisiones_validas = remisiones.every(r =>
       r.remision &&
       r.hora_llegada &&
@@ -264,13 +263,43 @@ function planillabombeo() {
       /^\d{2}:\d{2}$/.test(r.hora_inicial) &&
       /^\d{2}:\d{2}$/.test(r.hora_final)
     );
-
     if (!remisiones_validas) {
       alert("Todas las remisiones deben tener los campos completos y las horas en formato HH:MM.");
       return;
     }
+    const camposObligatorios = [
+      "nombre_cliente",
+      "nombre_proyecto",
+      "fecha_servicio",
+      "bomba_numero",
+      "hora_llegada_obra",
+      "hora_salida_obra",
+      "galones_inicio_acpm",
+      "galones_final_acpm",
+      "galones_pinpina",
+      "horometro_inicial",
+      "horometro_final",
+      "nombre_operador",
+      "nombre_auxiliar",
+      "total_metros_cubicos_bombeados",
+      "nombre_cliente_aceptacion",
+      "cc_cliente_aceptacion"
+    ];
+    const faltanCampos = camposObligatorios.some(campo => !datos[campo] || datos[campo].toString().trim() === "");
+    if (faltanCampos) {
+      alert("Por favor completa todos los campos obligatorios del formulario principal.");
+      return;
+    }
+    if (!datos.bomba_numero || datos.bomba_numero.trim() === "") {
+      alert("Selecciona el número de bomba.");
+      return;
+    }
+    if (!datos.nombre_cliente || datos.nombre_cliente.trim() === "" || datos.nombre_cliente === "no hay") {
+      alert("Selecciona una obra válida para que el campo cliente no esté vacío.");
+      return;
+    }
 
-    // Construir el payload sin campos de remisión sueltos
+    // Construcción del payload para el backend
     const payload = {
       nombre_cliente: datos.nombre_cliente,
       nombre_proyecto: datos.nombre_proyecto,
@@ -280,7 +309,7 @@ function planillabombeo() {
       hora_salida_obra: datos.hora_salida_obra,
       galones_inicio_acpm: datos.galones_inicio_acpm,
       galones_final_acpm: datos.galones_final_acpm,
-      galones_pinpina: datos.galones_pinpina, // Nuevo campo en el envío
+      galones_pinpina: datos.galones_pinpina,
       horometro_inicial: datos.horometro_inicial,
       horometro_final: datos.horometro_final,
       nombre_operador: datos.nombre_operador,
@@ -288,39 +317,35 @@ function planillabombeo() {
       total_metros_cubicos_bombeados: datos.total_metros_cubicos_bombeados,
       nombre_cliente_aceptacion: datos.nombre_cliente_aceptacion,
       cc_cliente_aceptacion: datos.cc_cliente_aceptacion,
-      remisiones: remisiones.map(r => ({
+      remisiones: Array.isArray(remisiones) ? remisiones.map(r => ({
         remision: r.remision,
         hora_llegada: r.hora_llegada,
         hora_inicial: r.hora_inicial,
         hora_final: r.hora_final,
         metros: Number(r.metros),
         observaciones: r.observaciones,
-        manguera: r.manguera // Nuevo campo
-      }))
+        manguera: r.manguera
+      })) : []
     };
 
-    console.log("Payload enviado:", payload);
-
     try {
-      const res = await fetch("http://localhost:3000/bomberman/planilla_bombeo", {
+      const res = await fetch("http://localhost:3000/bomberman/planillabombeo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
       const res_text = await res.text();
-      console.log("Respuesta backend:", res.status, res_text);
       if (!res.ok) throw new Error(res_text || "Error al guardar");
       alert("Guardado exitosamente");
-      // Borrar las horas de localStorage después de guardar
       localStorage.removeItem("hora_llegada_obra");
       localStorage.removeItem("hora_salida_obra");
-      navigate("/eleccionaic"); // Redirige al componente eleccionaic
+      navigate("/eleccionaic");
     } catch (err) {
       alert("Error al guardar: " + err.message);
     }
   };
 
-  // Función para obtener la hora actual en formato HH:MM
+  // Obtener la hora actual en formato HH:MM
   const get_hora_actual = () => {
     const now = new Date();
     return now.toTimeString().slice(0,5);
@@ -331,7 +356,7 @@ function planillabombeo() {
     nombre.toLowerCase().includes(busqueda_auxiliar.toLowerCase())
   );
 
-  // Validación de remisión: todos los campos requeridos deben estar llenos
+  // Validación de remisión actual para habilitar el botón de guardar en el modal
   const remision_completa = (
     remision_actual.remision.trim() !== "" &&
     remision_actual.hora_llegada.trim() !== "" &&
@@ -342,19 +367,56 @@ function planillabombeo() {
     Number(remision_actual.metros) > 0
   );
 
-  // Opciones para metros cúbicos (0.1 a 12.0)
+  // Opciones para campos select
   const opciones_metros = Array.from({ length: 120 }, (_, i) => ((i + 1) / 10).toFixed(1));
-  // Opciones para horómetros (0 a 9999)
   const opciones_horometro = Array.from({ length: 10000 }, (_, i) => i.toString());
-  // Opciones para galones de combustible (0 a 30)
   const opciones_galones = Array.from({ length: 31 }, (_, i) => i.toString());
-  // Opciones para manguera
   const opciones_manguera = ["3", "4", "5"];
 
+  // Descargar archivo Excel de planillas bombeo
+  const descargarPlanillas = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/bomberman/planillabombeo/exportar", {
+        method: "GET",
+      });
+      if (response.status === 404) {
+        alert("El archivo no existe o el endpoint /bomberman/planillabombeo/exportar no está disponible en el backend.");
+        return;
+      }
+      if (!response.ok) {
+        throw new Error("Error al descargar el archivo");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "planillas_bombeo.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert("Hubo un error al intentar descargar el archivo. Verifica que el backend tenga el endpoint /bomberman/planillabombeo/exportar disponible y que el archivo exista.");
+    }
+  };
+
+  // Renderizado del formulario y modal de remisión
   return (
     <div className="app-container">
       <h2>Control de Bombeo</h2>
+      <div style={{ marginBottom: 18 }}>
+        <button
+          id="descargar-planillas"
+          type="button"
+          className="app-button"
+          style={{ background: "#1976d2", color: "#fff", fontWeight: 600, borderRadius: 8, padding: "10px 18px" }}
+          onClick={descargarPlanillas}
+        >
+          Descargar Planillas
+        </button>
+      </div>
       <form>
+        {/* Campos generales */}
         <div className="app-group">
           <label className="app-label">Nombre del Cliente</label>
           <input className="app-input" name="nombre_cliente" value={datos.nombre_cliente} onChange={handle_change} />
@@ -396,6 +458,7 @@ function planillabombeo() {
             </select>
           </div>
         </div>
+        {/* Horas de llegada y salida */}
         <div className="app-group" style={{ display: "flex", gap: 8 }}>
           <div style={{ flex: 1 }}>
             <label className="app-label">Hora Llegada Obra</label>
@@ -495,6 +558,7 @@ function planillabombeo() {
             Agregar remisión
           </button>
         </div>
+        {/* Campos de galones y horómetros */}
         <div className="app-group" style={{ display: "flex", gap: 8 }}>
           <div style={{ flex: 1 }}>
             <label className="app-label">Galones de Inicio ACPM</label>
@@ -559,6 +623,7 @@ function planillabombeo() {
             />
           </div>
         </div>
+        {/* Operador y auxiliar */}
         <div className="app-group">
           <label className="app-label">Nombre Operador</label>
           <input
@@ -588,6 +653,7 @@ function planillabombeo() {
             ))}
           </datalist>
         </div>
+        {/* Total bombeado y aceptación cliente */}
         <div className="app-group" style={{ display: "flex", gap: 8 }}>
           <div style={{ flex: 1 }}>
             <label className="app-label">Total M³ Bombeados</label>
@@ -632,7 +698,6 @@ function planillabombeo() {
               tabIndex={-1}
               style={{ background: "#eee", color: "#1976d2", fontWeight: "bold" }}
             />
-            
             <label className="app-label">Hora Llegada</label>
             <div style={{ display: "flex", gap: 8 }}>
               <input
@@ -652,7 +717,6 @@ function planillabombeo() {
                 Registrar hora
               </button>
             </div>
-
             <label className="app-label">Hora Inicial</label>
             <div style={{ display: "flex", gap: 8 }}>
               <input
@@ -672,7 +736,6 @@ function planillabombeo() {
                 Registrar hora
               </button>
             </div>
-
             <label className="app-label">Hora Final</label>
             <div style={{ display: "flex", gap: 8 }}>
               <input
@@ -692,7 +755,6 @@ function planillabombeo() {
                 Registrar hora
               </button>
             </div>
-
             <label className="app-label">Manguera</label>
             <select
               className="app-input"
@@ -704,7 +766,6 @@ function planillabombeo() {
                 <option key={idx} value={m}>{m}</option>
               ))}
             </select>
-
             <label className="app-label">M³</label>
             <input
               className="app-input"

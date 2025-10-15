@@ -1,7 +1,5 @@
-/* Importando fuente Poppins de Google Fonts */
+/* Estilos base y responsivos para la portada principal */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-
-/* Estilos únicos para la portada (App.jsx) */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap');
 
 body {

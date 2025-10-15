@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../styles/formulario1.css";
 
+// Componente principal para el registro de jornada
 function formulario_1() {
   const navigate = useNavigate();
   const [hora_seleccionada, set_hora_seleccionada] = useState("");
@@ -11,6 +12,7 @@ function formulario_1() {
   const [mensaje, set_mensaje] = useState("");
   const [trabajador_id, set_trabajador_id] = useState(null);
 
+  // Datos del trabajador desde localStorage
   const nombre_trabajador = localStorage.getItem("nombre_trabajador") || "";
   const empresa = localStorage.getItem("empresa") || "";
   const obra = localStorage.getItem("obra") || "";
@@ -18,6 +20,7 @@ function formulario_1() {
 
   const api_url = "http://localhost:3000/formulario_1";
 
+  // Obtener trabajador_id desde el backend
   useEffect(() => {
     const fetch_trabajador_id = async () => {
       if (nombre_trabajador && empresa && obra && numero_identificacion) {
@@ -38,6 +41,7 @@ function formulario_1() {
     fetch_trabajador_id();
   }, [nombre_trabajador, empresa, obra, numero_identificacion]);
 
+  // Opciones para hora y minuto
   const horas_opciones = Array.from({ length: 12 }, (_, i) =>
     String(i === 0 ? 12 : i).padStart(2, "0")
   );
@@ -45,9 +49,8 @@ function formulario_1() {
     String(i).padStart(2, "0")
   );
 
-  // Enviar registro
+  // Guardar registro de entrada/salida en el backend
   const guardar_registro = async () => {
-    // Convertir a formato 24 horas
     let hora_24 = "";
     let tipo = "";
     if (hora_seleccionada && minuto_seleccionado && ampm_seleccionado) {
@@ -82,10 +85,10 @@ function formulario_1() {
       set_ampm_seleccionado("");
     } catch (err) {
       set_mensaje("Error al guardar registro");
-      console.error(err);
     }
   };
 
+  // Renderizado del formulario
   return (
     <div className="app-container">
       <button
