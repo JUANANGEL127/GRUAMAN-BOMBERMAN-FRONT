@@ -6,6 +6,7 @@ import InventariosObra from "./inventariosobra";
 import Administrador from "../administrador";
 import "../../App.css";
 import PermisoTrabajo from "../compartido/permiso_trabajo";
+import ChequeoAlturas from "../compartido/chequeo_alturas";
 
 // Utiliza localStorage para persistir el estado de los botones usados
 function getUsadosFromStorage(usuario) {
@@ -44,16 +45,18 @@ function BienvenidaAIC() {
   const [usados, setUsados] = useState(() => getUsadosFromStorage(usuario));
   const [usuarioActual, setUsuarioActual] = useState(usuario);
 
-  // Si cambia el usuario (por ejemplo, cierre de sesión), reinicia el progreso
+  // Reinicia el progreso cada vez que se detecta un nuevo ingreso (usuario o empresa cambia)
   useEffect(() => {
     const nuevoUsuario = localStorage.getItem("nombre_trabajador") || "anonimo";
-    if (nuevoUsuario !== usuarioActual) {
+    const nuevaEmpresa = localStorage.getItem("empresa") || "";
+    const key = `${nuevoUsuario}__${nuevaEmpresa}`;
+    if (key !== usuarioActual) {
       limpiarUsados(usuarioActual);
-      setUsados(getUsadosFromStorage(nuevoUsuario));
-      setUsuarioActual(nuevoUsuario);
+      setUsados(getUsadosFromStorage(key));
+      setUsuarioActual(key);
     }
     // eslint-disable-next-line
-  }, [localStorage.getItem("nombre_trabajador")]);
+  }, [localStorage.getItem("nombre_trabajador"), localStorage.getItem("empresa")]);
 
   useEffect(() => {
     setUsadosToStorage(usados, usuarioActual);
@@ -157,6 +160,36 @@ function BienvenidaAIC() {
           >
             Panel Administrador
           </button>
+                    <button
+            className={getButtonClass(usados.chequeo_alturas)}
+            style={{ maxWidth: 320, marginTop: 18 }}
+            onClick={() => handleNavigate("/chequeo_alturas", "chequeo_alturas")}
+          >
+            Chequeo Alturas
+          </button>
+          <button
+            className="button"
+            style={{
+              maxWidth: 320,
+              marginTop: 32,
+              background: porcentaje === 100 ? "#ff9800" : "#bdbdbd",
+              color: "#fff",
+              fontWeight: 600,
+              cursor: porcentaje === 100 ? "pointer" : "not-allowed",
+              opacity: porcentaje === 100 ? 1 : 0.7
+            }}
+            disabled={porcentaje !== 100}
+            onClick={() => {
+              if (porcentaje === 100) {
+                if (window.confirm("¿Estás seguro que deseas terminar? Esto reiniciará tu progreso.")) {
+                  limpiarUsados(usuarioActual);
+                  setUsados(getUsadosFromStorage(usuarioActual));
+                }
+              }
+            }}
+          >
+            Terminar
+          </button>
         </div>
       </div>
     </div>
@@ -172,6 +205,7 @@ function EleccionAIC() {
       <Route path="/inventariosobra" element={<InventariosObra />} />
       <Route path="/administrador" element={<Administrador />} />
       <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />
+      <Route path="/chequeo_alturas" element={<ChequeoAlturas />} />
     </Routes>
   );
 }

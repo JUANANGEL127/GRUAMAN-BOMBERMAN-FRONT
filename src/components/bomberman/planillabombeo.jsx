@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../../styles/compartido/permiso_trabajo.css";
+import "../../styles/permiso_trabajo.css";
 
 /**
  * Formulario de Control de Bombeo con estructura y clases compatibles con permiso_trabajo.css

@@ -10,6 +10,7 @@ import InventarioObra from "./components/bomberman/inventariosobra";
 import Administrador from "./components/administrador";
 import Footer from "./components/Footer";
 import PermisoTrabajo from "./components/compartido/permiso_trabajo";
+import ChequeoAlturas from "./components/compartido/chequeo_alturas";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
 
@@ -52,6 +53,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/checklist" element={<Checklist />} />
             <Route path="/inventariosobra/*" element={<InventarioObra />} />
             <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />
+            <Route path="/chequeo_alturas" element={<ChequeoAlturas />} />
           </Routes>
           <Footer />
         </div>

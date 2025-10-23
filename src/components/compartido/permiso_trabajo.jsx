@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import "../../styles/compartido/permiso_trabajo.css";
+import "../../styles/permiso_trabajo.css";
 
 function PermisoTrabajo(props) {
   const [generales, setGenerales] = useState({
