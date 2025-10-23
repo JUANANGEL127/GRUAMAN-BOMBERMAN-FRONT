@@ -12,6 +12,7 @@ import Footer from "./components/Footer";
 import PermisoTrabajo from "./components/compartido/permiso_trabajo";
 import ChequeoAlturas from "./components/compartido/chequeo_alturas";
 import ChequeoTorreGruas from "./components/gruaman/chequeo_torregruas";
+import InspeccionEPCC from "./components/gruaman/inspeccion_epcc";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
 
@@ -56,6 +57,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />
             <Route path="/chequeo_alturas" element={<ChequeoAlturas />} />
             <Route path="/chequeo_torregruas" element={<ChequeoTorreGruas />} />
+            <Route path="/inspeccion_epcc" element={<InspeccionEPCC />} />
           </Routes>
           <Footer />
         </div>

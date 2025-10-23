@@ -6,6 +6,7 @@ import "../../App.css";
 import PermisoTrabajo from "../compartido/permiso_trabajo";
 import ChequeoAlturas from "../compartido/chequeo_alturas";
 import ChequeoTorreGruas from "./chequeo_torregruas";
+import InspeccionEPCC from "./inspeccion_epcc";
 
 
 // Utiliza localStorage para persistir el estado de los botones usados por usuario
@@ -18,6 +19,9 @@ function getUsadosFromStorage(usuario) {
     formulario1: false,
     administrador: false,
     permiso_trabajo: false,
+    chequeo_alturas: false,
+    chequeo_torregruas: false,
+    inspeccion_epcc: false,
   };
 }
 
@@ -150,6 +154,13 @@ function Bienvenida() {
             Chequeo Torre Grúa
           </button>
           <button
+            className={getButtonClass(usados.inspeccion_epcc)}
+            style={{ maxWidth: 320, marginTop: 18 }}
+            onClick={() => handleNavigate("/inspeccion_epcc", "inspeccion_epcc")}
+          >
+            Inspección EPCC
+          </button>
+          <button
             className="button"
             style={{
               maxWidth: 320,
@@ -187,6 +198,7 @@ function eleccion() {
       <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />
       <Route path="/chequeo_alturas" element={<ChequeoAlturas />} />
       <Route path="/chequeo_torregruas" element={<ChequeoTorreGruas />} />
+      <Route path="/inspeccion_epcc" element={<InspeccionEPCC />} />
     </Routes>
   );
 }
