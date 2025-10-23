@@ -1,7 +1,3 @@
-/* Estilos base y responsivos para la portada principal */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap');
-
 :root {
   --naranja: #ff7a00;
   --naranja-claro: #ff9a2b;
@@ -13,6 +9,7 @@
   --borde-transparente: rgba(255, 255, 255, 0.3);
 }
 
+/* === ESTILO GENERAL === */
 body {
   font-family: "Poppins", "Inter", sans-serif;
   background: linear-gradient(145deg, var(--blanco), #f3f3f3);
@@ -21,190 +18,7 @@ body {
   padding: 0;
 }
 
-.app-container {
-  max-width: 420px;
-  margin: 40px auto 0 auto;
-  padding: 32px 18px 64px 18px;
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 6px 24px rgba(33,150,243,0.08);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  animation: fadeIn 0.7s;
-}
-
-.app-container h2 {
-  text-align: center;
-  margin-bottom: 32px;
-  color: #1976d2;
-  font-weight: 700;
-  font-size: 2.2em;
-  letter-spacing: 1px;
-}
-
-.app-group {
-  width: 100%;
-  max-width: 380px;
-  margin-bottom: 22px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.app-group.empresa {
-  flex-direction: row;
-  justify-content: center;
-  gap: 24px;
-  margin-bottom: 28px;
-}
-
-.empresa-boton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 !important;
-  height: 64px;
-  width: 100px;
-  min-width: 80px;
-  max-width: 100px;
-  border-radius: 16px;
-  box-shadow: none;
-  background: none !important;
-  border: none !important;
-}
-.empresa-boton.selected {
-  box-shadow: 0 2px 12px rgba(33,150,243,0.15);
-  border: 3px solid #1976d2 !important;
-  background: #e3f2fd !important;
-}
-.empresa-boton.selected[data-empresa="AIC"] {
-  border: 3px solid #ffa726 !important;
-  background: #fffde7 !important;
-}
-.empresa-img {
-  height: 56px;
-  width: auto;
-  max-width: 90px;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto;
-}
-
-.app-label {
-  font-size: 1.1em;
-  color: #ffa726;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 8px;
-}
-
-.app-input {
-  width: 100%;
-  max-width: 380px;
-  box-sizing: border-box;
-  padding: 13px 16px;
-  border: 2px solid #90caf9;
-  border-radius: 10px;
-  font-size: 17px;
-  background: #f7fbff;
-  color: #222;
-  margin: 0;
-}
-
-.app-boton {
-  width: 100%;
-  max-width: 320px;
-  padding: 16px;
-  background: linear-gradient(90deg, #1976d2 60%, #ffa726 100%);
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  font-size: 20px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 2px 12px rgba(33,150,243,0.10);
-  margin-top: 12px;
-  letter-spacing: 0.5px;
-  transition: background 0.2s, color 0.2s;
-}
-
-.app-boton:hover {
-  background: linear-gradient(90deg, #ffa726 60%, #1976d2 100%);
-  color: #fff176;
-}
-
-.app-mensaje {
-  margin-top: 18px;
-  font-size: 17px;
-  color: #ffa726;
-  font-weight: 600;
-  text-align: center;
-  letter-spacing: 0.5px;
-}
-
-.app-footer {
-  width: 100vw;
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 32px;
-  background: #fff;
-  padding-bottom: 8px;
-  z-index: 10;
-}
-
-.footer-logo {
-  max-width: 20%;
-  object-fit: contain;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@media (max-width: 600px) {
-  .app-container {
-    max-width: 98vw;
-    margin: 18px auto 0 auto;
-    padding: 12px 2vw 90px 2vw;
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(33,150,243,0.07);
-  }
-  .app-group {
-    max-width: 98vw;
-    margin-bottom: 16px;
-    padding: 0;
-  }
-  .app-group.empresa {
-    gap: 12px;
-    margin-bottom: 18px;
-  }
-  .empresa-boton {
-    height: 70px;
-    width: 100px;
-    min-width: 70px;
-    max-width: 100px;
-  }
-  .empresa-img {
-    height: 38px;
-    max-width: 60px;
-  }
-  .app-boton {
-    font-size: 18px;
-    padding: 13px;
-    border-radius: 8px;
-    width: 190vw;
-    max-width: 190vw;
-    margin-left: 5vw;
-    margin-right: 5vw;
-  }
-}
-
+/* === CONTENEDOR PRINCIPAL === */
 .form-container {
   display: flex;
   flex-direction: column;
@@ -215,9 +29,10 @@ body {
   margin-bottom: 30%;
 }
 
+/* === CARDS SECCIONES === */
 .card-section {
   backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.68);
+  background: rgba(255, 255, 255, 0.68); 
   border: 1px solid var(--borde-transparente);
   border-radius: 1.5rem;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
@@ -230,6 +45,7 @@ body {
   box-shadow: 0 6px 35px rgba(0, 0, 0, 0.08);
 }
 
+/* === TÍTULOS Y ETIQUETAS === */
 .card-title {
   font-size: 1.2rem;
   font-weight: 600;
@@ -245,6 +61,7 @@ body {
   margin-bottom: 0.25rem;
 }
 
+/* === INPUTS Y SELECTS === */
 input,
 select,
 textarea {
@@ -253,10 +70,11 @@ textarea {
   font-size: 0.95rem;
   color: var(--negro);
   background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 0.5px solid #ff9a2b;
   border-radius: 0.75rem;
   outline: none;
   transition: all 0.2s ease;
+  margin-bottom: 2%;
 }
 
 input:focus,
@@ -266,6 +84,7 @@ textarea:focus {
   box-shadow: 0 0 0 2px rgba(255, 122, 0, 0.3);
 }
 
+/* === PLACEHOLDER === */
 ::placeholder {
   color: #a1a1a1;
   opacity: 0.8;
@@ -307,10 +126,12 @@ button:active {
   }
 }
 
+
 .divider {
   border-bottom: 10px solid rgba(255, 255, 255, 0.3);
   margin: 1rem 0;
 }
+
 
 @keyframes fadeIn {
   from {
@@ -326,6 +147,7 @@ button:active {
 .card-section {
   animation: fadeIn 0.5s ease forwards;
 }
+
 
 @media (max-width: 600px) {
   .form-container {
@@ -362,9 +184,11 @@ button:active {
   padding-right: 8px;
 }
 
+
 .herramienta-checkbox {
   display: none !important;
 }
+
 
 .herramienta-recuadro {
   background: #f7f7fa;
@@ -375,6 +199,7 @@ button:active {
   transition: border 0.2s, box-shadow 0.2s, background 0.2s;
   min-height: 40px;
 }
+
 
 .herramienta-seleccionada {
   background: #e3f2fd !important;
@@ -413,4 +238,10 @@ button:active {
 .aptitud-item input[type="checkbox"] {
   margin-left: 8px;
   margin-right: 0;
+}
+
+.button-green {
+  background: linear-gradient(145deg, #43a047, #66bb6a) !important;
+  color: #fff !important;
+  border: none !important;
 }

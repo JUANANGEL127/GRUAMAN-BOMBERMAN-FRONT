@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./App.css";
 import axios from "axios";
+import "./App.css";
 
-// Componente principal para la portada y registro de datos básicos
-function app() {
+/**
+ * Formulario de portada y registro de datos básicos con estructura y clases compatibles con permiso_trabajo.css
+ */
+function App() {
   const [nombre_trabajador, set_nombre_trabajador] = useState("");
   const [lista_nombres, set_lista_nombres] = useState([]);
   const [filtro_nombre, set_filtro_nombre] = useState("");
@@ -19,7 +21,6 @@ function app() {
   const [ubicacion, set_ubicacion] = useState({ lat: null, lon: null });
   const navigate = useNavigate();
 
-  // Cargar lista de nombres desde backend
   useEffect(() => {
     axios.get("http://localhost:3000/nombres_trabajadores")
       .then(res => {
@@ -35,7 +36,6 @@ function app() {
       .catch(() => set_lista_nombres([]));
   }, []);
 
-  // Cargar lista de obras desde backend
   useEffect(() => {
     axios.get("http://localhost:3000/obras")
       .then(res => {
@@ -48,7 +48,6 @@ function app() {
       .catch(() => set_lista_obras([]));
   }, []);
 
-  // Al seleccionar obra, buscar id y pedir ubicación
   const handle_obra_change = e => {
     const nombre_obra = e.target.value;
     set_obra_busqueda(nombre_obra);
@@ -67,7 +66,6 @@ function app() {
     }
   };
 
-  // Guardar datos básicos y ubicación en backend y localStorage
   const handle_guardar = async () => {
     if (faltan_campos) {
       set_faltan_datos_mensaje("Por favor completa todos los campos obligatorios.");
@@ -93,13 +91,15 @@ function app() {
       localStorage.setItem("lat", ubicacion.lat);
       localStorage.setItem("lon", ubicacion.lon);
 
+      // Solo envía los campos que el backend espera (como antes de los cambios)
       const payload = {
         nombre: nombre_trabajador,
         empresa,
         empresa_id: empresa === "GyE" ? 1 : empresa === "AIC" ? 2 : null,
         obra_id: obra_id_seleccionada,
-        numero_identificacion: numero_identificacion,
+        numero_identificacion: numero_identificacion
       };
+
       await axios.post("http://localhost:3000/datos_basicos", payload);
       const resp = await axios.post("http://localhost:3000/validar_ubicacion", {
         obra_id: obra_id_seleccionada,
@@ -118,21 +118,16 @@ function app() {
         }, 500);
       }
     } catch (err) {
-      if (err.response && err.response.status === 400) {
+      if (err.response && err.response.data) {
         set_mensaje(
-          `Error 400: ${err.response.data?.mensaje || "Falta parámetro obligatorio."}\nPayload enviado: ${JSON.stringify(err.config.data)}`
+          `Error: ${err.response.data?.mensaje || err.response.data?.error || err.message}`
         );
-      } else if (err.response && err.response.status === 403) {
-        alert(err.response.data?.mensaje || "No autorizado para registrar ubicación.");
-      } else if (err.response && err.response.data?.mensaje) {
-        set_mensaje(err.response.data.mensaje);
       } else {
         set_mensaje("Error al guardar datos");
       }
     }
   };
 
-  // Validación de campos obligatorios
   const campos_obligatorios = {
     nombre_trabajador,
     numero_identificacion,
@@ -141,7 +136,6 @@ function app() {
   };
   const faltan_campos = Object.values(campos_obligatorios).some(v => !v);
 
-  // Filtrar nombres y obras según búsqueda
   const nombres_filtrados = (Array.isArray(lista_nombres) ? lista_nombres : []).filter(nombre =>
     nombre.toLowerCase().includes(filtro_nombre.toLowerCase())
   );
@@ -149,17 +143,16 @@ function app() {
     obra => obra && obra.nombre_obra && obra.nombre_obra.toLowerCase().includes(obra_busqueda.toLowerCase())
   );
 
-  // Renderizado del formulario principal
   return (
-    <div className="app-container">
-      <h2>Déjanos conocerte</h2>
-      <div className="app-group">
-        <label className="app-label">
+    <div className="form-container" style={{ paddingBottom: 120 }}>
+      <div className="card-section">
+        <h3 className="card-title">Déjanos conocerte</h3>
+        <label className="label">
           Catedral 
           {!obra_id_seleccionada && <span style={{ color: "red", marginLeft: 4 }}>*</span>}
         </label>
         <input
-          className="app-input"
+          className="input"
           list="lista-obras"
           placeholder="Buscar o selecciona la obra"
           value={obra_busqueda}
@@ -171,13 +164,13 @@ function app() {
           ))}
         </datalist>
       </div>
-      <div className="app-group">
-        <label className="app-label">
+      <div className="card-section">
+        <label className="label">
           ¿Cuál es tu nombre?
           {!nombre_trabajador && <span style={{ color: "red", marginLeft: 4 }}>*</span>}
         </label>
         <input
-          className="app-input"
+          className="input"
           list="lista-nombres"
           placeholder="Buscar o selecciona tu nombre"
           value={nombre_trabajador}
@@ -189,30 +182,30 @@ function app() {
           ))}
         </datalist>
       </div>
-      <div className="app-group">
-        <label className="app-label">
+      <div className="card-section">
+        <label className="label">
           ¿Cómo es tu número de identificación?
           Digítalo sin puntos ni comas 
           {!numero_identificacion && <span style={{ color: "red", marginLeft: 4 }}>*</span>}
         </label>
         <input
-          className="app-input"
+          className="input"
           type="text"
           value={numero_identificacion}
           onChange={e => set_numero_identificacion(e.target.value)}
         />
       </div>
-      <div className="app-group">
-        <label className="app-label">
+      <div className="card-section">
+        <label className="label">
           ¿Tu eres?...
           {!empresa && <span style={{ color: "red", marginLeft: 4 }}>*</span>}
         </label>
       </div>
-      <div className="app-group" style={{ flexDirection: "row", justifyContent: "center", gap: "16px" }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ display: "flex", flexDirection: "row", justifyContent: "center", gap: "16px", marginBottom: 24 }}>
+        <div className="card-section" style={{ display: "flex", flexDirection: "column", alignItems: "center", maxWidth: 180, padding: 18 }}>
           <button
             type="button"
-            className={`app-boton empresa-boton${empresa === "GyE" ? " selected" : ""}`}
+            className={`empresa-boton${empresa === "GyE" ? " selected" : ""}`}
             style={{
               maxWidth: "140px",
               height: "140px",
@@ -224,12 +217,12 @@ function app() {
           >
             <img src="/gruaman.png" alt="GyE" className="empresa-img" style={{ width: "115px", height: "115px" }} />
           </button>
-          <span className="app-label" style={{ marginTop: "8px" }}>GruaMan</span>
+          <span className="label" style={{ marginTop: "8px" }}>GruaMan</span>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div className="card-section" style={{ display: "flex", flexDirection: "column", alignItems: "center", maxWidth: 220, padding: 18 }}>
           <button
             type="button"
-            className={`app-boton empresa-boton${empresa === "AIC" ? " selected" : ""}`}
+            className={`empresa-boton${empresa === "AIC" ? " selected" : ""}`}
             style={{
               maxWidth: "220px",
               height: "140px",
@@ -241,18 +234,18 @@ function app() {
           >
             <img src="/bomberman.png" alt="AIC" className="empresa-img" style={{ width: "161px", height: "115px" }} />
           </button>
-          <span className="app-label" style={{ marginTop: "8px" }}>BomberMan</span>
+          <span className="label" style={{ marginTop: "8px" }}>BomberMan</span>
         </div>
       </div>
-      <button className="app-boton" onClick={handle_guardar}>
+      <button className="button" onClick={handle_guardar} style={{ position: "relative", zIndex: 2 }}>
         Guardar
       </button>
       {faltan_datos_mensaje && (
-        <p className="app-mensaje" style={{ color: "red", marginBottom: "32px" }}>{faltan_datos_mensaje}</p>
+        <p className="label" style={{ color: "red", marginBottom: "22px" }}>{faltan_datos_mensaje}</p>
       )}
-      <p className="app-mensaje">{mensaje}</p>
+      <p className="label">{mensaje}</p>
     </div>
   );
 }
 
-export default app;
+export default App;
