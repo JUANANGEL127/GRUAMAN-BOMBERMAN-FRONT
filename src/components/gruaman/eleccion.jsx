@@ -5,6 +5,7 @@ import administrador from "../administrador";
 import "../../App.css";
 import PermisoTrabajo from "../compartido/permiso_trabajo";
 import ChequeoAlturas from "../compartido/chequeo_alturas";
+import ChequeoTorreGruas from "./chequeo_torregruas";
 
 
 // Utiliza localStorage para persistir el estado de los botones usados por usuario
@@ -142,6 +143,13 @@ function Bienvenida() {
             Chequeo Alturas
           </button>
           <button
+            className={getButtonClass(usados.chequeo_torregruas)}
+            style={{ maxWidth: 320, marginTop: 18 }}
+            onClick={() => handleNavigate("/chequeo_torregruas", "chequeo_torregruas")}
+          >
+            Chequeo Torre Grúa
+          </button>
+          <button
             className="button"
             style={{
               maxWidth: 320,
@@ -178,6 +186,7 @@ function eleccion() {
       <Route path="/administrador" element={<administrador />} />
       <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />
       <Route path="/chequeo_alturas" element={<ChequeoAlturas />} />
+      <Route path="/chequeo_torregruas" element={<ChequeoTorreGruas />} />
     </Routes>
   );
 }
