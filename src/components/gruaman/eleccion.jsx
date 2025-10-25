@@ -7,6 +7,7 @@ import PermisoTrabajo from "../compartido/permiso_trabajo";
 import ChequeoAlturas from "../compartido/chequeo_alturas";
 import ChequeoTorreGruas from "./chequeo_torregruas";
 import InspeccionEPCC from "./inspeccion_epcc";
+import InspeccionIzaje from "./inspeccion_izaje";
 
 
 // Utiliza localStorage para persistir el estado de los botones usados por usuario
@@ -22,6 +23,7 @@ function getUsadosFromStorage(usuario) {
     chequeo_alturas: false,
     chequeo_torregruas: false,
     inspeccion_epcc: false,
+    inspeccion_izaje: false, // nuevo estado
   };
 }
 
@@ -117,7 +119,7 @@ function Bienvenida() {
         <p className="label" style={{ marginBottom: 32 }}>
           Selecciona el formulario que deseas usar:
         </p>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
           <button
             className={getButtonClass(usados.formulario1)}
             style={{ maxWidth: 320 }}
@@ -127,44 +129,51 @@ function Bienvenida() {
           </button>
           <button
             className={getButtonClass(usados.administrador)}
-            style={{ maxWidth: 320, marginTop: 18 }}
+            style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/administrador", "administrador")}
           >
             Panel Administrador
           </button>
           <button
             className={getButtonClass(usados.permiso_trabajo)}
-            style={{ maxWidth: 320, marginTop: 18 }}
+            style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/permiso_trabajo", "permiso_trabajo")}
           >
             Permiso de Trabajo
           </button>
           <button
             className={getButtonClass(usados.chequeo_alturas)}
-            style={{ maxWidth: 320, marginTop: 18 }}
+            style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/chequeo_alturas", "chequeo_alturas")}
           >
             Chequeo Alturas
           </button>
           <button
             className={getButtonClass(usados.chequeo_torregruas)}
-            style={{ maxWidth: 320, marginTop: 18 }}
+            style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/chequeo_torregruas", "chequeo_torregruas")}
           >
             Chequeo Torre Grúa
           </button>
           <button
             className={getButtonClass(usados.inspeccion_epcc)}
-            style={{ maxWidth: 320, marginTop: 18 }}
+            style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/inspeccion_epcc", "inspeccion_epcc")}
           >
             Inspección EPCC
           </button>
           <button
+            className={getButtonClass(usados.inspeccion_izaje)}
+            style={{ maxWidth: 320 }}
+            onClick={() => handleNavigate("/inspeccion_izaje", "inspeccion_izaje")}
+          >
+            Inspección Izaje
+          </button>
+          <button
             className="button"
             style={{
               maxWidth: 320,
-              marginTop: 32,
+              marginTop: 24,
               background: porcentaje === 100 ? "#ff9800" : "#bdbdbd",
               color: "#fff",
               fontWeight: 600,
@@ -199,6 +208,7 @@ function eleccion() {
       <Route path="/chequeo_alturas" element={<ChequeoAlturas />} />
       <Route path="/chequeo_torregruas" element={<ChequeoTorreGruas />} />
       <Route path="/inspeccion_epcc" element={<InspeccionEPCC />} />
+      <Route path="/inspeccion_izaje" element={<InspeccionIzaje />} />
     </Routes>
   );
 }

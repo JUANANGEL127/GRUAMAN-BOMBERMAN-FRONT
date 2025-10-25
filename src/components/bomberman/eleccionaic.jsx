@@ -124,10 +124,10 @@ function BienvenidaAIC() {
         <p className="label" style={{ marginBottom: 32 }}>
           Selecciona el formulario que deseas usar:
         </p>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
           <button
             className={getButtonClass(usados.permiso_trabajo)}
-            style={{ maxWidth: 320, marginTop: 18 }}
+            style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/permiso_trabajo", "permiso_trabajo")}
           >
             Permiso de Trabajo
@@ -141,28 +141,28 @@ function BienvenidaAIC() {
           </button>
           <button
             className={getButtonClass(usados.checklist)}
-            style={{ maxWidth: 320, marginTop: 18 }}
+            style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/checklist", "checklist")}
           >
             Checklist
           </button>
           <button
             className={getButtonClass(usados.inventariosobra)}
-            style={{ maxWidth: 320, marginTop: 18 }}
+            style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/inventariosobra", "inventariosobra")}
           >
             Inventario de Obra
           </button>
           <button
             className={getButtonClass(usados.administrador)}
-            style={{ maxWidth: 320, marginTop: 18 }}
+            style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/administrador", "administrador")}
           >
             Panel Administrador
           </button>
-                    <button
+          <button
             className={getButtonClass(usados.chequeo_alturas)}
-            style={{ maxWidth: 320, marginTop: 18 }}
+            style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/chequeo_alturas", "chequeo_alturas")}
           >
             Chequeo Alturas
@@ -171,7 +171,7 @@ function BienvenidaAIC() {
             className="button"
             style={{
               maxWidth: 320,
-              marginTop: 32,
+              marginTop: 24,
               background: porcentaje === 100 ? "#ff9800" : "#bdbdbd",
               color: "#fff",
               fontWeight: 600,
