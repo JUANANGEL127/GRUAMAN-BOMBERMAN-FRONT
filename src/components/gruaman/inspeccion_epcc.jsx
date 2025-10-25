@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
@@ -51,6 +51,8 @@ function InspeccionEPCC({ value = {}, onChange }) {
 		nombre_operador: "",
 		cargo: "",
 	});
+	const [errores, setErrores] = useState({});
+	const guardarBtnRef = useRef(null);
 
 	const navigate = useNavigate();
 
@@ -91,13 +93,30 @@ function InspeccionEPCC({ value = {}, onChange }) {
 		const nuevas = { ...respuestas, [idx]: val };
 		setRespuestas(nuevas);
 		if (onChange) onChange(nuevas);
+		setErrores((prev) => ({ ...prev, [idx]: false }));
 	};
 
 	const handleGeneralesChange = (e) => {
 		setGenerales({ ...generales, [e.target.name]: e.target.value });
+		setErrores((prev) => ({ ...prev, [e.target.name]: false }));
 	};
 
 	let preguntaIdx = 0;
+
+	const scrollToItem = (id) => {
+		const el = document.getElementById(id);
+		if (el) {
+			el.scrollIntoView({ behavior: "smooth", block: "center" });
+			el.focus?.();
+		}
+	};
+
+	const scrollToGuardar = () => {
+		if (guardarBtnRef.current) {
+			guardarBtnRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+			guardarBtnRef.current.focus?.();
+		}
+	};
 
 	const mapRespuestasToPayload = () => {
 		return {
@@ -134,23 +153,40 @@ function InspeccionEPCC({ value = {}, onChange }) {
 		const payload = mapRespuestasToPayload();
 
 		// Validación de campos obligatorios
-		if (
-			!payload.nombre_cliente ||
-			!payload.nombre_proyecto ||
-			!payload.fecha_servicio ||
-			!payload.nombre_operador ||
-			!payload.cargo
-		) {
-			alert("Por favor completa todos los datos generales.");
-			return;
-		}
+		const erroresTemp = {};
+		let primerError = null;
+
+		[
+			"nombre_cliente",
+			"nombre_proyecto",
+			"fecha_servicio",
+			"nombre_operador",
+			"cargo"
+		].forEach((campo) => {
+			if (!payload[campo]) {
+				erroresTemp[campo] = true;
+				if (!primerError) primerError = campo;
+			}
+		});
 
 		const totalPreguntas = 6;
 		for (let i = 0; i < totalPreguntas; i++) {
 			if (!respuestas[i] || !["SI", "NO", "NA"].includes(respuestas[i])) {
-				alert("Por favor responde todas las preguntas de la lista de chequeo.");
-				return;
+				erroresTemp[i] = true;
+				if (!primerError) primerError = `pregunta_${i}`;
 			}
+		}
+
+		setErrores(erroresTemp);
+
+		if (primerError) {
+			if (typeof primerError === "string" && primerError.startsWith("pregunta_")) {
+				const idx = Number(primerError.split("_")[1]);
+				scrollToItem(`pregunta_${idx}`);
+			} else {
+				scrollToItem(`campo_${primerError}`);
+			}
+			return;
 		}
 
 		try {
@@ -183,13 +219,32 @@ function InspeccionEPCC({ value = {}, onChange }) {
 						<div key={item.name} style={{ flex: 1, minWidth: 180 }}>
 							<label className="label">{item.label}</label>
 							<input
+								id={`campo_${item.name}`}
 								type={item.type || "text"}
 								name={item.name}
 								value={generales[item.name]}
 								readOnly={item.name !== "cargo"}
 								onChange={handleGeneralesChange}
-								className="permiso-trabajo-input"
+								className={`permiso-trabajo-input${errores[item.name] ? " campo-error" : ""}`}
+								style={errores[item.name] ? { borderColor: "red", background: "#ffeaea" } : {}}
 							/>
+							{errores[item.name] && (
+								<span style={{ color: "red", fontSize: 13 }}>
+									Este campo es obligatorio.
+									<span
+										style={{
+											marginLeft: 8,
+											cursor: "pointer",
+											fontSize: 18,
+											verticalAlign: "middle"
+										}}
+										onClick={scrollToGuardar}
+										title="Ir al botón Guardar"
+									>
+										&#8594;
+									</span>
+								</span>
+							)}
 						</div>
 					))}
 				</div>
@@ -236,17 +291,35 @@ function InspeccionEPCC({ value = {}, onChange }) {
 						return (
 							<div key={idx} style={{ marginBottom: 8 }}>
 								<div className="permiso-trabajo-label">{pregunta}</div>
-								<select
-									value={respuestas[idx] || ""}
-									onChange={(e) => handleRespuesta(idx, e.target.value)}
-									className="permiso-trabajo-select"
-									style={{ minWidth: 120, maxWidth: 220 }}
-								>
-									<option value="">--</option>
-									<option value="SI">SI</option>
-									<option value="NO">NO</option>
-									<option value="NA">NA</option>
-								</select>
+								<div style={{ display: "flex", alignItems: "center" }}>
+									<select
+										id={`pregunta_${idx}`}
+										value={respuestas[idx] || ""}
+										onChange={(e) => handleRespuesta(idx, e.target.value)}
+										className={`permiso-trabajo-select${errores[idx] ? " campo-error" : ""}`}
+										style={errores[idx] ? { borderColor: "red", background: "#ffeaea", minWidth: 120, maxWidth: 220 } : { minWidth: 120, maxWidth: 220 }}
+									>
+										<option value="">--</option>
+										<option value="SI">SI</option>
+										<option value="NO">NO</option>
+										<option value="NA">NA</option>
+									</select>
+									{errores[idx] && (
+										<span
+											style={{
+												color: "red",
+												fontSize: 16,
+												marginLeft: 8,
+												cursor: "pointer",
+												verticalAlign: "middle"
+											}}
+											onClick={scrollToGuardar}
+											title="Ir al botón Guardar"
+										>
+											&#8594;
+										</span>
+									)}
+								</div>
 							</div>
 						);
 					})}
@@ -291,6 +364,7 @@ function InspeccionEPCC({ value = {}, onChange }) {
 					type="submit"
 					className="button"
 					style={{ background: "#ff9800", color: "#fff" }}
+					ref={guardarBtnRef}
 				>
 					Guardar
 				</button>

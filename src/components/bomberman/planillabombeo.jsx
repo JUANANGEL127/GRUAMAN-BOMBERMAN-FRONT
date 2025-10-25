@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
@@ -46,6 +46,8 @@ function PlanillaBombeo(props) {
     manguera: "3"
   });
   const [lista_bombas, set_lista_bombas] = useState([]);
+  const [errores, setErrores] = useState({});
+  const guardarBtnRef = useRef(null);
   const nombre_operador_local = localStorage.getItem("nombre_trabajador") || "";
   const navigate = useNavigate();
 
@@ -138,8 +140,24 @@ function PlanillaBombeo(props) {
     setDatos(prev => ({ ...prev, hora_salida_obra: hora }));
   };
 
+  const scrollToItem = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.focus?.();
+    }
+  };
+
+  const scrollToGuardar = () => {
+    if (guardarBtnRef.current) {
+      guardarBtnRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      guardarBtnRef.current.focus?.();
+    }
+  };
+
   const handle_change = (e) => {
     setDatos({ ...datos, [e.target.name]: e.target.value });
+    setErrores((prev) => ({ ...prev, [e.target.name]: false }));
   };
 
   const handle_remision_change = (e) => {
@@ -220,11 +238,24 @@ function PlanillaBombeo(props) {
       "nombre_cliente_aceptacion",
       "cc_cliente_aceptacion"
     ];
-    const faltanCampos = camposObligatorios.some(campo => !datos[campo] || datos[campo].toString().trim() === "");
-    if (faltanCampos) {
-      alert("Por favor completa todos los campos obligatorios del formulario principal.");
+
+    const erroresTemp = {};
+    let primerError = null;
+
+    camposObligatorios.forEach((campo) => {
+      if (!datos[campo] || datos[campo].toString().trim() === "") {
+        erroresTemp[campo] = true;
+        if (!primerError) primerError = campo;
+      }
+    });
+
+    setErrores(erroresTemp);
+
+    if (primerError) {
+      scrollToItem(`campo_${primerError}`);
       return;
     }
+
     if (!Array.isArray(remisiones) || remisiones.length === 0) {
       alert("Debes agregar al menos una remisión antes de guardar.");
       return;
@@ -318,32 +349,181 @@ function PlanillaBombeo(props) {
       <div className="card-section">
         <h3 className="card-title">Datos Generales</h3>
         <label className="label">Cliente</label>
-        <input name="nombre_cliente" value={datos.nombre_cliente} onChange={handle_change} className="input" />
+        <input
+          id="campo_nombre_cliente"
+          name="nombre_cliente"
+          value={datos.nombre_cliente}
+          onChange={handle_change}
+          className={`input${errores.nombre_cliente ? " campo-error" : ""}`}
+          style={errores.nombre_cliente ? { borderColor: "red", background: "#ffeaea" } : {}}
+        />
+        {errores.nombre_cliente && (
+          <span style={{ color: "red", fontSize: 13 }}>
+            Este campo es obligatorio.
+            <span
+              style={{
+                marginLeft: 8,
+                cursor: "pointer",
+                fontSize: 18,
+                verticalAlign: "middle"
+              }}
+              onClick={scrollToGuardar}
+              title="Ir al botón Guardar"
+            >
+              &#8594;
+            </span>
+          </span>
+        )}
         <label className="label">Proyecto</label>
-        <input name="nombre_proyecto" value={datos.nombre_proyecto} onChange={handle_change} className="input" readOnly />
+        <input
+          id="campo_nombre_proyecto"
+          name="nombre_proyecto"
+          value={datos.nombre_proyecto}
+          onChange={handle_change}
+          className={`input${errores.nombre_proyecto ? " campo-error" : ""}`}
+          readOnly
+          style={errores.nombre_proyecto ? { borderColor: "red", background: "#ffeaea" } : {}}
+        />
+        {errores.nombre_proyecto && (
+          <span style={{ color: "red", fontSize: 13 }}>
+            Este campo es obligatorio.
+            <span
+              style={{
+                marginLeft: 8,
+                cursor: "pointer",
+                fontSize: 18,
+                verticalAlign: "middle"
+              }}
+              onClick={scrollToGuardar}
+              title="Ir al botón Guardar"
+            >
+              &#8594;
+            </span>
+          </span>
+        )}
         <label className="label">Fecha Servicio</label>
-        <input type="date" name="fecha_servicio" value={datos.fecha_servicio} onChange={handle_change} className="input" readOnly />
+        <input
+          id="campo_fecha_servicio"
+          type="date"
+          name="fecha_servicio"
+          value={datos.fecha_servicio}
+          onChange={handle_change}
+          className={`input${errores.fecha_servicio ? " campo-error" : ""}`}
+          readOnly
+          style={errores.fecha_servicio ? { borderColor: "red", background: "#ffeaea" } : {}}
+        />
+        {errores.fecha_servicio && (
+          <span style={{ color: "red", fontSize: 13 }}>
+            Este campo es obligatorio.
+            <span
+              style={{
+                marginLeft: 8,
+                cursor: "pointer",
+                fontSize: 18,
+                verticalAlign: "middle"
+              }}
+              onClick={scrollToGuardar}
+              title="Ir al botón Guardar"
+            >
+              &#8594;
+            </span>
+          </span>
+        )}
         <label className="label">Bomba #</label>
-        <select name="bomba_numero" value={datos.bomba_numero} onChange={handle_change} className="input">
+        <select
+          id="campo_bomba_numero"
+          name="bomba_numero"
+          value={datos.bomba_numero}
+          onChange={handle_change}
+          className={`input${errores.bomba_numero ? " campo-error" : ""}`}
+          style={errores.bomba_numero ? { borderColor: "red", background: "#ffeaea" } : {}}
+        >
           <option value="">Selecciona bomba</option>
           {lista_bombas.map((b, idx) => (
             <option key={idx} value={b.numero_bomba}>{b.numero_bomba}</option>
           ))}
         </select>
+        {errores.bomba_numero && (
+          <span style={{ color: "red", fontSize: 13 }}>
+            Este campo es obligatorio.
+            <span
+              style={{
+                marginLeft: 8,
+                cursor: "pointer",
+                fontSize: 18,
+                verticalAlign: "middle"
+              }}
+              onClick={scrollToGuardar}
+              title="Ir al botón Guardar"
+            >
+              &#8594;
+            </span>
+          </span>
+        )}
       </div>
 
       <div className="card-section">
         <h3 className="card-title">Horas de llegada y salida</h3>
         <label className="label">Hora Llegada Obra</label>
         <div style={{ display: "flex", gap: 8 }}>
-          <input type="time" name="hora_llegada_obra" value={datos.hora_llegada_obra} readOnly className="input" />
+          <input
+            id="campo_hora_llegada_obra"
+            type="time"
+            name="hora_llegada_obra"
+            value={datos.hora_llegada_obra}
+            readOnly
+            className={`input${errores.hora_llegada_obra ? " campo-error" : ""}`}
+            style={errores.hora_llegada_obra ? { borderColor: "red", background: "#ffeaea" } : {}}
+          />
           <button type="button" className="button" onClick={registrar_hora_llegada_obra}>Registrar hora</button>
         </div>
+        {errores.hora_llegada_obra && (
+          <span style={{ color: "red", fontSize: 13 }}>
+            Este campo es obligatorio.
+            <span
+              style={{
+                marginLeft: 8,
+                cursor: "pointer",
+                fontSize: 18,
+                verticalAlign: "middle"
+              }}
+              onClick={scrollToGuardar}
+              title="Ir al botón Guardar"
+            >
+              &#8594;
+            </span>
+          </span>
+        )}
         <label className="label">Hora Salida Obra</label>
         <div style={{ display: "flex", gap: 8 }}>
-          <input type="time" name="hora_salida_obra" value={datos.hora_salida_obra} readOnly className="input" />
+          <input
+            id="campo_hora_salida_obra"
+            type="time"
+            name="hora_salida_obra"
+            value={datos.hora_salida_obra}
+            readOnly
+            className={`input${errores.hora_salida_obra ? " campo-error" : ""}`}
+            style={errores.hora_salida_obra ? { borderColor: "red", background: "#ffeaea" } : {}}
+          />
           <button type="button" className="button" onClick={registrar_hora_salida_obra}>Registrar hora</button>
         </div>
+        {errores.hora_salida_obra && (
+          <span style={{ color: "red", fontSize: 13 }}>
+            Este campo es obligatorio.
+            <span
+              style={{
+                marginLeft: 8,
+                cursor: "pointer",
+                fontSize: 18,
+                verticalAlign: "middle"
+              }}
+              onClick={scrollToGuardar}
+              title="Ir al botón Guardar"
+            >
+              &#8594;
+            </span>
+          </span>
+        )}
       </div>
 
       <div className="card-section">
@@ -430,7 +610,12 @@ function PlanillaBombeo(props) {
         <input name="cc_cliente_aceptacion" value={datos.cc_cliente_aceptacion} onChange={handle_change} className="input" />
       </div>
 
-      <button type="button" className="button" onClick={handle_guardar}>
+      <button
+        type="button"
+        className="button"
+        onClick={handle_guardar}
+        ref={guardarBtnRef}
+      >
         Guardar
       </button>
 

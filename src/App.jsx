@@ -116,9 +116,16 @@ function App() {
             navigate("/eleccionaic");
           }
         }, 500);
+      } else {
+        window.alert("no se encuentra en la ubicacion selccionada");
       }
     } catch (err) {
-      if (err.response && err.response.data) {
+      if (
+        err.response &&
+        err.response.status === 403
+      ) {
+        window.alert("no se encuentra en la ubicacion selccionada");
+      } else if (err.response && err.response.data) {
         set_mensaje(
           `Error: ${err.response.data?.mensaje || err.response.data?.error || err.message}`
         );
@@ -243,7 +250,6 @@ function App() {
       {faltan_datos_mensaje && (
         <p className="label" style={{ color: "red", marginBottom: "22px" }}>{faltan_datos_mensaje}</p>
       )}
-      <p className="label">{mensaje}</p>
     </div>
   );
 }

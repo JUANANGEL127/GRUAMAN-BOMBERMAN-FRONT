@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
@@ -110,6 +110,8 @@ function InspeccionIzaje({ value = {}, onChange }) {
 		nombre_operador: "",
 		cargo: "",
 	});
+	const [errores, setErrores] = useState({});
+	const guardarBtnRef = useRef(null);
 	const navigate = useNavigate();
 
 	useEffect(() => {
@@ -151,10 +153,27 @@ function InspeccionIzaje({ value = {}, onChange }) {
 		const nuevas = { ...respuestas, [key]: val };
 		setRespuestas(nuevas);
 		if (onChange) onChange(nuevas);
+		setErrores((prev) => ({ ...prev, [key]: false }));
 	};
 
 	const handleGeneralesChange = (e) => {
 		setGenerales({ ...generales, [e.target.name]: e.target.value });
+		setErrores((prev) => ({ ...prev, [e.target.name]: false }));
+	};
+
+	const scrollToItem = (id) => {
+		const el = document.getElementById(id);
+		if (el) {
+			el.scrollIntoView({ behavior: "smooth", block: "center" });
+			el.focus?.();
+		}
+	};
+
+	const scrollToGuardar = () => {
+		if (guardarBtnRef.current) {
+			guardarBtnRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+			guardarBtnRef.current.focus?.();
+		}
 	};
 
 	// Nuevo mapeo para la estructura de la base de datos
@@ -234,27 +253,44 @@ function InspeccionIzaje({ value = {}, onChange }) {
 		e.preventDefault();
 		const payload = mapRespuestasToPayload();
 
+		const erroresTemp = {};
+		let primerError = null;
+
 		// Validación de datos generales obligatorios
-		if (
-			!payload.nombre_cliente?.trim() ||
-			!payload.nombre_proyecto?.trim() ||
-			!payload.fecha_servicio?.trim() ||
-			!payload.nombre_operador?.trim() ||
-			!payload.cargo?.trim()
-		) {
-			alert("Por favor completa todos los datos generales obligatorios: Cliente, Proyecto, Fecha, Trabajador y Cargo.");
-			return;
-		}
+		[
+			"cliente_constructora",
+			"proyecto_constructora",
+			"fecha_final",
+			"nombre_operador",
+			"cargo"
+		].forEach((campo) => {
+			if (!generales[campo] || !generales[campo].trim()) {
+				erroresTemp[campo] = true;
+				if (!primerError) primerError = campo;
+			}
+		});
 
 		// Validación de preguntas
 		for (let sidx = 0; sidx < secciones.length; sidx++) {
 			for (let pidx = 0; pidx < secciones[sidx].preguntas.length; pidx++) {
-				const val = respuestas[`sec${sidx}_preg${pidx}`];
+				const key = `sec${sidx}_preg${pidx}`;
+				const val = respuestas[key];
 				if (!val || !["SI", "NO", "NA"].includes(val)) {
-					alert("Por favor responde todas las preguntas de la lista de chequeo.");
-					return;
+					erroresTemp[key] = true;
+					if (!primerError) primerError = key;
 				}
 			}
+		}
+
+		setErrores(erroresTemp);
+
+		if (primerError) {
+			if (primerError.startsWith("sec")) {
+				scrollToItem(primerError);
+			} else {
+				scrollToItem(`campo_${primerError}`);
+			}
+			return;
 		}
 
 		try {
@@ -297,13 +333,32 @@ function InspeccionIzaje({ value = {}, onChange }) {
 						<div key={item.name} style={{ flex: 1, minWidth: 180 }}>
 							<label className="label">{item.label}</label>
 							<input
+								id={`campo_${item.name}`}
 								type={item.type || "text"}
 								name={item.name}
 								value={generales[item.name]}
 								onChange={handleGeneralesChange}
-								className="permiso-trabajo-input"
+								className={`permiso-trabajo-input${errores[item.name] ? " campo-error" : ""}`}
 								readOnly={item.name === "cliente_constructora" || item.name === "proyecto_constructora" || item.name === "nombre_operador"}
+								style={errores[item.name] ? { borderColor: "red", background: "#ffeaea" } : {}}
 							/>
+							{errores[item.name] && (
+								<span style={{ color: "red", fontSize: 13 }}>
+									Este campo es obligatorio.
+									<span
+										style={{
+											marginLeft: 8,
+											cursor: "pointer",
+											fontSize: 18,
+											verticalAlign: "middle"
+										}}
+										onClick={scrollToGuardar}
+										title="Ir al botón Guardar"
+									>
+										&#8594;
+									</span>
+								</span>
+							)}
 						</div>
 					))}
 				</div>
@@ -327,23 +382,44 @@ function InspeccionIzaje({ value = {}, onChange }) {
 							</div>
 						))}
 					</div>
-					{sec.preguntas.map((pregunta, pidx) => (
-						<div key={pidx} style={{ marginBottom: 8 }}>
-							<div className="permiso-trabajo-label">{pregunta}</div>
-							<select
-								name={`sec${sidx}_preg${pidx}`}
-								value={respuestas[`sec${sidx}_preg${pidx}`] || ""}
-								onChange={(e) => handleRespuesta(`sec${sidx}_preg${pidx}`, e.target.value)}
-								className="permiso-trabajo-select"
-								style={{ minWidth: 120, maxWidth: 220 }}
-							>
-								<option value="">--</option>
-								<option value="SI">SI</option>
-								<option value="NO">NO</option>
-								<option value="NA">NA</option>
-							</select>
-						</div>
-					))}
+					{sec.preguntas.map((pregunta, pidx) => {
+						const key = `sec${sidx}_preg${pidx}`;
+						return (
+							<div key={pidx} style={{ marginBottom: 8 }}>
+								<div className="permiso-trabajo-label">{pregunta}</div>
+								<div style={{ display: "flex", alignItems: "center" }}>
+									<select
+										id={key}
+										name={key}
+										value={respuestas[key] || ""}
+										onChange={(e) => handleRespuesta(key, e.target.value)}
+										className={`permiso-trabajo-select${errores[key] ? " campo-error" : ""}`}
+										style={errores[key] ? { borderColor: "red", background: "#ffeaea", minWidth: 120, maxWidth: 220 } : { minWidth: 120, maxWidth: 220 }}
+									>
+										<option value="">--</option>
+										<option value="SI">SI</option>
+										<option value="NO">NO</option>
+										<option value="NA">NA</option>
+									</select>
+									{errores[key] && (
+										<span
+											style={{
+												color: "red",
+												fontSize: 16,
+												marginLeft: 8,
+												cursor: "pointer",
+												verticalAlign: "middle"
+											}}
+											onClick={scrollToGuardar}
+											title="Ir al botón Guardar"
+										>
+											&#8594;
+										</span>
+									)}
+								</div>
+							</div>
+						);
+					})}
 				</div>
 			))}
 
@@ -379,6 +455,7 @@ function InspeccionIzaje({ value = {}, onChange }) {
 					type="submit"
 					className="button"
 					style={{ background: "#ff9800", color: "#fff" }}
+					ref={guardarBtnRef}
 				>
 					Guardar
 				</button>
