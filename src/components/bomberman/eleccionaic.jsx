@@ -7,6 +7,7 @@ import Administrador from "../administrador";
 import "../../App.css";
 import PermisoTrabajo from "../compartido/permiso_trabajo";
 import ChequeoAlturas from "../compartido/chequeo_alturas";
+import inspeccionEpccBomberman from "./inspeccion_epcc_bomberman"; // importación del nuevo componente
 
 // Utiliza localStorage para persistir el estado de los botones usados
 function getUsadosFromStorage(usuario) {
@@ -20,6 +21,7 @@ function getUsadosFromStorage(usuario) {
     checklist: false,
     inventariosobra: false,
     administrador: false,
+    condiciones_salud_epp: false, // estado para el nuevo componente
   };
 }
 
@@ -162,10 +164,22 @@ function BienvenidaAIC() {
           </button>
           <button
             className={getButtonClass(usados.chequeo_alturas)}
-            style={{ maxWidth: 320 }}
+            style={{
+              maxWidth: 320,
+              background: "linear-gradient(145deg, var(--naranja), var(--naranja-claro))",
+              color: "#fff",
+              fontWeight: 600
+            }}
             onClick={() => handleNavigate("/chequeo_alturas", "chequeo_alturas")}
           >
             Chequeo Alturas
+          </button>
+          <button
+            className={getButtonClass(usados.inspeccion_epcc_bomberman)} // clase para el nuevo botón
+            style={{ maxWidth: 320 }}
+            onClick={() => handleNavigate("/inspeccion_epcc_bomberman", "inspeccion_epcc_bomberman")}
+          >
+            Inspección EPCC
           </button>
           <button
             className="button"
@@ -206,6 +220,7 @@ function EleccionAIC() {
       <Route path="/administrador" element={<Administrador />} />
       <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />
       <Route path="/chequeo_alturas" element={<ChequeoAlturas />} />
+      <Route path="/inspeccion_epcc_bomberman" element={<inspeccionEpccBomberman />} /> {/* nuevo route */}
     </Routes>
   );
 }
