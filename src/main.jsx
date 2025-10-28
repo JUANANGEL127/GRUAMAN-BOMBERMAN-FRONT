@@ -20,6 +20,147 @@ import BienvenidaSeleccion from "./BienvenidaSeleccion";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
 
+// Función para obtener usuario y obra de localStorage
+function getUsuarioObra() {
+  let usuario = "";
+  let obra = "";
+
+  // Usuario: primero intenta con nombre_trabajador, luego usuario
+  const nombreTrabajador = localStorage.getItem("nombre_trabajador");
+  if (nombreTrabajador && nombreTrabajador.trim()) {
+    usuario = nombreTrabajador;
+  } else {
+    const usuarioStorage = localStorage.getItem("usuario");
+    if (usuarioStorage) {
+      try {
+        const usuarioParsed = JSON.parse(usuarioStorage);
+        if (usuarioParsed && typeof usuarioParsed === "object" && usuarioParsed.nombre) {
+          usuario = usuarioParsed.nombre;
+        } else if (typeof usuarioParsed === "string") {
+          usuario = usuarioParsed;
+        } else {
+          usuario = usuarioStorage;
+        }
+      } catch {
+        usuario = usuarioStorage;
+      }
+    }
+  }
+
+  // Obra: primero intenta con obra, luego nombre_proyecto
+  const obraStorage = localStorage.getItem("obra");
+  if (obraStorage && obraStorage.trim()) {
+    obra = obraStorage;
+  } else {
+    const nombreProyecto = localStorage.getItem("nombre_proyecto");
+    if (nombreProyecto && nombreProyecto.trim()) {
+      obra = nombreProyecto;
+    } else {
+      try {
+        const obraParsed = JSON.parse(obraStorage);
+        if (obraParsed && typeof obraParsed === "object" && obraParsed.nombre) {
+          obra = obraParsed.nombre;
+        } else if (typeof obraParsed === "string") {
+          obra = obraParsed;
+        }
+      } catch {
+        obra = obraStorage;
+      }
+    }
+  }
+
+  return { usuario, obra };
+}
+
+// Componente del botón SOS flotante
+function SOSButton() {
+  const [enviando, setEnviando] = React.useState(false);
+  const [mensaje, setMensaje] = React.useState("");
+
+  const enviarSOS = async () => {
+    setEnviando(true);
+    setMensaje("");
+    const { usuario, obra } = getUsuarioObra();
+    if (!usuario || !obra) {
+      setMensaje("No se encontró usuario u obra en localStorage.");
+      setEnviando(false);
+      return;
+    }
+    try {
+      const res = await fetch("http://localhost:3000/api/emergencia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuario, ubicacion: obra }),
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`Error del servidor: ${res.status} ${errorText}`);
+        setMensaje("Error al enviar mensaje.");
+      } else {
+        await res.json();
+        setMensaje("¡Mensaje de emergencia enviado!");
+      }
+    } catch (err) {
+      console.error("Error al enviar mensaje:", err);
+      setMensaje("Error al enviar mensaje.");
+    }
+    setEnviando(false);
+  };
+
+  return (
+    <>
+      <button
+        style={{
+          position: "fixed",
+          left: 14,
+          bottom: "80px",
+          zIndex: 1000,
+          borderRadius: "50%",
+          width: 64,
+          height: 64,
+          background: "#c00",
+          color: "#fff",
+          border: "none",
+          fontSize: 24,
+          fontWeight: "bold",
+          boxShadow: "0 2px 12px #c00",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 0,
+          lineHeight: "1",
+        }}
+        onClick={enviarSOS}
+        disabled={enviando}
+        title="SOS Emergencia"
+      >
+        <span style={{ fontSize: 24, fontWeight: "bold", color: "#fff", letterSpacing: 2 }}>SOS</span>
+      </button>
+      {mensaje && (
+        <div
+          style={{
+            position: "fixed",
+            left: 14,
+            bottom: "150px",
+            zIndex: 1100,
+            background: "#fff",
+            border: "2px solid #c00",
+            borderRadius: 12,
+            padding: "8px 16px",
+            boxShadow: "0 2px 8px #c00",
+            minWidth: 220,
+            color: mensaje.includes("Error") ? "#c00" : "#1976d2",
+            fontWeight: "bold",
+            textAlign: "center"
+          }}
+        >
+          {mensaje}
+        </div>
+      )}
+    </>
+  );
+}
+
 // Renderizado principal y rutas de la aplicación
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -48,6 +189,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             userSelect: "none",
           }}
         />
+        <SOSButton />
         <div style={{ position: "relative", zIndex: 1 }}>
           <Routes>
             <Route path="/" element={<App />} />

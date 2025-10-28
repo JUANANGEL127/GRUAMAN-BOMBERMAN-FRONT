@@ -1,9 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 function CedulaIngreso({ onUsuarioEncontrado }) {
   const [cedula, setCedula] = useState("");
   const [error, setError] = useState("");
+  const [gifIndex, setGifIndex] = useState(0);
+
+  useEffect(() => {
+    const gifs = ["/gruaman1.1.gif", "/bomberman1.1.gif"];
+    const interval = setInterval(() => {
+      setGifIndex(prev => (prev + 1) % gifs.length);
+    }, 2500); // cambia cada 2.5 segundos
+    return () => clearInterval(interval);
+  }, []);
 
   const handleBuscar = async () => {
     setError("");
@@ -62,18 +71,15 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         </button>
         {error && <div style={{ color: "red", marginTop: 12 }}>{error}</div>}
       </div>
-      <video
-        src="/amigos.mp4"
-        autoPlay
-        loop
-        muted
-        playsInline
+      <img
+        src={gifIndex === 0 ? "/gruaman1.1.gif" : "/bomberman1.1.gif"}
+        alt={gifIndex === 0 ? "GruaMan animado" : "BomberMan animado"}
         style={{
           position: "absolute",
           top: "30%",
           left: 0,
-          width: "100vw",
-          height: "70vh",
+          width: "95vw",
+          height: "60vh",
           objectFit: "cover",
           zIndex: 1,
           pointerEvents: "none",
