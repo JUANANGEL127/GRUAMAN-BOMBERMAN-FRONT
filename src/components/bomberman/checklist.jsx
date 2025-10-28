@@ -1,8 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
-function Checklist() {
+
+// ✅ CORRECCIÓN 1: El componente ahora acepta 'props' (aunque no la usaremos, es buena práctica)
+function Checklist(props) { 
+  const navigate = useNavigate();
+
+  // 1. Referencias para campos obligatorios y el botón de guardar
+  const [camposFaltantes, setCamposFaltantes] = useState([]);
+  const itemRefs = useRef({}); // Para almacenar referencias a los ítems del checklist
+  const submitRef = useRef(null); // Para la referencia del botón Guardar
+  // Referencias para los campos del encabezado que son obligatorios
+  const bombaRef = useRef(null);
+  const horometroRef = useRef(null);
+
   const [datos, setDatos] = useState({
     nombre_cliente: "",
     nombre_proyecto: "",
@@ -10,27 +23,167 @@ function Checklist() {
     bomba_numero: "",
     horometro_motor: "",
     nombre_operador: "",
+    observaciones: "" 
   });
 
   const [lista_bombas, set_lista_bombas] = useState([]);
-  const [estadoItems, setEstadoItems] = useState({});
+  const [estadoItems, setEstadoItems] = useState({}); 
   const [enviando, setEnviando] = useState(false);
   const [mensajeEnvio, setMensajeEnvio] = useState("");
 
   const nombre_operador_local = localStorage.getItem("nombre_trabajador") || "";
   const nombre_obra_local = localStorage.getItem("obra") || "";
 
+  // --- ARREGLO DE CLAVES DE LA BASE DE DATOS (itemToField) ---
+  const itemToField = [
+    // CHASIS (13 campos)
+    "chasis_aceite_motor", "chasis_funcionamiento_combustible", "chasis_nivel_refrigerante",
+    "chasis_nivel_aceite_hidraulicos", "chasis_presion_llantas", "chasis_fugas",
+    "chasis_soldadura", "chasis_integridad_cubierta", "chasis_herramientas_productos_diversos",
+    "chasis_sistema_alberca", "chasis_filtro_hidraulico", "chasis_filtro_agua_limpio",
+    "chasis_nivel_agua",
+    // PIEZAS DE DESGASTE Y SALIENTES (14 campos)
+    "anillos", "anillos_desgaste", "placa_gafa", "cilindros_atornillados", "paso_masilla",
+    "paso_agua", "partes_faltantes", "mecanismo_s", "funcion_sensor", "estado_oring",
+    "funcion_vibrador", "paletas_eje_agitador", "motor_accionamiento", "valvula_control",
+    // SISTEMA HIDRÁULICO (7 campos)
+    "hidraulico_fugas", "hidraulico_cilindros_botellas_estado", "hidraulico_indicador_nivel_aceite",
+    "hidraulico_enfriador_termotasto", "hidraulico_indicador_filtro", "hidraulico_limalla",
+    "hidraulico_mangueras_tubos_sin_fugas",
+    // SISTEMA LUBRICACION (4 campos)
+    "superficie_nivel_deposito_grasa", "superficie_puntos_lubricacion", "superficie_empaquetaduras_conexion",
+    "superficie_fugas", 
+    // MANGUERAS Y ACOPLES (3 campos)
+    "mangueras_interna_no_deshilachadas", "mangueras_acoples_buen_estado", "mangueras_externa_no_deshilachado",
+    // SISTEMA ELÉCTRICO (8 campos)
+    "electrico_interruptores_buen_estado", "electrico_luces_funcionan", "electrico_cubiertas_proteccion_buenas",
+    "electrico_cordon_mando_buen_estado", "electrico_interruptores_emergencia_funcionan", "electrico_conexiones_sin_oxido",
+    "electrico_paros_emergencia", "electrico_aisladores_cables_buenos",
+    // TUBERÍA (6 campos)
+    "tuberia_abrazaderas_codos_ajustadas", "tuberia_bujia_tallo_anclados", "tuberia_abrazaderas_descarga_ajustadas",
+    "tuberia_espesor", "tuberia_vertical_tallo_recta", "tuberia_desplazamiento_seguro",
+    // SST (19 campos)
+    "equipo_limpio", "orden_aseo", "delimitacion_etiquetado", "permisos", "extintores", "botiquin",
+    "arnes_eslinga", "dotacion", "epp", "rotulacion", "matriz_compatibilidad", "demarcacion_bomba",
+    "orden_aseo_concreto", "epp_operario_auxiliar", "kit_mantenimiento", "combustible", "horas_motor",
+    "grasa", "planillas"
+  ];
+  
+  // --- MAPEO DE CLAVE DB a TEXTO VISIBLE (fieldToTextMap) ---
+  const fieldToTextMap = {
+    // CHASIS
+    "chasis_aceite_motor": "Revisar el nivel de aceite del motor.",
+    "chasis_funcionamiento_combustible": "Revise el nivel del tanque de combustible.",
+    "chasis_nivel_refrigerante": "Revise el nivel del refrigerante.",
+    "chasis_nivel_aceite_hidraulicos": "Revise el nivel del aceite de la hidrolavadora",
+    "chasis_presion_llantas": "Revise la condición y la presión de las llantas.",
+    "chasis_fugas": "Revise las fugas de combustible, aceite y otras fugas.",
+    "chasis_soldadura": "Revise el sub-chasis para detectar grietas de soldadura, pernos faltantes, deformaciones.",
+    "chasis_integridad_cubierta": "Revise la integridad estructural de la cubierta.",
+    "chasis_herramientas_productos_diversos": "Revise que las cajas de herramientas y productos diversos estén aseguradas.",
+    "chasis_sistema_alberca": "Revise sistema de drenaje de la alberca.",
+    "chasis_filtro_hidraulico": "Revisión del filtro hidraúlico del equipo.",
+    "chasis_filtro_agua_limpio": "Revisión del filtro del agua debe encontrarse limpio.",
+    "chasis_nivel_agua": "Revisar el nivel del agua que se encuentre lleno.",
+    // PIEZAS DE DESGASTE Y SALIENTES
+    "anillos": "Revise anillo de corte y anillo de sujeción.",
+    "anillos_desgaste": "Revise que el anillo de corte no presente desgaste prematuro",
+    "placa_gafa": "Revise placa gafa.",
+    "cilindros_atornillados": "Revisar que los cilindros de empuje o camisas de concreto estén asegurados y bien atornillados.",
+    "paso_masilla": "Revise los pistones y asegure que no exista paso de masilla para la caja de refrigeración.",
+    "paso_agua": "Revise los pistones y asegure que no exista paso de agua a la tolva.",
+    "partes_faltantes": "Revisar si hay partes faltantes tales como pasadores, pernos y tuercas.",
+    "mecanismo_s": "Revise que el mecanismo de cambio del tubo en “S” sea estructuralmente rígido.",
+    "funcion_sensor": "Revisar que la rejilla de la tolva no este partida y que este funcionando el sensor.",
+    "estado_oring": "Revise el estado del oring de la escotilla.",
+    "funcion_vibrador": "Revisar que el vibrador esté montado en forma segura y que las conexiones de los cables estén aseguradas y este funcionando correctamente.",
+    "paletas_eje_agitador": "Revise que las paletas y el eje del agitador no estén dañados y revise si hay soldaduras agrietadas.",
+    "motor_accionamiento": "Revise si el motor de accionamiento está asegurado y si los cojinetes, sellos y caja están en buenas condiciones.",
+    "valvula_control": "Revise que la válvula de control esté montada en forma segura y que las palancas se muevan libremente.",
+    // SISTEMA HIDRÁULICO
+    "hidraulico_fugas": "Revisar que no existan fugas hidraulicas, estrangule la maquina antes de inciar el servicio.",
+    "hidraulico_cilindros_botellas_estado": "Revisar si los cilindros hidráulicos o botellas impulsadoras esten asegurados y en buenas condiciones.",
+    "hidraulico_indicador_nivel_aceite": "Revise que el indicador visible de nivel aceite hidraulico esté en buenas condiciones.",
+    "hidraulico_enfriador_termotasto": "Revise enfriador aceite hidraulico y su termostato.",
+    "hidraulico_indicador_filtro": "Revisar los indicadores de la condición del filtro hidráulico.",
+    "hidraulico_limalla": "Revisar que el filtro hidraulico no tenga limalla",
+    "hidraulico_mangueras_tubos_sin_fugas": "Revise que las mangueras y tubos estén asegurados, sin fugas y que tengan un mínimo desgaste.",
+    // SISTEMA LUBRICACION
+    "superficie_nivel_deposito_grasa": "Revise el nivel del depósito de grasa.",
+    "superficie_puntos_lubricacion": "Revise puntos de lubricación  (yugos, checks de distribución, ductos, mangueras distribución de grasa,  tarro general de autoengrase, arbol trasero.)",
+    "superficie_empaquetaduras_conexion": "Revise si las empaquetaduras de  conexión del tubo en “S” en los sellos de salida y cojinetes se encuentran lubricadas.",
+    "superficie_fugas": "Revise el nivel de agua de caja de lubricación de los pistones.",
+    // MANGUERAS Y ACOPLES
+    "mangueras_interna_no_deshilachadas": "Revisión interna que la manguera no se encuentre deshilachada.",
+    "mangueras_acoples_buen_estado": "Revisión de acoples que se encuentren en buen estado.",
+    "mangueras_externa_no_deshilachado": "Revisión externa de que la manguera no este deshilachada.",
+    // SISTEMA ELÉCTRICO
+    "electrico_interruptores_buen_estado": "Revisar que los interruptores estén en buenas condiciones, permanezcan en su posición o regresen momentáneamente al centro.",
+    "electrico_luces_funcionan": "Revisar que los instrumentos e indicadores estén en buenas condiciones y que las luces funcionen.",
+    "electrico_cubiertas_proteccion_buenas": "Revisar que las cubiertas de caucho de protección estén en buenas condiciones.",
+    "electrico_cordon_mando_buen_estado": "Revisar que el cordón  de mando estén en buenas condiciones, que no esté dañado ni cortado, y que esté conectado en forma segura.",
+    "electrico_interruptores_emergencia_funcionan": "Revise que los interruptores no estén dañados y revise las funciones de presionar/tirar de los interruptores de parada de emergencia.",
+    "electrico_conexiones_sin_oxido": "Revisar que las conexiones eléctricas estén bien aseguradas y libres de óxido.",
+    "electrico_paros_emergencia": "Revisar paros de emergencia.",
+    "electrico_aisladores_cables_buenos": "Revisar que los aisladores de los cables no estén desgastados ni descascarados.",
+    // TUBERÍA
+    "tuberia_abrazaderas_codos_ajustadas": "Revisar que el codo de salida esté asegurado y que la abrazadera esté fija.",
+    "tuberia_bujia_tallo_anclados": "Colocación de tubería y tallo (bien anclada a la estructura).",
+    "tuberia_abrazaderas_descarga_ajustadas": "Revise si las abrazaderas de los tubos de descarga están flojas o dañadas.",
+    "tuberia_espesor": "Revise espesores de tubería.",
+    "tuberia_vertical_tallo_recta": "Revise que la vertical o tallo se encuentre recta.",
+    "tuberia_desplazamiento_seguro": "Revisar el area de desplazamiento de la tuberia y que sea segura para su manipulacion y descargue Operador y auxiliar.",
+    // SST
+    "equipo_limpio": "El equipo debe estar completamente limpio, sin excesos de grasa antigua, ni concreto en partes como vibrador, parrilla y tolva, abrazaderas, empaques, tubería y mangueras.",
+    "orden_aseo": "Revisión orden y aseo",
+    "delimitacion_etiquetado": "Revisión delimitación area y etiquetado productos",
+    "permisos": "Revisar permisos de trabajo y ATS y dejar firmados según la periodicidad que corresponda.",
+    "extintores": "Revisión fecha de vencimiento extintores y marcación visible.",
+    "botiquin": "Revisión elementos del botiquin (stock y fechas de vencimiento).",
+    "arnes_eslinga": "Revisar que se encuentre vigente fecha de recertificación de arnes y eslinga, revisar que ambos se encuentren en buen estado y limpios.",
+    "dotacion": "Revisar estado de dotación (camisa, pantalon, botas)",
+    "epp": "Revisar estado de EPP (Casco, gafas, tapaoidos, tapabocas, barbuquejo, guantes)",
+    "rotulacion": "Rotulación obligatoria de ACPM, GRASA LITIO y de AGUA NO POTABLE.",
+    "matriz_compatibilidad": "Matriz de compatibilidad de ACPM y GRASA.",
+    "demarcacion_bomba": "Demarcación del área donde se encuentra la bomba.",
+    "orden_aseo_concreto": "Orden y aseo (bomba y alrededor libre de concreto)",
+    "epp_operario_auxiliar": "Revise que el operario y ayudante porte: (Casco, Guantes, Tapa oidos, Barbuquejo, Botas, Uniforme de la empresa)",
+    "kit_mantenimiento": "Revise kit de mantenimiento y herramientas y verificar con administración.",
+    "combustible": "Revisión cantidad de combustble y stock verificar con administración.",
+    "horas_motor": "Revisión horas de motor y verificar con administración para mantenimiento.",
+    "grasa": "Revisar grasa y verificar con administración.",
+    "planillas": "Revise planillas para confirmar horas trabajadas, metros cubicos bombeados, formato diligenciado total."
+  };
+
+  // --- ESTRUCTURA DE SECCIONES PARA EL RENDERIZADO ---
+  const seccionesEstructura = [
+    { titulo: "CHASIS", fields: itemToField.slice(0, 13) },
+    { titulo: "PIEZAS DE DESGASTE Y SALIENTES", fields: itemToField.slice(13, 27) },
+    { titulo: "SISTEMA HIDRÁULICO", fields: itemToField.slice(27, 34) },
+    { titulo: "SISTEMA DE LUBRICACIÓN", fields: itemToField.slice(34, 38) },
+    { titulo: "MANGUERAS (3\", 4\", 5\")", fields: itemToField.slice(38, 41) },
+    { titulo: "SISTEMA ELÉCTRICO", fields: itemToField.slice(41, 49) },
+    { titulo: "TUBERÍA", fields: itemToField.slice(49, 55) },
+    { titulo: "SEGURIDAD Y SALUD EN EL TRABAJO (SST)", fields: itemToField.slice(55) },
+  ];
+
+  // --- EFECTOS (Inicialización y carga de datos) ---
   useEffect(() => {
+    const inicial = itemToField.reduce((acc, field) => {
+      acc[field] = { estado: "", observacion: "" };
+      return acc;
+    }, {});
+    setEstadoItems(inicial);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    // Lógica de carga de datos... (sin cambios)
     const fecha_hoy = new Date().toISOString().slice(0, 10);
     axios
       .get("http://localhost:3000/obras")
       .then((res) => {
-        const obras = Array.isArray(res.data.obras)
-          ? res.data.obras
-          : res.data || [];
-        const obra_encontrada = obras.find(
-          (o) => o.nombre_obra === nombre_obra_local
-        );
+        const obras = Array.isArray(res.data.obras) ? res.data.obras : res.data || [];
+        const obra_encontrada = obras.find((o) => o.nombre_obra === nombre_obra_local);
         const constructora = obra_encontrada ? obra_encontrada.constructora : "";
         setDatos((prev) => ({
           ...prev,
@@ -52,184 +205,175 @@ function Checklist() {
   }, [nombre_operador_local, nombre_obra_local]);
 
   useEffect(() => {
+    // Lógica de carga de bombas... (sin cambios)
     axios
       .get("http://localhost:3000/bombas")
       .then((res) => {
-        const bombas = Array.isArray(res.data.bombas)
-          ? res.data.bombas
-          : res.data || [];
+        const bombas = Array.isArray(res.data.bombas) ? res.data.bombas : res.data || [];
         set_lista_bombas(bombas);
       })
       .catch(() => set_lista_bombas([]));
   }, []);
-
-  const secciones = [
-    {
-      titulo: "CHASIS",
-      items: [
-        "Revisar el nivel de aceite del motor.",
-        "Revise el nivel del tanque de combustible.",
-        "Revise el nivel del refrigerante.",
-        "Revise el nivel del aceite de la hidrolavadora",
-        "Revise la condición y la presión de las llantas.",
-        "Revise las fugas de combustible, aceite y otras fugas.",
-        "Revise el sub-chasis para detectar grietas de soldadura, pernos faltantes, deformaciones.",
-        "Revise la integridad estructural de la cubierta.",
-        "Revise que las cajas de herramientas y productos diversos estén aseguradas.",
-        "Revise sistema de drenaje de la alberca.",
-        "Revisión del filtro hidraúlico del equipo.",
-        "Revisión del filtro del agua debe encontrarse limpio.",
-        "Revisar el nivel del agua que se encuentre lleno.",
-      ],
-    },
-    {
-      titulo: "PIEZAS DE DESGASTE Y SALIENTES",
-      items: [
-        "Revise anillo de corte y anillo de sujeción.",
-        "Revise que el anillo de corte no presente desgaste prematuro",
-        "Revise placa gafa.",
-        "Revisar que los cilindros de empuje o camisas de concreto estén asegurados y bien atornillados.",
-        "Revise los pistones y asegure que no exista paso de masilla para la caja de refrigeración.",
-        "Revise los pistones y asegure que no exista paso de agua a la tolva.",
-        "Revise la condición de las mangueras y tubos hidráulicos.",
-        "Revisar si hay partes faltantes tales como pasadores, pernos y tuercas.",
-        "Revise que la caja de agua sea estructuralmente rígida, esté limpia, con la cubierta en su lugar y que el drenaje sea funcional.",
-        "Revise que el mecanismo de cambio del tubo en “S” sea estructuralmente rígido.",
-        "Revisar que la rejilla de la tolva no este partida y que este funcionando el sensor.",
-        "Revise el estado del oring de la escotilla.",
-        "Revisar que el vibrador esté montado en forma segura y que las conexiones de los cables estén aseguradas y este funcionando correctamente.",
-        "Revise que las paletas y el eje del agitador no estén dañados y revise si hay soldaduras agrietadas.",
-        "Revise si el motor de accionamiento está asegurado y si los cojinetes, sellos y caja están en buenas condiciones.",
-        "Revise que la válvula de control esté montada en forma segura y que las palancas se muevan libremente.",
-      ],
-    },
-    {
-      titulo: "SISTEMA HIDRÁULICO",
-      items: [
-        "Revisar que no existan fugas hidraulicas, estrangule la maquina antes de inciar el servicio.",
-        "Revisar si los cilindros hidráulicos o botellas impulsadoras esten asegurados y en buenas condiciones.",
-        "Revise que el indicador visible de nivel aceite hidraulico esté en buenas condiciones.",
-        "Revise enfriador aceite hidraulico y su termostato.",
-        "Revisar los indicadores de la condición del filtro hidráulico.",
-        "Revisar que el filtro hidraulico no tenga limalla",
-        "Revise que las mangueras y tubos estén asegurados, sin fugas y que tengan un mínimo desgaste.",
-      ],
-    },
-    {
-      titulo: "SISTEMA DE LUBRICACIÓN",
-      items: [
-        "Revise el nivel del depósito de grasa.",
-        "Revise puntos de lubricación  (yugos, checks de distribución, ductos, mangueras distribución de grasa,  tarro general de autoengrase, arbol trasero.)",
-        "Revise si las empaquetaduras de  conexión del tubo en “S” en los sellos de salida y cojinetes se encuentran lubricadas.",
-        "Revise el nivel de agua de caja de lubricación de los pistones.",
-      ],
-    },
-    {
-      titulo: "MANGUERAS (3\", 4\", 5\")",
-      items: [
-        "Revisión interna que la manguera no se encuentre deshilachada.",
-        "Revisión de acoples que se encuentren en buen estado.",
-        "Revisión externa de que la manguera no este deshilachada.",
-      ],
-    },
-    {
-      titulo: "SISTEMA ELÉCTRICO",
-      items: [
-        "Revisar que los interruptores estén en buenas condiciones, permanezcan en su posición o regresen momentáneamente al centro.",
-        "Revisar que los instrumentos e indicadores estén en buenas condiciones y que las luces funcionen.",
-        "Revisar que las cubiertas de caucho de protección estén en buenas condiciones.",
-        "Revisar que el cordón  de mando estén en buenas condiciones, que no esté dañado ni cortado, y que esté conectado en forma segura.",
-        "Revise que los interruptores no estén dañados y revise las funciones de presionar/tirar de los interruptores de parada de emergencia.",
-        "Revisar que las conexiones eléctricas estén bien aseguradas y libres de óxido.",
-        "Revisar paros de emergencia.",
-        "Revisar que los aisladores de los cables no estén desgastados ni descascarados.",
-      ],
-    },
-    {
-      titulo: "TUBERÍA",
-      items: [
-        "Revisar que el codo de salida esté asegurado y que la abrazadera esté fija.",
-        "Colocación de tubería y tallo (bien anclada a la estructura).",
-        "Revise si las abrazaderas de los tubos de descarga están flojas o dañadas.",
-        "Revise espesores de tubería.",
-        "Revise que la vertical o tallo se encuentre recta.",
-        "Revisar el area de desplazamiento de la tuberia y que sea segura para su manipulacion y descargue Operador y auxiliar.",
-      ],
-    },
-    {
-      titulo: "SEGURIDAD Y SALUD EN EL TRABAJO (SST)",
-      items: [
-        "El equipo debe estar completamente limpio, sin excesos de grasa  antigua, ni concreto en partes como vibrador, parrilla y tolva, abrazaderas, empaques, tubería y mangueras.",
-        "Revisión orden y aseo",
-        "Revisión delimitación area y etiquetado productos",
-        "Revisar permisos de trabajo y ATS y dejar firmados según la periodicidad que corresponda.",
-        "Revisión fecha de vencimiento extintores y marcación visible.",
-        "Revisión elementos del botiquin (stock y fechas de vencimiento).",
-        "Revisar que se encuentre vigente fecha de recertificación de arnes y eslinga, revisar que ambos se encuentren en buen estado y limpios.",
-        "Revisar y diligenciar formato de revisión del estado de los equipos de protección contra caídas.",
-        "Revisar estado de dotación (camisa, pantalon, botas)",
-        "Revisar estado de EPP (Casco, gafas, tapaoidos, tapabocas, barbuquejo, guantes)",
-        "Rotulación obligatoria de ACPM, GRASA LITIO y de AGUA NO POTABLE.",
-        "Matriz de compatibilidad de ACPM y GRASA.",
-        "Demarcación del área donde se encuentra la bomba.",
-        "Orden y aseo (bomba y alrededor libre de concreto)",
-        "Revise que el operario y ayudante porte: (Casco, Guantes, Tapa oidos, Barbuquejo, Botas, Uniforme de la empresa)",
-        "Revise kit de mantenimiento y herramientas y verificar con administración.",
-        "Revisión cantidad de combustble y stock verificar con administración.",
-        "Revisión horas de motor y verificar con administración para mantenimiento.",
-        "Revisar grasa y verificar con administración.",
-        "Revise planillas para confirmar horas trabajadas, metros cubicos bombeados, formato diligenciado total.",
-      ],
-    },
-  ];
-
-  useEffect(() => {
-    const inicial = secciones.reduce((acc, seccion) => {
-      seccion.items.forEach((item) => (acc[item] = ""));
-      return acc;
-    }, {});
-    setEstadoItems(inicial);
-  }, []); // eslint-disable-line
-
+  
+  // --- HANDLERS (Sin cambios en la lógica interna) ---
   const handle_change = (e) => {
     const { name, value } = e.target;
+    // Limpiar el campo de error del encabezado si se corrige
+    if (name === "bomba_numero" || name === "horometro_motor") {
+        setCamposFaltantes(prev => prev.filter(field => field !== name));
+    }
     setDatos((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleItemChange = (item, valor) => {
-    setEstadoItems((prev) => ({ ...prev, [item]: valor }));
+  const handleItemStateChange = (fieldName, nuevoEstado) => {
+    // Limpia el campo de error de estado al seleccionar un estado
+    setCamposFaltantes(prev => prev.filter(field => field !== fieldName));
+    
+    setEstadoItems((prev) => ({
+      ...prev,
+      [fieldName]: {
+        ...prev[fieldName],
+        estado: nuevoEstado,
+        // Limpiar observación si se cambia a BUENO
+        observacion: (nuevoEstado === 'BUENO' || nuevoEstado === '') 
+            ? '' 
+            : prev[fieldName].observacion,
+      },
+    }));
   };
 
+  const handleItemObservationChange = (fieldName, nuevaObservacion) => {
+    // Limpia el campo de error de observación al escribir
+    setCamposFaltantes(prev => prev.filter(field => field !== `${fieldName}_observacion`));
+    
+    setEstadoItems((prev) => ({
+      ...prev,
+      [fieldName]: {
+        ...prev[fieldName],
+        observacion: nuevaObservacion,
+      },
+    }));
+  };
+  
+  // 2. Función para desplazarse al primer error (Incluyendo encabezado)
+  const scrollToFirstError = (errores) => {
+    if (errores.length === 0) return;
+    
+    const primerError = errores[0];
+    let elemento = null;
+
+    if (primerError === 'bomba_numero') {
+        elemento = bombaRef.current;
+    } else if (primerError === 'horometro_motor') {
+        elemento = horometroRef.current;
+    } else {
+        // Para errores del checklist, apuntamos al div contenedor para mejor visibilidad
+        elemento = itemRefs.current[primerError];
+    }
+    
+    if (elemento) {
+        // block: 'start' para asegurar que el elemento quede en la parte superior
+        elemento.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
+        elemento.focus?.();
+    }
+  };
+  
+  // Función para desplazarse al botón Guardar
+  const scrollToBottom = () => {
+    if (submitRef.current) {
+        submitRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        submitRef.current.focus?.();
+    }
+  };
+
+
+  // --- SUBMIT (Lógica de payload modificada con validación y scroll) ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setEnviando(true);
     setMensajeEnvio("");
+    setCamposFaltantes([]); // Limpiar errores previos
+
+    const erroresDetectados = [];
+    const headerErrores = [];
+    
+    // 1. Validación de campos obligatorios del ENCABEZADO
+    if (!datos.bomba_numero) headerErrores.push("bomba_numero");
+    if (!datos.horometro_motor) headerErrores.push("horometro_motor");
+
+    // 2. Validación de campos del CHECKLIST (Estado NOT NULL)
+    itemToField.forEach(field => {
+        if (estadoItems[field].estado === "") {
+            erroresDetectados.push(field);
+        }
+    });
+
+    // 3. Validación de campos de OBSERVACIÓN (Obligatorias si es REGULAR/MALO)
+    itemToField.forEach(field => {
+        if ((estadoItems[field].estado === 'REGULAR' || estadoItems[field].estado === 'MALO') && 
+            estadoItems[field].observacion.trim() === "") {
+            erroresDetectados.push(`${field}_observacion`); // Sufijo para error de observación
+        }
+    });
+
+    const totalErrores = headerErrores.length + erroresDetectados.length;
+    
+    if (totalErrores > 0) {
+        
+        const todosLosErrores = [...headerErrores, ...erroresDetectados];
+        setMensajeEnvio(`❌ Error: Se encontraron ${totalErrores} campos sin diligenciar. Revise los campos marcados en rojo.`);
+        setCamposFaltantes(todosLosErrores);
+        setEnviando(false);
+        
+        // 🚨 Desplazarse al primer error
+        scrollToFirstError(todosLosErrores);
+        return;
+    }
+    
+    // --- LÓGICA DE ENVÍO ORIGINAL (Si no hay errores) ---
+    const checklistPayload = itemToField.reduce((acc, field) => {
+        acc[field] = estadoItems[field].estado; 
+        acc[`${field}_observacion`] = estadoItems[field].observacion.trim(); 
+        return acc;
+    }, {});
 
     const payload = {
-      ...datos,
-      checklist: { ...estadoItems },
+      ...datos, 
+      ...checklistPayload, 
     };
-
+    
+    // 5. Envío y Navegación
     try {
       await axios.post("http://localhost:3000/bomberman/checklist", payload);
-      setMensajeEnvio("✅ Checklist guardado correctamente.");
-      // reset items
-      const limpio = secciones.reduce((acc, s) => {
-        s.items.forEach((i) => (acc[i] = ""));
-        return acc;
-      }, {});
-      setEstadoItems(limpio);
+      
+      // La confirmación se realiza antes de la navegación
+      console.log("Checklist enviado correctamente.");
+      alert("Checklist enviado correctamente."); 
+      
+      // ❌ LÍNEA ELIMINADA: if (props.onFinish) props.onFinish();
+      
+      // ✅ NAVEGACIÓN CORREGIDA: Devuelve al componente anterior, que es el comportamiento deseado.
+      navigate(-1); 
+      
     } catch (err) {
-      console.error(err);
-      setMensajeEnvio("❌ Error al guardar el checklist.");
+      console.error("Error al enviar el checklist:", err.response ? err.response.data : err.message);
+      
+      const serverMessage = err.response && err.response.data 
+          ? JSON.stringify(err.response.data) 
+          : err.message;
+
+      setMensajeEnvio(`❌ Error al guardar el checklist. Detalle: ${serverMessage}`);
+      alert("Error al guardar el checklist."); 
     } finally {
       setEnviando(false);
     }
   };
 
+  // --- RENDERIZADO ---
   return (
     <form className="form-container" onSubmit={handleSubmit}>
-      {/* Datos Generales */}
+
+      {/* 1. Datos Generales (ENCABEZADO) */}
       <div className="card-section" style={{ marginBottom: 16 }}>
         <h3 className="card-title" style={{ marginBottom: 12 }}>
           LISTA DE CHEQUEO PARA BOMBA ESTACIONARIA DE CONCRETO
@@ -242,68 +386,161 @@ function Checklist() {
             { name: "nombre_operador", label: "Operario" },
             { name: "bomba_numero", label: "BOMBA No.", type: "select" },
             { name: "horometro_motor", label: "HOROMETRO MOTOR" },
-          ].map((item) => (
-            <div key={item.name} style={{ flex: 1, minWidth: 180 }}>
-              <label className="permiso-trabajo-label">{item.label}</label>
-              {item.type === "select" ? (
-                <select
-                  name={item.name}
-                  value={datos[item.name]}
-                  onChange={handle_change}
-                  className="permiso-trabajo-select"
-                >
-                  <option value="">Seleccionar</option>
-                  {lista_bombas.map((b, idx) => (
-                    <option key={idx} value={b.numero_bomba}>
-                      {b.numero_bomba}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type={item.type || "text"}
-                  name={item.name}
-                  value={datos[item.name]}
-                  onChange={handle_change}
-                  className="permiso-trabajo-input"
-                  readOnly={
-                    item.name === "nombre_cliente" ||
-                    item.name === "nombre_proyecto" ||
-                    item.name === "fecha_servicio" ||
-                    item.name === "nombre_operador"
-                  }
-                />
-              )}
-            </div>
-          ))}
+          ].map((item) => {
+            const isHeaderError = camposFaltantes.includes(item.name);
+            const isMandatory = item.name === "bomba_numero" || item.name === "horometro_motor";
+
+            return (
+              <div key={item.name} style={{ flex: 1, minWidth: 180 }}>
+                <label className="permiso-trabajo-label">{item.label}{isMandatory}</label>
+                
+                {item.type === "select" ? (
+                  <select
+                    ref={item.name === "bomba_numero" ? bombaRef : null}
+                    name={item.name}
+                    value={datos[item.name]}
+                    onChange={handle_change}
+                    className={`permiso-trabajo-select ${isHeaderError ? 'campo-error' : ''}`}
+                  >
+                    <option value="">Seleccionar</option>
+                    {lista_bombas.map((b, idx) => (
+                      <option key={idx} value={b.numero_bomba}>
+                        {b.numero_bomba}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    ref={item.name === "horometro_motor" ? horometroRef : null}
+                    type={item.type || "text"}
+                    name={item.name}
+                    value={datos[item.name]}
+                    onChange={handle_change}
+                    className="permiso-trabajo-input"
+                    readOnly={
+                      item.name === "nombre_cliente" ||
+                      item.name === "nombre_proyecto" ||
+                      item.name === "fecha_servicio" ||
+                      item.name === "nombre_operador"
+                    }
+                  />
+                )}
+                {/* Indicador de error y puntero */}
+                {isHeaderError && (
+                    <span style={{ color: "red", fontSize: 13 }}>
+                        Este campo es obligatorio.
+                        <span
+                            style={{ marginLeft: 8, cursor: "pointer", fontSize: 18, verticalAlign: "middle" }}
+                            onClick={scrollToBottom}
+                            title="Ir al botón Guardar"
+                        >
+                            &#8594;
+                        </span>
+                    </span>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Secciones del checklist */}
-      {secciones.map((seccion, idx) => (
+      {/* 2. Secciones del Checklist (Cuerpo con Observaciones Condicionales y Errores) */}
+      {seccionesEstructura.map((seccion, idx) => (
         <div className="card-section" key={idx} style={{ marginBottom: 16 }}>
           <h4 className="card-title">{seccion.titulo}</h4>
 
-          {seccion.items.map((item, i) => (
-            <div key={i} style={{ marginBottom: 8 }}>
-              <div className="permiso-trabajo-label">{item}</div>
-              <select
-                value={estadoItems[item] || ""}
-                onChange={(e) => handleItemChange(item, e.target.value)}
-                className="permiso-trabajo-select"
-                style={{ minWidth: 160, maxWidth: 320 }}
+          {seccion.fields.map((field, i) => {
+            // Chequeo si el campo de estado o el campo de observación tienen error
+            const isStateError = camposFaltantes.includes(field);
+            const isObservationError = camposFaltantes.includes(`${field}_observacion`);
+            const needsObservation = estadoItems[field]?.estado === 'REGULAR' || estadoItems[field]?.estado === 'MALO';
+
+            return (
+              // 3. Añadir la referencia al div contenedor para el scroll
+              <div 
+                key={i} 
+                style={{ marginBottom: 16, paddingBottom: '16px' }}
+                ref={el => itemRefs.current[field] = el} // Ref para scroll al inicio del ítem
               >
-                <option value="">--</option>
-                <option value="Bueno">Bueno</option>
-                <option value="Regular">Regular</option>
-                <option value="Malo">Malo</option>
-              </select>
-            </div>
-          ))}
+                <div className="permiso-trabajo-label">{fieldToTextMap[field]}</div> 
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <select
+                    value={estadoItems[field]?.estado || ""} 
+                    onChange={(e) => handleItemStateChange(field, e.target.value)} 
+                    className={`permiso-trabajo-select ${isStateError ? 'campo-error' : ''}`} // Aplicar clase de error
+                    style={{ minWidth: 160, maxWidth: 320 }}
+                    >
+                    <option value="">--</option>
+                    <option value="BUENO">Bueno</option>
+                    <option value="REGULAR">Regular</option>
+                    <option value="MALO">Malo</option>
+                    </select>
+
+                    {/* Indicador de error de Estado */}
+                    {isStateError && (
+                        <span style={{ color: "red", fontSize: 13 }}>
+                            Selección obligatoria.
+                            <span
+                                style={{ marginLeft: 8, cursor: "pointer", fontSize: 18, verticalAlign: "middle" }}
+                                onClick={scrollToBottom}
+                                title="Ir al botón Guardar"
+                            >
+                                &#8594;
+                            </span>
+                        </span>
+                    )}
+                </div>
+
+                {/* Campo de Observación Condicional */}
+                {needsObservation && (
+                  <div style={{ marginTop: 8 }}>
+                    <label className="permiso-trabajo-label" style={{ fontSize: '0.9em', fontWeight: 'bold' }}>
+                      Observación (Detalle requerido):
+                    </label>
+                    <textarea
+                      ref={el => itemRefs.current[`${field}_observacion`] = el} // Ref para scroll al textarea
+                      name={`${field}_observacion`}
+                      value={estadoItems[field]?.observacion || ""}
+                      onChange={(e) => handleItemObservationChange(field, e.target.value)}
+                      className={`permiso-trabajo-input ${isObservationError ? 'campo-error' : ''}`} // Aplicar clase de error
+                      rows="2"
+                      style={{ width: '93%' }}
+                    />
+                    {/* Indicador de error de Observación */}
+                    {isObservationError && (
+                        <span style={{ color: "red", fontSize: 13 }}>
+                            Detalle de observación obligatorio.
+                            <span
+                                style={{ marginLeft: 8, cursor: "pointer", fontSize: 18, verticalAlign: "middle" }}
+                                onClick={scrollToBottom}
+                                title="Ir al botón Guardar"
+                            >
+                                &#8594;
+                            </span>
+                        </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       ))}
 
-      <div style={{ textAlign: "right", marginTop: 24 }}>
+      {/* 3. Campo de Observaciones Generales */}
+      <div className="card-section" style={{ marginBottom: 24, padding: '20px' }}>
+          <label className="permiso-trabajo-label">Observaciones generales</label>
+          <textarea
+            name="observaciones"
+            value={datos.observaciones}
+            onChange={handle_change}
+            className="permiso-trabajo-input"
+            rows="4"
+          />
+      </div>
+
+      {/* 5. Botón de Guardar (con referencia) */}
+      <div style={{ textAlign: "right", marginTop: 24 }} ref={submitRef}>
         <button
           type="submit"
           className="button"
@@ -313,21 +550,8 @@ function Checklist() {
           {enviando ? "Guardando..." : "Guardar Checklist"}
         </button>
       </div>
-
-      {mensajeEnvio && (
-        <p
-          style={{
-            marginTop: 12,
-            textAlign: "center",
-            color: mensajeEnvio.includes("✅") ? "green" : "red",
-          }}
-        >
-          {mensajeEnvio}
-        </p>
-      )}
     </form>
   );
 }
 
 export default Checklist;
-

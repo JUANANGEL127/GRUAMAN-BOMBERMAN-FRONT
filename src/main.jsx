@@ -61,7 +61,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/inspeccion_epcc" element={<InspeccionEPCC />} />
             <Route path="/inspeccion_izaje" element={<InspeccionIzaje />} />
           </Routes>
-          <Footer />
+          {/* <Footer /> */}
         </div>
       </div>
     </BrowserRouter>

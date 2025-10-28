@@ -151,7 +151,7 @@ function App() {
   );
 
   return (
-    <div className="form-container" style={{ paddingBottom: 120 }}>
+    <div className="form-container">
       <div className="card-section">
         <h3 className="card-title">Déjanos conocerte</h3>
         <label className="label">
@@ -247,9 +247,6 @@ function App() {
       <button className="button" onClick={handle_guardar} style={{ position: "relative", zIndex: 2 }}>
         Guardar
       </button>
-      {faltan_datos_mensaje && (
-        <p className="label" style={{ color: "red", marginBottom: "22px" }}>{faltan_datos_mensaje}</p>
-      )}
     </div>
   );
 }
