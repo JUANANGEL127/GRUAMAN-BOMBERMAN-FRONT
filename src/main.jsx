@@ -15,6 +15,8 @@ import ChequeoTorreGruas from "./components/gruaman/chequeo_torregruas";
 import InspeccionEPCC from "./components/gruaman/inspeccion_epcc";
 import InspeccionIzaje from "./components/gruaman/inspeccion_izaje";
 import InspeccionEPCCBomberman from "./components/bomberman/inspeccion_epcc_bomberman";
+import CedulaIngreso from "./CedulaIngreso";
+import BienvenidaSeleccion from "./BienvenidaSeleccion";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
 
@@ -49,6 +51,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <div style={{ position: "relative", zIndex: 1 }}>
           <Routes>
             <Route path="/" element={<App />} />
+            <Route path="/cedula" element={<CedulaIngreso />} />
+            <Route path="/bienvenida" element={<BienvenidaSeleccion usuario={{ nombre: "Invitado", empresa: "GyE" }} />} />
             <Route path="/eleccion/*" element={<Eleccion />} />
             <Route path="/eleccionaic/*" element={<EleccionAIC />} />
             <Route path="/formulario1" element={<Formulario1 />} />
