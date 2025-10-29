@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate } from "react-router-dom";
 import PlanillaDeBombeo from "./planillabombeo";
 import Checklist from "./checklist";
 import InventariosObra from "./inventariosobra";
-import Administrador from "../administrador";
+import Administrador from "../administrador_gruaman/administrador";
 import "../../App.css";
 import PermisoTrabajo from "../compartido/permiso_trabajo";
 import ChequeoAlturas from "../compartido/chequeo_alturas";

@@ -135,9 +135,10 @@ function getColombiaDateString() {
 }
 
 function inspeccion_epcc_bomberman() {
+  // 🔑 Cambiado: cliente -> nombre_cliente, proyecto -> nombre_proyecto
   const [datosGenerales, setDatosGenerales] = useState({
-    cliente: "",
-    proyecto: "",
+    nombre_cliente: "",
+    nombre_proyecto: "",
     fecha: "",
     nombre_operador: "",
     cargo: ""
@@ -160,18 +161,21 @@ function inspeccion_epcc_bomberman() {
         if (Array.isArray(res.data.obras)) obras = res.data.obras;
         const obra = obras.find(o => o.nombre_obra === nombre_proyecto);
         const constructora = obra ? obra.constructora : "";
+        
+        // 🔑 Cambiado: cliente -> nombre_cliente, proyecto -> nombre_proyecto
         setDatosGenerales({
-          cliente: constructora,
-          proyecto: nombre_proyecto,
+          nombre_cliente: constructora,
+          nombre_proyecto: nombre_proyecto,
           fecha: fechaHoy,
           nombre_operador,
           cargo: localStorage.getItem("cargo_trabajador") || ""
         });
       })
       .catch(() => {
+        // 🔑 Cambiado: cliente -> nombre_cliente, proyecto -> nombre_proyecto
         setDatosGenerales({
-          cliente: "",
-          proyecto: nombre_proyecto,
+          nombre_cliente: "",
+          nombre_proyecto: nombre_proyecto,
           fecha: fechaHoy,
           nombre_operador,
           cargo: localStorage.getItem("cargo_trabajador") || ""
@@ -214,7 +218,8 @@ function inspeccion_epcc_bomberman() {
     let primerError = null;
 
     // Datos generales
-    ["cliente", "proyecto", "fecha", "nombre_operador", "cargo"].forEach(field => {
+    // 🔑 Cambiado: 'cliente' a 'nombre_cliente', 'proyecto' a 'nombre_proyecto'
+    ["nombre_cliente", "nombre_proyecto", "fecha", "nombre_operador", "cargo"].forEach(field => {
       if (!datosGenerales[field] || datosGenerales[field].toString().trim() === "") {
         erroresTemp[field] = true;
         if (!primerError) primerError = field;
@@ -255,12 +260,13 @@ function inspeccion_epcc_bomberman() {
       });
     });
 
+    // 🔑 Renombrado de las claves del payload para coincidir con los nuevos requisitos
     return {
-      cliente_constructora: datosGenerales.cliente,
-      proyecto_constructora: datosGenerales.proyecto,
-      fecha_registro: datosGenerales.fecha,
-      nombre_operador: datosGenerales.nombre_operador,
-      cargo_operador: datosGenerales.cargo,
+      nombre_cliente: datosGenerales.nombre_cliente, // Antes: cliente_constructora
+      nombre_proyecto: datosGenerales.nombre_proyecto, // Antes: proyecto_constructora
+      fecha_servicio: datosGenerales.fecha, // Antes: fecha_registro
+      nombre_operador: datosGenerales.nombre_operador, // Sin cambio
+      cargo: datosGenerales.cargo, // Antes: cargo_operador
       ...campos,
       observaciones_generales: observaciones
     };
@@ -293,24 +299,24 @@ function inspeccion_epcc_bomberman() {
             <label className="label">Cliente / Constructora</label>
             <input
               type="text"
-              name="cliente"
-              value={datosGenerales.cliente}
+              name="nombre_cliente" // 🔑 Cambiado: cliente -> nombre_cliente
+              value={datosGenerales.nombre_cliente} // 🔑 Cambiado
               readOnly
               className="permiso-trabajo-input"
               style={{ width: "100%" }}
-              id="cliente"
+              id="nombre_cliente" // 🔑 Cambiado
             />
           </div>
           <div style={{ width: "93%" }}>
             <label className="label">Proyecto / Constructora</label>
             <input
               type="text"
-              name="proyecto"
-              value={datosGenerales.proyecto}
+              name="nombre_proyecto" // 🔑 Cambiado: proyecto -> nombre_proyecto
+              value={datosGenerales.nombre_proyecto} // 🔑 Cambiado
               readOnly
               className="permiso-trabajo-input"
               style={{ width: "100%" }}
-              id="proyecto"
+              id="nombre_proyecto" // 🔑 Cambiado
             />
           </div>
           <div style={{ width: "93%" }}>

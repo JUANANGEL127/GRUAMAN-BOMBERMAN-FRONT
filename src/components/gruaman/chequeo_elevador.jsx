@@ -41,14 +41,14 @@ const MAPEO_DB = {
 function ChequeoElevador() {
   const navigate = useNavigate();
 
-  // Datos generales (Cargo renombrado a cargo_operador en el payload)
+  // 🔑 DATOS GENERALES: Renombrados
   const [generales, setGenerales] = useState({
-    cliente_constructora: "",
-    proyecto_constructora: "",
+    nombre_cliente: "", // Antes: cliente_constructora
+    nombre_proyecto: "", // Antes: proyecto_constructora
     fecha_servicio: "",
     nombre_operador: "",
-    cargo: "", // Se mapeará a cargo_operador en el submit
-    observaciones: "", // Se mapeará a observaciones_generales en el submit
+    cargo: "", // Antes se mapeaba a cargo_operador, ahora es cargo
+    observaciones: "", // Se mapea a observaciones_generales
   });
 
   // Estados
@@ -58,7 +58,7 @@ function ChequeoElevador() {
   const submitRef = useRef(null);
   const itemRefs = useRef({});
 
-  // Secciones
+  // Secciones (sin cambios)
   const secciones = [
     {
       titulo: "CONDICIONES DE SEGURIDAD",
@@ -106,7 +106,7 @@ function ChequeoElevador() {
     },
   ];
 
-  // La función makeKey ahora usará el mapeo a la columna de la DB
+  // La función makeKey ahora usará el mapeo a la columna de la DB (sin cambios)
   const makeKey = (itemText) => MAPEO_DB[itemText] || itemText; 
 
   useEffect(() => {
@@ -133,6 +133,7 @@ function ChequeoElevador() {
         "";
       let constructora = "";
       try {
+        // Asumiendo que esta URL es correcta y funcional
         const res = await axios.get("http://localhost:3000/obras");
         const obras = Array.isArray(res.data.obras) ? res.data.obras : res.data || [];
         const obra_obj = obras.find(
@@ -145,9 +146,10 @@ function ChequeoElevador() {
 
       const cargo = localStorage.getItem("cargo_trabajador") || "";
 
+      // 🔑 ESTADO INICIAL: Renombrado de claves
       setGenerales({
-        cliente_constructora: constructora,
-        proyecto_constructora: proyecto,
+        nombre_cliente: constructora, // Antes: cliente_constructora
+        nombre_proyecto: proyecto, // Antes: proyecto_constructora
         fecha_servicio: fechaHoy,
         nombre_operador: nombre_operador,
         cargo: cargo,
@@ -157,7 +159,7 @@ function ChequeoElevador() {
     init();
   }, []);
 
-  // Handlers
+  // Handlers (sin cambios, solo usan las nuevas claves)
   const handleGeneralesChange = (e) =>
     setGenerales((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -166,18 +168,20 @@ function ChequeoElevador() {
     setErrores((prev) => prev.filter((p) => p !== key));
   };
 
-  // Scroll a primer error
+  // Scroll a primer error (actualizado para usar las nuevas claves)
   const scrollToFirstError = (errList) => {
     if (!errList || errList.length === 0) return;
     const first = errList[0];
+    
     // Primero, intenta hacer scroll a un error de respuesta (select)
     if (first in itemRefs.current && itemRefs.current[first]) {
       itemRefs.current[first].scrollIntoView({ behavior: "smooth", block: "center" });
       itemRefs.current[first].focus?.();
       return;
     }
-    // Si es un error de dato general, haz scroll al inicio
-    if (["cliente_constructora", "proyecto_constructora", "fecha_servicio", "nombre_operador", "cargo"].includes(first)) {
+    
+    // Si es un error de dato general, haz scroll al campo con el nuevo nombre
+    if (["nombre_cliente", "nombre_proyecto", "fecha_servicio", "nombre_operador", "cargo"].includes(first)) {
         document.getElementById(`campo_${first}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
         document.getElementById(`campo_${first}`)?.focus?.();
         return;
@@ -196,8 +200,8 @@ function ChequeoElevador() {
     setMostrarFlecha(false); // reinicia la flecha
     const faltantes = [];
 
-    // Validar Datos Generales
-    ["cliente_constructora", "proyecto_constructora", "fecha_servicio", "nombre_operador", "cargo"].forEach(
+    // Validar Datos Generales (usando las nuevas claves)
+    ["nombre_cliente", "nombre_proyecto", "fecha_servicio", "nombre_operador", "cargo"].forEach(
       (g) => {
         if (!generales[g] || !generales[g].toString().trim()) faltantes.push(g);
       }
@@ -216,20 +220,20 @@ function ChequeoElevador() {
       return;
     }
 
-    // Construir Payload para la DB
+    // 🔑 CONSTRUCCIÓN DEL PAYLOAD: Renombrado de claves
     const payload = {
       // DATOS GENERALES
-      cliente_constructora: generales.cliente_constructora,
-      proyecto_constructora: generales.proyecto_constructora,
-      fecha_servicio: generales.fecha_servicio,
+      nombre_cliente: generales.nombre_cliente, // Antes: cliente_constructora
+      nombre_proyecto: generales.nombre_proyecto, // Antes: proyecto_constructora
+      fecha_servicio: generales.fecha_servicio, // Se mantiene
       nombre_operador: generales.nombre_operador,
-      cargo_operador: generales.cargo, // Renombrado: cargo -> cargo_operador
+      cargo: generales.cargo, // Antes: cargo_operador
 
-      // RESPUESTAS (Ya están con el nombre de la columna de la DB gracias a makeKey)
+      // RESPUESTAS
       ...respuestas,
 
       // OBSERVACIONES
-      observaciones_generales: generales.observaciones, // Renombrado: observaciones -> observaciones_generales
+      observaciones_generales: generales.observaciones, // Se mantiene el mapeo
     };
 
     try {
@@ -251,8 +255,9 @@ function ChequeoElevador() {
         </h3>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
           {[
-            { name: "cliente_constructora", label: "Cliente / Constructora" },
-            { name: "proyecto_constructora", label: "Proyecto / Constructora" },
+            // 🔑 RENDERIZADO: Cambiando los nombres de los campos y etiquetas
+            { name: "nombre_cliente", label: "Cliente / Constructora" },
+            { name: "nombre_proyecto", label: "Proyecto / Constructora" },
             { name: "fecha_servicio", label: "Fecha" },
             { name: "nombre_operador", label: "Trabajador autorizado" },
             { name: "cargo", label: "Cargo" },
@@ -263,7 +268,8 @@ function ChequeoElevador() {
                 id={`campo_${item.name}`}
                 type="text"
                 name={item.name}
-                value={generales[item.name]}
+                // Usando corchetes para acceder al estado con la clave dinámica (nueva)
+                value={generales[item.name]} 
                 onChange={handleGeneralesChange}
                 className={`permiso-trabajo-input${
                   errores.includes(item.name) ? " campo-error" : ""
@@ -282,7 +288,7 @@ function ChequeoElevador() {
         </div>
       </div>
 
-      {/* Secciones */}
+      {/* Secciones (sin cambios) */}
       {secciones.map((sec, sidx) => (
         <div className="card-section" key={sidx} style={{ marginBottom: 16 }}>
           <h4 className="card-title">{sec.titulo}</h4>

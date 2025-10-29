@@ -7,7 +7,7 @@ import Formulario1 from "./components/gruaman/formulario1";
 import PlanillaBombeo from "./components/bomberman/planillabombeo";
 import Checklist from "./components/bomberman/checklist";
 import InventarioObra from "./components/bomberman/inventariosobra";
-import Administrador from "./components/administrador";
+import Administrador from "./components/administrador_gruaman/administrador";
 import Footer from "./components/Footer";
 import PermisoTrabajo from "./components/compartido/permiso_trabajo";
 import ChequeoAlturas from "./components/compartido/chequeo_alturas";
@@ -20,6 +20,13 @@ import CedulaIngreso from "./CedulaIngreso";
 import BienvenidaSeleccion from "./BienvenidaSeleccion";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
+import PermisoTrabajoAdmin from "./components/administrador_gruaman/permiso_trabajo_admin";
+import LlegadaSalidaAdmin from "./components/administrador_gruaman/llegada_salida_admin";
+import ChequeoAlturasAdmin from "./components/administrador_gruaman/chequeo_alturas_admin";
+import ChequeoTorreGruasAdmin from "./components/administrador_gruaman/chequeo_torregruas_admin";
+import ChequeoElevadorAdmin from "./components/administrador_gruaman/chequeo_elevador_admin";
+import InspeccionEPCCAdmins from "./components/administrador_gruaman/inspeccion_EPCC_admins";
+import InspeccionIzajeAdmin from "./components/administrador_gruaman/inspeccion_izaje_admin";
 
 // Función para obtener usuario y obra de localStorage
 function getUsuarioObra() {
@@ -210,6 +217,13 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/inspeccion_epcc" element={<InspeccionEPCC />} />
             <Route path="/inspeccion_izaje" element={<InspeccionIzaje />} />
             <Route path="/inspeccion_epcc_bomberman" element={<InspeccionEPCCBomberman />} />
+            <Route path="/permiso_trabajo_admin" element={<PermisoTrabajoAdmin />} />
+            <Route path="/llegada_salida_admin" element={<LlegadaSalidaAdmin />} />
+            <Route path="/chequeo_alturas_admin" element={<ChequeoAlturasAdmin />} />
+            <Route path="/chequeo_torregruas_admin" element={<ChequeoTorreGruasAdmin />} />
+            <Route path="/chequeo_elevador_admin" element={<ChequeoElevadorAdmin />} />
+            <Route path="/inspeccion_EPCC_admins" element={<InspeccionEPCCAdmins />} />
+            <Route path="/inspeccion_izaje_admin" element={<InspeccionIzajeAdmin />} />
           </Routes>
           {/* <Footer /> */}
         </div>

@@ -94,7 +94,7 @@ const accesoriosDBMap = [
   "bola_limpieza_tuberia_55_cifa",
   "jostick",
   "inyector_grasa",
-  "caja_herramientas", // <--- corregido aquí
+  "caja_herramientas", 
   "tubo_entrega_50cm_flanche_plano",
   "caneca_5_galones",
   "caneca_55_galones",
@@ -295,11 +295,11 @@ function inventariosobra() {
     if (!validarCamposObligatorios()) return;
 
     const payload = {
-      cliente_constructora: generales.cliente,
-      proyecto_constructora: generales.proyecto,
-      fecha_registro: generales.fecha,
+      nombre_cliente: generales.cliente,
+      nombre_proyecto: generales.proyecto,
+      fecha_servicio: generales.fecha,
       nombre_operador: generales.nombre_operador,
-      cargo_operador: generales.cargo,
+      cargo: generales.cargo,
       ...accesoriosDBMap.reduce((acc, col, idx) => {
         acc[col] = getAccesorioValue(accesoriosCant, idx) || 0;
         return acc;
