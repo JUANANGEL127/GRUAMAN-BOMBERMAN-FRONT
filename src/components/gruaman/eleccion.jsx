@@ -78,7 +78,7 @@ function Bienvenida() {
     <div className="form-container">
       <div className="card-section">
         <h3 className="card-title">
-          Bienvenido GruaMan{nombre ? ` ${nombre}` : ""}
+          Bienvenido Super Heroe{nombre ? ` ${nombre}` : ""}
         </h3>
         <div style={{ margin: "18px 0 24px 0" }}>
           <div style={{

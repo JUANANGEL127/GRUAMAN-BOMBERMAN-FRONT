@@ -85,7 +85,7 @@ function BienvenidaAIC() {
     <div className="form-container">
       <div className="card-section">
         <h3 className="card-title">
-          Bienvenido{empresaNombre ? ` ${empresaNombre}` : ""}{nombre ? ` ${nombre}` : ""}
+          Bienvenido Super Heroe{empresaNombre ? ` ${empresaNombre}` : ""}{nombre ? ` ${nombre}` : ""}
         </h3>
         <div style={{ margin: "18px 0 24px 0" }}>
           <div style={{

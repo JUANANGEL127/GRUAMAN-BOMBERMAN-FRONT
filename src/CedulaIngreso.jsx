@@ -22,12 +22,38 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
     }
     try {
       const resp = await axios.get(`http://localhost:3000/datos_basicos`);
-      // resp.data.datos es el array de usuarios
-      const usuario = Array.isArray(resp.data.datos)
-        ? resp.data.datos.find(u => u.numero_identificacion === cedula)
-        : null;
+      const datosArray = Array.isArray(resp.data.datos) ? resp.data.datos : (Array.isArray(resp.data) ? resp.data : []);
+      const usuario = datosArray.find(u => {
+        // Normalizar posible campo de identificación
+        const id = u.numero_identificacion || u.cedula || u.id || "";
+        return id === cedula;
+      }) || null;
+
       if (usuario) {
-        onUsuarioEncontrado({
+        // Normalizar valores y guardar en localStorage para toda la app
+        try {
+          const nombre = usuario.nombre || usuario.nombres || usuario.nombre_trabajador || "";
+          const numeroId = usuario.numero_identificacion || usuario.cedula || usuario.id || cedula;
+          const cargo = usuario.cargo || usuario.cargo_trabajador || usuario.puesto || "";
+          const empresaName = usuario.empresa || (usuario.empresa_id === 1 ? "GyE" : (usuario.empresa_id === 2 ? "AIC" : "")) || "";
+          const obra = usuario.obra || usuario.nombre_proyecto || usuario.nombre_obra || "";
+
+          localStorage.setItem("nombre_trabajador", nombre);
+          localStorage.setItem("usuario", JSON.stringify(usuario));
+          localStorage.setItem("cedula_trabajador", numeroId);
+          localStorage.setItem("cedula", numeroId);
+          if (cargo) localStorage.setItem("cargo_trabajador", cargo);
+          if (empresaName) localStorage.setItem("empresa_trabajador", empresaName);
+          if (obra) {
+            localStorage.setItem("obra", obra);
+            localStorage.setItem("nombre_proyecto", obra);
+          }
+        } catch (e) {
+          console.error("Error guardando datos en localStorage:", e);
+        }
+
+        // Mantener callback existente
+        onUsuarioEncontrado && onUsuarioEncontrado({
           nombre: usuario.nombre,
           empresa: usuario.empresa_id === 1 ? "GyE" : "AIC",
           numero_identificacion: usuario.numero_identificacion
@@ -35,7 +61,8 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
       } else {
         setError("No haces parte de nuestros super héroes.");
       }
-    } catch {
+    } catch (err) {
+      console.error("Error obteniendo datos básicos:", err);
       setError("No haces parte de nuestros super héroes.");
     }
   };

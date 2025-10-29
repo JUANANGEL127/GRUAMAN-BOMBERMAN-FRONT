@@ -16,12 +16,34 @@ function BienvenidaSeleccion({ usuario }) {
       .catch(() => setListaObras([]));
   }, []);
 
+  // Guardar usuario recibido en localStorage para que esté disponible en toda la app
+  useEffect(() => {
+    if (!usuario) return;
+    try {
+      localStorage.setItem("usuario", JSON.stringify(usuario));
+      if (usuario.nombre) localStorage.setItem("nombre_trabajador", usuario.nombre);
+      if (usuario.numero_identificacion) localStorage.setItem("cedula_trabajador", usuario.numero_identificacion);
+      if (usuario.empresa) localStorage.setItem("empresa_trabajador", usuario.empresa);
+    } catch (e) {
+      console.error("Error guardando usuario en localStorage", e);
+    }
+  }, [usuario]);
+
   const handleObraChange = e => {
     const nombre_obra = e.target.value;
     setObraBusqueda(nombre_obra);
     const obra_obj = lista_obras.find(o => o.nombre_obra === nombre_obra);
     if (obra_obj) {
       setObraIdSeleccionada(obra_obj.id);
+      // Guardar obra seleccionada en localStorage (nombre, id, constructora, nombre_proyecto)
+      try {
+        localStorage.setItem("obra", obra_obj.nombre_obra || "");
+        localStorage.setItem("obra_id", String(obra_obj.id || ""));
+        if (obra_obj.constructora) localStorage.setItem("constructora", obra_obj.constructora);
+        if (obra_obj.nombre_obra) localStorage.setItem("nombre_proyecto", obra_obj.nombre_obra);
+      } catch (err) {
+        console.error("Error guardando obra en localStorage", err);
+      }
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           pos => setUbicacion({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
@@ -31,6 +53,14 @@ function BienvenidaSeleccion({ usuario }) {
     } else {
       setObraIdSeleccionada("");
       setUbicacion({ lat: null, lon: null });
+      try {
+        localStorage.removeItem("obra");
+        localStorage.removeItem("obra_id");
+        localStorage.removeItem("constructora");
+        localStorage.removeItem("nombre_proyecto");
+      } catch (err) {
+        console.error("Error limpiando obra en localStorage", err);
+      }
     }
   };
 
@@ -47,6 +77,18 @@ function BienvenidaSeleccion({ usuario }) {
         lon: ubicacion.lon
       });
       if (resp.data && resp.data.ok) {
+        // Asegurar que la obra seleccionada esté persistida antes de navegar
+        const obra_obj = lista_obras.find(o => o.id === obra_id_seleccionada);
+        if (obra_obj) {
+          try {
+            localStorage.setItem("obra", obra_obj.nombre_obra || "");
+            localStorage.setItem("obra_id", String(obra_obj.id || ""));
+            if (obra_obj.constructora) localStorage.setItem("constructora", obra_obj.constructora);
+            if (obra_obj.nombre_obra) localStorage.setItem("nombre_proyecto", obra_obj.nombre_obra);
+          } catch (err) {
+            console.error("Error guardando obra en localStorage antes de navegar", err);
+          }
+        }
         if (usuario.empresa === "GyE") {
           navigate("/eleccion");
         } else {
