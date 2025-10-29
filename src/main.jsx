@@ -15,6 +15,7 @@ import ChequeoTorreGruas from "./components/gruaman/chequeo_torregruas";
 import InspeccionEPCC from "./components/gruaman/inspeccion_epcc";
 import InspeccionIzaje from "./components/gruaman/inspeccion_izaje";
 import InspeccionEPCCBomberman from "./components/bomberman/inspeccion_epcc_bomberman";
+import ChequeoElevador from "./components/gruaman/chequeo_elevador";
 import CedulaIngreso from "./CedulaIngreso";
 import BienvenidaSeleccion from "./BienvenidaSeleccion";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -205,6 +206,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />
             <Route path="/chequeo_alturas" element={<ChequeoAlturas />} />
             <Route path="/chequeo_torregruas" element={<ChequeoTorreGruas />} />
+            <Route path="/chequeo_elevador" element={<ChequeoElevador />} />
             <Route path="/inspeccion_epcc" element={<InspeccionEPCC />} />
             <Route path="/inspeccion_izaje" element={<InspeccionIzaje />} />
             <Route path="/inspeccion_epcc_bomberman" element={<InspeccionEPCCBomberman />} />

@@ -8,7 +8,7 @@ import ChequeoAlturas from "../compartido/chequeo_alturas";
 import ChequeoTorreGruas from "./chequeo_torregruas";
 import InspeccionEPCC from "./inspeccion_epcc";
 import InspeccionIzaje from "./inspeccion_izaje";
-
+import ChequeoElevador from "./chequeo_elevador"; // <- nuevo import
 
 // Utiliza localStorage para persistir el estado de los botones usados por usuario
 function getUsadosFromStorage(usuario) {
@@ -23,7 +23,8 @@ function getUsadosFromStorage(usuario) {
     chequeo_alturas: false,
     chequeo_torregruas: false,
     inspeccion_epcc: false,
-    inspeccion_izaje: false, // nuevo estado
+    inspeccion_izaje: false,
+    chequeo_elevador: false, // <- nueva clave por defecto
   };
 }
 
@@ -156,6 +157,13 @@ function Bienvenida() {
             Chequeo Torre Grúa
           </button>
           <button
+            className={getButtonClass(usados.chequeo_elevador)} // <- usar la nueva clave
+            style={{ maxWidth: 320 }}
+            onClick={() => handleNavigate("/chequeo_elevador", "chequeo_elevador")}
+          >
+            Chequeo Elevador
+          </button>
+          <button
             className={getButtonClass(usados.inspeccion_epcc)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/inspeccion_epcc", "inspeccion_epcc")}
@@ -207,6 +215,7 @@ function eleccion() {
       <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />
       <Route path="/chequeo_alturas" element={<ChequeoAlturas />} />
       <Route path="/chequeo_torregruas" element={<ChequeoTorreGruas />} />
+      <Route path="/chequeo_elevador" element={<ChequeoElevador />} /> {/* <- nueva ruta */}
       <Route path="/inspeccion_epcc" element={<InspeccionEPCC />} />
       <Route path="/inspeccion_izaje" element={<InspeccionIzaje />} />
     </Routes>
