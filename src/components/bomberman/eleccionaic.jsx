@@ -4,6 +4,7 @@ import PlanillaDeBombeo from "./planillabombeo";
 import Checklist from "./checklist";
 import InventariosObra from "./inventariosobra";
 import Administrador from "../administrador_gruaman/administrador";
+import AdministradorBomberman from "../administrador_bomberman/administrador_bomberman"; // importar el componente
 import "../../App.css";
 import PermisoTrabajo from "../compartido/permiso_trabajo";
 import ChequeoAlturas from "../compartido/chequeo_alturas";
@@ -158,7 +159,7 @@ function BienvenidaAIC() {
           <button
             className={getButtonClass(usados.administrador)}
             style={{ maxWidth: 320 }}
-            onClick={() => handleNavigate("/administrador", "administrador")}
+            onClick={() => handleNavigate("/administrador_bomberman", "administrador")}
           >
             Panel Administrador
           </button>
@@ -218,6 +219,7 @@ function EleccionAIC() {
       <Route path="/checklist" element={<Checklist />} />
       <Route path="/inventariosobra" element={<InventariosObra />} />
       <Route path="/administrador" element={<Administrador />} />
+      <Route path="/administrador_bomberman" element={<AdministradorBomberman />} />
       <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />
       <Route path="/chequeo_alturas" element={<ChequeoAlturas />} />
       <Route path="/inspeccion_epcc_bomberman" element={<inspeccionEpccBomberman />} /> {/* nuevo route */}

@@ -27,6 +27,11 @@ import ChequeoTorreGruasAdmin from "./components/administrador_gruaman/chequeo_t
 import ChequeoElevadorAdmin from "./components/administrador_gruaman/chequeo_elevador_admin";
 import InspeccionEPCCAdmins from "./components/administrador_gruaman/inspeccion_EPCC_admins";
 import InspeccionIzajeAdmin from "./components/administrador_gruaman/inspeccion_izaje_admin";
+import AdministradorBomberman from "./components/administrador_bomberman/administrador_bomberman";
+import PlanillaBombeoAdmin from "./components/administrador_bomberman/planilla_bombeo_admin";
+import InventariosObraAdmin from "./components/administrador_bomberman/inventarios_obra_admin";
+import ChecklistAdmin from "./components/administrador_bomberman/checklist_admin";
+import InspeccionEPCCBombermanAdmin from "./components/administrador_bomberman/inspeccion_epcc_bomberman";
 
 // Función para obtener usuario y obra de localStorage
 function getUsuarioObra() {
@@ -224,6 +229,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/chequeo_elevador_admin" element={<ChequeoElevadorAdmin />} />
             <Route path="/inspeccion_EPCC_admins" element={<InspeccionEPCCAdmins />} />
             <Route path="/inspeccion_izaje_admin" element={<InspeccionIzajeAdmin />} />
+            <Route path="/administrador_bomberman" element={<AdministradorBomberman />} />
+            <Route path="/planilla_bombeo_admin" element={<PlanillaBombeoAdmin />} />
+            <Route path="/inventarios_obra_admin" element={<InventariosObraAdmin />} />
+            <Route path="/checklist_admin" element={<ChecklistAdmin />} />
+            <Route path="/inspeccion_epcc_bomberman_admin" element={<InspeccionEPCCBombermanAdmin />} />
           </Routes>
           {/* <Footer /> */}
         </div>
