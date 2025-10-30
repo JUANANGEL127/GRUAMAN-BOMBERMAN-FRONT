@@ -2,6 +2,27 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
+function toYMD(date) {
+  if (!date) return '';
+  if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+  const d = new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function normalizaFlag(val) {
+  if (val === null || val === undefined || val === "") return "—";
+  if (typeof val === "string") {
+    if (val.toUpperCase() === "SI") return "Sí";
+    if (val.toUpperCase() === "NO") return "No";
+    if (val.toUpperCase() === "NA") return "N/A";
+  }
+  if (typeof val === "boolean") return val ? "Sí" : "No";
+  return val;
+}
+
 function ChequeoTorreGruasAdmin() {
   const [activeBar, setActiveBar] = useState(""); // "ver", "excel", "pdf"
   const [filters, setFilters] = useState({
@@ -10,17 +31,23 @@ function ChequeoTorreGruasAdmin() {
     obra: "",
     constructora: "",
     fecha_inicio: "",
-    fecha_fin: ""
+    fecha_fin: "",
+    limit: 50,
+    offset: 0
   });
   const [resultados, setResultados] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [total, setTotal] = useState(0);
   const [nombresOperarios, setNombresOperarios] = useState([]);
   const [listaObras, setListaObras] = useState([]);
   const [listaConstructoras, setListaConstructoras] = useState([]);
+  const [openId, setOpenId] = useState(null);
 
   const handleOpenBar = (bar) => {
     setActiveBar(bar === activeBar ? "" : bar);
     setResultados([]);
+    setTotal(0);
+    setFilters(f => ({ ...f, offset: 0 }));
   };
 
   const handleFilterChange = (e) => {
@@ -28,61 +55,59 @@ function ChequeoTorreGruasAdmin() {
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  function toYMD(date) {
-    if (!date) return '';
-    if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return date;
-    }
-    const d = new Date(date);
-    // Ajuste para compensar la zona horaria y evitar desfase de un día
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
-
-  const handleBuscar = async () => {
+  async function handleBuscar() {
     setLoading(true);
     try {
       const body = {
-        ...filters,
-        fecha_inicio: toYMD(filters.fecha_inicio),
-        fecha_fin: toYMD(filters.fecha_fin)
-      };
-      const res = await axios.post("http://localhost:3000/chequeo_torregruas_admin/buscar", body);
-      setResultados(res.data || []);
-    } catch (err) {
-      setResultados([]);
-    }
-    setLoading(false);
-  };
-
-  const handleDescargar = async (tipo) => {
-    setLoading(true);
-    try {
-      const body = {
-        ...filters,
+        nombre: filters.nombre || '',
+        cedula: filters.cedula || '',
+        obra: filters.obra || '',
+        constructora: filters.constructora || '',
         fecha_inicio: toYMD(filters.fecha_inicio),
         fecha_fin: toYMD(filters.fecha_fin),
-        formato: tipo
+        limit: filters.limit || 50,
+        offset: filters.offset || 0
       };
-      const res = await axios.post(
-        `http://localhost:3000/chequeo_torregruas_admin/descargar`,
-        body,
-        { responseType: "blob" }
-      );
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement("a");
+      const res = await axios.post('http://localhost:3000/chequeo_torregruas_admin/buscar', body);
+      setResultados(res.data?.rows || []);
+      setTotal(res.data?.count || 0);
+    } catch (e) {
+      setResultados([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDescargar(tipo) {
+    setLoading(true);
+    try {
+      const body = {
+        nombre: filters.nombre || '',
+        cedula: filters.cedula || '',
+        obra: filters.obra || '',
+        constructora: filters.constructora || '',
+        fecha_inicio: toYMD(filters.fecha_inicio),
+        fecha_fin: toYMD(filters.fecha_fin),
+        formato: tipo,
+        limit: 50000
+      };
+      const res = await axios.post('http://localhost:3000/chequeo_torregruas_admin/descargar', body, { responseType: 'blob' });
+      const blob = new Blob([res.data], { type: tipo === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/zip' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
       link.href = url;
-      link.setAttribute("download", `chequeo_torregruas.${tipo === "excel" ? "xlsx" : "pdf"}`);
+      link.setAttribute('download', tipo === 'excel' ? 'chequeo_torregruas.xlsx' : 'chequeo_torregruas.zip');
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch (err) {
-      // Error al descargar
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }
 
   useEffect(() => {
     // Nombres operarios
@@ -113,6 +138,13 @@ function ChequeoTorreGruasAdmin() {
         setListaConstructoras([]);
       });
   }, []);
+
+  useEffect(() => {
+    if (activeBar === "ver") {
+      handleBuscar();
+    }
+    // eslint-disable-next-line
+  }, [filters.offset, filters.limit]);
 
   const renderBarraBusqueda = (forAction) => (
     <div className="card-section" style={{ marginBottom: 18 }}>
@@ -255,37 +287,92 @@ function ChequeoTorreGruasAdmin() {
             {loading ? (
               <p className="permiso-trabajo-label">Cargando datos...</p>
             ) : (
-              <ul style={{ listStyle: "none", padding: 0 }}>
-                {resultados.length === 0 ? (
-                  <p className="permiso-trabajo-label">No hay resultados disponibles.</p>
-                ) : (
-                  resultados.map((r, idx) => (
-                    <li
-                      key={idx}
-                      style={{
-                        background: "#f7fbff",
-                        marginBottom: 12,
-                        padding: "10px 12px",
-                        borderRadius: 8,
-                        minWidth: 220,
-                        maxWidth: 320,
-                        fontSize: 14,
-                        boxShadow: "0 1px 4px #e0e0e0",
-                        marginLeft: "auto",
-                        marginRight: "auto"
-                      }}
+              <>
+                <div style={{ marginBottom: 10, fontSize: 14, color: "#222" }}>
+                  {total > 0 && (
+                    <span>
+                      Mostrando {filters.offset + 1} - {Math.min(filters.offset + (filters.limit || 50), total)} de {total} resultados
+                    </span>
+                  )}
+                </div>
+                <ul style={{ listStyle: "none", padding: 0 }}>
+                  {resultados.length === 0 ? (
+                    <p className="permiso-trabajo-label">No hay resultados disponibles.</p>
+                  ) : (
+                    resultados.map((r, idx) => (
+                      <li
+                        key={r.id || idx}
+                        style={{
+                          background: "#f7fbff",
+                          marginBottom: 12,
+                          padding: "10px 12px",
+                          borderRadius: 8,
+                          minWidth: 220,
+                          maxWidth: 320,
+                          fontSize: 14,
+                          boxShadow: "0 1px 4px #e0e0e0",
+                          marginLeft: "auto",
+                          marginRight: "auto"
+                        }}
+                      >
+                        <div><strong>Fecha:</strong> {r.fecha ? r.fecha.slice(0, 10) : "—"}</div>
+                        <div><strong>Nombre:</strong> {r.nombre || "—"}</div>
+                        <div><strong>Cédula:</strong> {r.cedula || r.numero_identificacion || "—"}</div>
+                        <div><strong>Empresa:</strong> {r.empresa || "—"}</div>
+                        <div><strong>Obra:</strong> {r.obra || "—"}</div>
+                        <div><strong>Constructora:</strong> {r.constructora || "—"}</div>
+                        <button
+                          className="permiso-trabajo-btn"
+                          style={{ marginTop: 8, fontSize: 13, padding: "4px 10px" }}
+                          onClick={() => setOpenId(openId === (r.raw?.id || r.id || idx) ? null : (r.raw?.id || r.id || idx))}
+                        >
+                          {openId === (r.raw?.id || r.id || idx) ? "Ocultar detalles" : "Ver más"}
+                        </button>
+                        {openId === (r.raw?.id || r.id || idx) && r.raw && (
+                          <div className="detalle" style={{
+                            background: "#fff",
+                            border: "1px solid #e0e0e0",
+                            borderRadius: 8,
+                            marginTop: 10,
+                            padding: "10px 8px",
+                            fontSize: 13,
+                            color: "#222"
+                          }}>
+                            {Object.entries(r.raw).map(([key, val]) => (
+                              <div key={key} style={{ marginBottom: 4 }}>
+                                <strong>{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}:</strong>{" "}
+                                {typeof val === "string" && ["SI", "NO", "NA"].includes(val.toUpperCase())
+                                  ? normalizaFlag(val)
+                                  : (val === null || val === undefined || val === "") ? "—" : String(val)}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </li>
+                    ))
+                  )}
+                </ul>
+                {total > (filters.limit || 50) && (
+                  <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 16 }}>
+                    <button
+                      className="permiso-trabajo-btn"
+                      style={{ minWidth: 90 }}
+                      disabled={loading || filters.offset === 0}
+                      onClick={() => setFilters(f => ({ ...f, offset: Math.max(0, f.offset - (f.limit || 50)) }))}
                     >
-                      <div><strong>Fecha:</strong> {r.fecha ? r.fecha.slice(0, 10) : ""}</div>
-                      <div><strong>Nombre:</strong> {r.nombre}</div>
-                      <div><strong>Cédula:</strong> {r.cedula}</div>
-                      <div><strong>Empresa:</strong> {r.empresa}</div>
-                      <div><strong>Obra:</strong> {r.obra}</div>
-                      <div><strong>Constructora:</strong> {r.constructora}</div>
-                      {/* Agrega más campos si lo necesitas */}
-                    </li>
-                  ))
+                      Anterior
+                    </button>
+                    <button
+                      className="permiso-trabajo-btn"
+                      style={{ minWidth: 90 }}
+                      disabled={loading || filters.offset + (filters.limit || 50) >= total}
+                      onClick={() => setFilters(f => ({ ...f, offset: f.offset + (f.limit || 50) }))}
+                    >
+                      Siguiente
+                    </button>
+                  </div>
                 )}
-              </ul>
+              </>
             )}
           </div>
         )}
