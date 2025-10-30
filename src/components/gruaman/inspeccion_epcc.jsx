@@ -331,7 +331,7 @@ function InspeccionEPCC({ value = {}, onChange }) {
 				<label className="permiso-trabajo-label">OBSERVACIONES</label>
 				<textarea
 					className="permiso-trabajo-textarea"
-					style={{ width: "100%", minHeight: 60 }}
+					style={{ width: "93%", minHeight: 60 }}
 					value={respuestas.observaciones || ""}
 					onChange={(e) => {
 						const nuevas = { ...respuestas, observaciones: e.target.value };
