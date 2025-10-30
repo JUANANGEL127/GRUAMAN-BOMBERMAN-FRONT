@@ -291,8 +291,8 @@ function PermisoTrabajo(props) {
       cargo: firmas.cargo_autorizado,
       trabajo_rutinario: trabajoRutinario,
       tarea_en_alturas: alturaTiene,
-      altura_inicial: alturaInicial,
-      altura_final: alturaFinal,
+      altura_inicial: alturaTiene === "SI" ? alturaInicial : "0",
+      altura_final: alturaTiene === "SI" ? alturaFinal : "0",
       herramientas_seleccionadas: Object.keys(herramientasLista).filter(k => herramientasLista[k]).join(","),
       herramientas_otros: herramientas,
       certificado_alturas: epp.cuenta_certificado_alturas,
@@ -416,7 +416,13 @@ function PermisoTrabajo(props) {
           <select
             name="altura_tiene"
             value={alturaTiene}
-            onChange={e => setAlturaTiene(e.target.value)}
+            onChange={e => {
+              setAlturaTiene(e.target.value);
+              if (e.target.value !== "SI") {
+                setAlturaInicial("");
+                setAlturaFinal("");
+              }
+            }}
           >
             <option value="">--</option>
             <option value="SI">SI</option>
@@ -424,11 +430,23 @@ function PermisoTrabajo(props) {
             <option value="NA">NA</option>
           </select>
         </div>
-        <label className="label">¿Cuál fue la altura aproximada de la tarea?</label>
-        <div>
-          <input placeholder="INICIAL" value={alturaInicial} onChange={(e) => setAlturaInicial(e.target.value)} />
-          <input placeholder="FINAL" value={alturaFinal} onChange={(e) => setAlturaFinal(e.target.value)} />
-        </div>
+        {alturaTiene === "SI" && (
+          <>
+            <label className="label">¿Cuál fue la altura aproximada de la tarea?</label>
+            <div>
+              <input
+                placeholder="INICIAL"
+                value={alturaInicial}
+                onChange={(e) => setAlturaInicial(e.target.value)}
+              />
+              <input
+                placeholder="FINAL"
+                value={alturaFinal}
+                onChange={(e) => setAlturaFinal(e.target.value)}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <div className="card-section">

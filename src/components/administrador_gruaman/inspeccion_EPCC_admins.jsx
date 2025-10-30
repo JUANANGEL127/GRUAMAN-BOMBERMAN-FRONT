@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
@@ -14,6 +14,9 @@ function InspeccionEPCCAdmins() {
   });
   const [resultados, setResultados] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [nombresOperarios, setNombresOperarios] = useState([]);
+  const [listaObras, setListaObras] = useState([]);
+  const [listaConstructoras, setListaConstructoras] = useState([]);
 
   const handleOpenBar = (bar) => {
     setActiveBar(bar === activeBar ? "" : bar);
@@ -25,10 +28,28 @@ function InspeccionEPCCAdmins() {
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
+  function toYMD(date) {
+    if (!date) return '';
+    if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return date;
+    }
+    const d = new Date(date);
+    // Ajuste para compensar la zona horaria y evitar desfase de un día
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
   const handleBuscar = async () => {
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:3000/inspeccion_EPCC_admins/buscar", filters);
+      const body = {
+        ...filters,
+        fecha_inicio: toYMD(filters.fecha_inicio),
+        fecha_fin: toYMD(filters.fecha_fin)
+      };
+      const res = await axios.post("http://localhost:3000/inspeccion_EPCC_admins/buscar", body);
       setResultados(res.data || []);
     } catch (err) {
       setResultados([]);
@@ -39,9 +60,15 @@ function InspeccionEPCCAdmins() {
   const handleDescargar = async (tipo) => {
     setLoading(true);
     try {
+      const body = {
+        ...filters,
+        fecha_inicio: toYMD(filters.fecha_inicio),
+        fecha_fin: toYMD(filters.fecha_fin),
+        formato: tipo
+      };
       const res = await axios.post(
         `http://localhost:3000/inspeccion_EPCC_admins/descargar`,
-        { ...filters, formato: tipo },
+        body,
         { responseType: "blob" }
       );
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -57,6 +84,36 @@ function InspeccionEPCCAdmins() {
     setLoading(false);
   };
 
+  useEffect(() => {
+    // Nombres operarios
+    async function fetchNombres() {
+      try {
+        const res = await axios.get("http://localhost:3000/datos_basicos");
+        if (Array.isArray(res.data.datos)) {
+          setNombresOperarios(res.data.datos.map(d => d.nombre));
+        } else {
+          setNombresOperarios([]);
+        }
+      } catch (e) {
+        setNombresOperarios([]);
+      }
+    }
+    fetchNombres();
+
+    // Obras y constructoras
+    axios.get("http://localhost:3000/obras")
+      .then(res => {
+        const obras = res.data.obras || [];
+        setListaObras(obras);
+        const constructoras = Array.from(new Set(obras.map(o => o.constructora).filter(Boolean)));
+        setListaConstructoras(constructoras);
+      })
+      .catch(() => {
+        setListaObras([]);
+        setListaConstructoras([]);
+      });
+  }, []);
+
   const renderBarraBusqueda = (forAction) => (
     <div className="card-section" style={{ marginBottom: 18 }}>
       <div style={{ marginBottom: 10, fontWeight: 600, color: "#222", fontSize: 15 }}>
@@ -71,9 +128,15 @@ function InspeccionEPCCAdmins() {
             name="nombre"
             value={filters.nombre}
             onChange={handleFilterChange}
-            placeholder="Nombre"
+            placeholder="Buscar o selecciona nombre"
             style={{ width: "93%", marginBottom: 6 }}
+            list="lista-nombres-operarios"
           />
+          <datalist id="lista-nombres-operarios">
+            {nombresOperarios.map((nombre, i) => (
+              <option key={i} value={nombre} />
+            ))}
+          </datalist>
         </div>
         <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
           <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>Cédula</label>
@@ -95,9 +158,15 @@ function InspeccionEPCCAdmins() {
             name="obra"
             value={filters.obra}
             onChange={handleFilterChange}
-            placeholder="Obra"
+            placeholder="Buscar o selecciona obra"
             style={{ width: "93%", marginBottom: 6 }}
+            list="lista-obras"
           />
+          <datalist id="lista-obras">
+            {listaObras.map((obra) => (
+              <option key={obra.id} value={obra.nombre_obra}></option>
+            ))}
+          </datalist>
         </div>
         <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
           <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>Constructora</label>
@@ -107,9 +176,15 @@ function InspeccionEPCCAdmins() {
             name="constructora"
             value={filters.constructora}
             onChange={handleFilterChange}
-            placeholder="Constructora"
+            placeholder="Buscar o selecciona constructora"
             style={{ width: "93%", marginBottom: 6 }}
+            list="lista-constructoras"
           />
+          <datalist id="lista-constructoras">
+            {listaConstructoras.map((c, i) => (
+              <option key={i} value={c}></option>
+            ))}
+          </datalist>
         </div>
         <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
           <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>Rango de Fechas</label>

@@ -1,15 +1,43 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
 // Helper para formato fecha YYYY-MM-DD
 function toYMD(date) {
   if (!date) return '';
+  // Si el valor es tipo string y ya está en formato YYYY-MM-DD, lo retornamos tal cual
+  if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return date;
+  }
   const d = new Date(date);
+  // Ajuste para compensar la zona horaria y evitar desfase de un día
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+const descripcionOpciones = [
+  "ASCENSO Y DESCENSO DE TORRE GRÚA",
+  "ALISTAMIENTO DE BOMBA",
+  "ARMADO DE TUBERÍA",
+  "BOMBEO DE CONCRETO",
+  "IZAJE DE CARGAS CON TORRE GRUA (Operación torre grua)",
+  "VERIFICACION Y/O MANTENIMIENTO ELECTRICO MECANICO",
+  "MONTAJE DE TORRE GRUA / ELEVADOR DE CARGA",
+  "DESMONTAJE DE TORRE GRUA / ELEVADOR DE CARGA",
+  "TELESCOPAJE DE TORRE GRUA / ELEVADOR DE CARGA"
+];
+
+function normalizaFlag(val) {
+  if (val === null || val === undefined || val === "") return "—";
+  if (typeof val === "string") {
+    if (val.toUpperCase() === "SI") return "Sí";
+    if (val.toUpperCase() === "NO") return "No";
+    if (val.toUpperCase() === "NA") return "N/A";
+  }
+  if (typeof val === "boolean") return val ? "Sí" : "No";
+  return val;
 }
 
 function PermisoTrabajoAdmin() {
@@ -24,9 +52,49 @@ function PermisoTrabajoAdmin() {
     limit: 20,
     offset: 0
   });
+  const [nombresOperarios, setNombresOperarios] = useState([]);
+  const [busquedaNombre, setBusquedaNombre] = useState("");
+  const nombreInputRef = useRef(null);
   const [resultados, setResultados] = useState([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
+  const [nombreInput, setNombreInput] = useState("");
+  const [listaObras, setListaObras] = useState([]);
+  const [listaConstructoras, setListaConstructoras] = useState([]);
+  const [openId, setOpenId] = useState(null);
+
+  // Obtener lista de nombres de operarios al montar el componente
+  useEffect(() => {
+    async function fetchNombres() {
+      try {
+        const res = await axios.get("http://localhost:3000/datos_basicos");
+        if (Array.isArray(res.data.datos)) {
+          setNombresOperarios(res.data.datos.map(d => d.nombre));
+        } else {
+          setNombresOperarios([]);
+        }
+      } catch (e) {
+        setNombresOperarios([]);
+      }
+    }
+    fetchNombres();
+  }, []);
+
+  // Obtener lista de obras y constructoras al montar el componente
+  useEffect(() => {
+    axios.get("http://localhost:3000/obras")
+      .then(res => {
+        const obras = res.data.obras || [];
+        setListaObras(obras);
+        // Extraer constructoras únicas
+        const constructoras = Array.from(new Set(obras.map(o => o.constructora).filter(Boolean)));
+        setListaConstructoras(constructoras);
+      })
+      .catch(() => {
+        setListaObras([]);
+        setListaConstructoras([]);
+      });
+  }, []);
 
   // Buscar cuando cambian offset/limit
   useEffect(() => {
@@ -61,6 +129,7 @@ function PermisoTrabajoAdmin() {
         limit: filters.limit || 20,
         offset: filters.offset || 0
       };
+      console.log("Datos enviados en búsqueda:", body);
       const res = await axios.post('http://localhost:3000/permiso_trabajo_admin/buscar', body);
       setResultados(res.data?.rows || []);
       setTotal(res.data?.count || 0);
@@ -86,6 +155,7 @@ function PermisoTrabajoAdmin() {
         formato: tipo,
         limit: 50000
       };
+      console.log("Datos enviados en descarga:", body);
       const res = await axios.post('http://localhost:3000/permiso_trabajo_admin/descargar', body, { responseType: 'blob' });
       const blob = new Blob([res.data], { type: tipo === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/zip' });
       const url = window.URL.createObjectURL(blob);
@@ -103,6 +173,25 @@ function PermisoTrabajoAdmin() {
     }
   }
 
+  const handleNombreInputChange = (e) => {
+    setNombreInput(e.target.value);
+    setFilters((prev) => ({ ...prev, nombre: e.target.value }));
+  };
+
+  const handleObraBusquedaChange = (e) => {
+    setFilters((prev) => ({ ...prev, obra: e.target.value }));
+  };
+
+  const handleConstructoraBusquedaChange = (e) => {
+    setFilters((prev) => ({ ...prev, constructora: e.target.value }));
+  };
+
+  const nombresFiltrados = nombreInput
+    ? nombresOperarios.filter(n =>
+        n.toLowerCase().includes(nombreInput.toLowerCase())
+      )
+    : nombresOperarios;
+
   const renderBarraBusqueda = (forAction) => (
     <div className="card-section" style={{ marginBottom: 18 }}>
       <div style={{ marginBottom: 10, fontWeight: 600, color: "#222", fontSize: 15 }}>
@@ -114,13 +203,19 @@ function PermisoTrabajoAdmin() {
           <input
             className="permiso-trabajo-input"
             type="text"
-            name="nombre"
-            value={filters.nombre}
-            onChange={handleFilterChange}
-            placeholder="Nombre"
+            placeholder="Buscar nombre..."
+            value={nombreInput}
+            onChange={handleNombreInputChange}
             style={{ width: "93%", marginBottom: 6 }}
+            list="lista_nombres_operarios"
+            autoComplete="off"
             disabled={loading}
           />
+          <datalist id="lista_nombres_operarios">
+            {nombresFiltrados.map((nombre, i) => (
+              <option key={i} value={nombre} />
+            ))}
+          </datalist>
         </div>
         <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
           <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>Cédula</label>
@@ -139,27 +234,35 @@ function PermisoTrabajoAdmin() {
           <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>Obra</label>
           <input
             className="permiso-trabajo-input"
-            type="text"
-            name="obra"
+            list="lista-obras"
+            placeholder="Buscar o selecciona la obra"
             value={filters.obra}
-            onChange={handleFilterChange}
-            placeholder="Obra"
+            onChange={handleObraBusquedaChange}
             style={{ width: "93%", marginBottom: 6 }}
             disabled={loading}
           />
+          <datalist id="lista-obras">
+            {listaObras.map((obra) => (
+              <option key={obra.id} value={obra.nombre_obra}></option>
+            ))}
+          </datalist>
         </div>
         <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
           <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>Constructora</label>
           <input
             className="permiso-trabajo-input"
-            type="text"
-            name="constructora"
+            list="lista-constructoras"
+            placeholder="Buscar o selecciona la constructora"
             value={filters.constructora}
-            onChange={handleFilterChange}
-            placeholder="Constructora"
+            onChange={handleConstructoraBusquedaChange}
             style={{ width: "93%", marginBottom: 6 }}
             disabled={loading}
           />
+          <datalist id="lista-constructoras">
+            {listaConstructoras.map((c, i) => (
+              <option key={i} value={c}></option>
+            ))}
+          </datalist>
         </div>
         <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
           <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>Rango de Fechas</label>
@@ -261,13 +364,39 @@ function PermisoTrabajoAdmin() {
                           marginRight: "auto"
                         }}
                       >
-                        <div><strong>Fecha:</strong> {r.fecha ? r.fecha.slice(0, 10) : ""}</div>
-                        <div><strong>Nombre:</strong> {r.nombre}</div>
+                        <div><strong>Fecha:</strong> {r.fecha ? r.fecha.slice(0, 10) : "—"}</div>
+                        <div><strong>Nombre:</strong> {r.nombre || "—"}</div>
                         <div><strong>Cédula:</strong> {r.cedula || r.numero_identificacion || "—"}</div>
-                        <div><strong>Empresa:</strong> {r.empresa}</div>
-                        <div><strong>Obra:</strong> {r.obra}</div>
-                        <div><strong>Constructora:</strong> {r.constructora}</div>
-                        {/* ...otros campos si lo necesitas... */}
+                        <div><strong>Empresa:</strong> {r.empresa || "—"}</div>
+                        <div><strong>Obra:</strong> {r.obra || "—"}</div>
+                        <div><strong>Constructora:</strong> {r.constructora || "—"}</div>
+                        <button
+                          className="permiso-trabajo-btn"
+                          style={{ marginTop: 8, fontSize: 13, padding: "4px 10px" }}
+                          onClick={() => setOpenId(openId === (r.raw?.id || r.id || idx) ? null : (r.raw?.id || r.id || idx))}
+                        >
+                          {openId === (r.raw?.id || r.id || idx) ? "Ocultar detalles" : "Ver más"}
+                        </button>
+                        {openId === (r.raw?.id || r.id || idx) && r.raw && (
+                          <div className="detalle" style={{
+                            background: "#fff",
+                            border: "1px solid #e0e0e0",
+                            borderRadius: 8,
+                            marginTop: 10,
+                            padding: "10px 8px",
+                            fontSize: 13,
+                            color: "#222"
+                          }}>
+                            {Object.entries(r.raw).map(([key, val]) => (
+                              <div key={key} style={{ marginBottom: 4 }}>
+                                <strong>{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}:</strong>{" "}
+                                {typeof val === "string" && ["SI", "NO", "NA"].includes(val.toUpperCase())
+                                  ? normalizaFlag(val)
+                                  : (val === null || val === undefined || val === "") ? "—" : String(val)}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </li>
                     ))
                   )}
