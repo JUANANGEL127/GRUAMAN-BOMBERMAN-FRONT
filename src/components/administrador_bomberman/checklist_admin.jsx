@@ -5,7 +5,12 @@ import "../../styles/permiso_trabajo.css";
 function toYMD(date) {
   if (!date) return '';
   if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+  // Ajuste para zona horaria: si la fecha es tipo Date y la hora es >= 19, restar un día
   const d = new Date(date);
+  const localHour = d.getHours();
+  if (localHour >= 19) {
+    d.setDate(d.getDate() - 1);
+  }
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -115,7 +120,8 @@ function ChecklistAdmin() {
       try {
         const res = await axios.get("http://localhost:3000/datos_basicos");
         if (Array.isArray(res.data.datos)) {
-          setNombresOperarios(res.data.datos.map(d => d.nombre));
+          // Filtrar solo empresa_id=2
+          setNombresOperarios(res.data.datos.filter(d => d.empresa_id === 2).map(d => d.nombre));
         } else {
           setNombresOperarios([]);
         }
@@ -128,7 +134,7 @@ function ChecklistAdmin() {
     // Obras y constructoras
     axios.get("http://localhost:3000/obras")
       .then(res => {
-        const obras = res.data.obras || [];
+        const obras = (res.data.obras || []).filter(o => o.empresa_id === 2);
         setListaObras(obras);
         const constructoras = Array.from(new Set(obras.map(o => o.constructora).filter(Boolean)));
         setListaConstructoras(constructoras);
@@ -328,13 +334,7 @@ function ChecklistAdmin() {
                         <div><strong>Empresa:</strong> {r.empresa || "—"}</div>
                         <div><strong>Obra:</strong> {r.obra || "—"}</div>
                         <div><strong>Constructora:</strong> {r.constructora || "—"}</div>
-                        <button
-                          className="permiso-trabajo-btn"
-                          style={{ marginTop: 8, fontSize: 13, padding: "4px 10px" }}
-                          onClick={() => setOpenId(openId === (r.raw?.id || r.id || idx) ? null : (r.raw?.id || r.id || idx))}
-                        >
-                          {openId === (r.raw?.id || r.id || idx) ? "Ocultar detalles" : "Ver más"}
-                        </button>
+                        {/* Solo mostrar campos REGULAR/MALO y observaciones */}
                         {openId === (r.raw?.id || r.id || idx) && r.raw && (
                           <div className="detalle" style={{
                             background: "#fff",
@@ -346,15 +346,23 @@ function ChecklistAdmin() {
                             color: "#222"
                           }}>
                             {Object.entries(r.raw).map(([key, val]) => (
-                              <div key={key} style={{ marginBottom: 4 }}>
-                                <strong>{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}:</strong>{" "}
-                                {typeof val === "string" && ["SI", "NO", "NA"].includes(val.toUpperCase())
-                                  ? normalizaFlag(val)
-                                  : (val === null || val === undefined || val === "") ? "—" : String(val)}
-                              </div>
+                              !["id","fecha_servicio","nombre_operador","bomba_numero","nombre_proyecto","nombre_cliente"].includes(key) &&
+                              (key.includes("REGULAR") || key.includes("MALO") || key.includes("observacion")) && (
+                                <div key={key} style={{ marginBottom: 4 }}>
+                                  <strong>{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}:</strong>{" "}
+                                  {val === null || val === undefined || val === "" ? "—" : String(val)}
+                                </div>
+                              )
                             ))}
                           </div>
                         )}
+                        <button
+                          className="permiso-trabajo-btn"
+                          style={{ marginTop: 8, fontSize: 13, padding: "4px 10px" }}
+                          onClick={() => setOpenId(openId === (r.raw?.id || r.id || idx) ? null : (r.raw?.id || r.id || idx))}
+                        >
+                          {openId === (r.raw?.id || r.id || idx) ? "Ocultar detalles" : "Ver más"}
+                        </button>
                       </li>
                     ))
                   )}

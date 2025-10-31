@@ -16,13 +16,15 @@ function getUsadosFromStorage(usuario) {
     const data = localStorage.getItem(`aic_usados_${usuario}`);
     if (data) return JSON.parse(data);
   } catch {}
+  // Asegura que todos los keys estén presentes
   return {
     permiso_trabajo: false,
     planillabombeo: false,
     checklist: false,
     inventariosobra: false,
     administrador: false,
-    condiciones_salud_epp: false, // estado para el nuevo componente
+    chequeo_alturas: false,
+    inspeccion_epcc_bomberman: false, // debe estar este key para la barra
   };
 }
 
@@ -78,7 +80,7 @@ function BienvenidaAIC() {
     usado ? "button button-green" : "button";
 
   // Barra de progreso
-  const total = Object.keys(usados).length;
+  const total = 7; // número real de formularios (botones)
   const completados = Object.values(usados).filter(Boolean).length;
   const porcentaje = Math.round((completados / total) * 100);
 

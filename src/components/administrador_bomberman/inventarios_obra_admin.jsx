@@ -110,12 +110,12 @@ function InventariosObraAdmin() {
   }
 
   useEffect(() => {
-    // Nombres operarios
     async function fetchNombres() {
       try {
         const res = await axios.get("http://localhost:3000/datos_basicos");
         if (Array.isArray(res.data.datos)) {
-          setNombresOperarios(res.data.datos.map(d => d.nombre));
+          // Filtrar solo empresa_id=2
+          setNombresOperarios(res.data.datos.filter(d => d.empresa_id === 2).map(d => d.nombre));
         } else {
           setNombresOperarios([]);
         }
@@ -125,10 +125,9 @@ function InventariosObraAdmin() {
     }
     fetchNombres();
 
-    // Obras y constructoras
     axios.get("http://localhost:3000/obras")
       .then(res => {
-        const obras = res.data.obras || [];
+        const obras = (res.data.obras || []).filter(o => o.empresa_id === 2);
         setListaObras(obras);
         const constructoras = Array.from(new Set(obras.map(o => o.constructora).filter(Boolean)));
         setListaConstructoras(constructoras);
@@ -248,11 +247,9 @@ function InventariosObraAdmin() {
             Buscar
           </button>
         ) : (
-          <>
-            <button className="permiso-trabajo-btn" onClick={() => handleDescargar(forAction)} style={{ width: "100%", marginTop: 8 }} disabled={loading}>
-              Descargar
-            </button>
-          </>
+          <button className="permiso-trabajo-btn" onClick={() => handleDescargar(forAction)} style={{ width: "100%", marginTop: 8 }} disabled={loading}>
+            Descargar
+          </button>
         )}
       </div>
     </div>
@@ -295,12 +292,17 @@ function InventariosObraAdmin() {
               <p className="permiso-trabajo-label">Cargando datos...</p>
             ) : (
               <>
-                <div style={{ marginBottom: 10, fontSize: 14, color: "#222" }}>
-                  {total > 0 && (
-                    <span>
-                      Mostrando {filters.offset + 1} - {Math.min(filters.offset + (filters.limit || 50), total)} de {total} resultados
-                    </span>
-                  )}
+                <div style={{ marginBottom: 10, fontSize: 14, color: "#222", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    {total > 0 && (
+                      <span>
+                        Mostrando {filters.offset + 1} - {Math.min(filters.offset + (filters.limit || 50), total)} de {total} resultados
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#666" }}>
+                    Página {Math.floor((filters.offset || 0) / (filters.limit || 50)) + 1} — {filters.limit} por página
+                  </div>
                 </div>
                 <ul style={{ listStyle: "none", padding: 0 }}>
                   {resultados.length === 0 ? (
@@ -308,14 +310,14 @@ function InventariosObraAdmin() {
                   ) : (
                     resultados.map((r, idx) => (
                       <li
-                        key={r.id || idx}
+                        key={r.raw?.id || r.id || idx}
                         style={{
                           background: "#f7fbff",
                           marginBottom: 12,
                           padding: "10px 12px",
                           borderRadius: 8,
                           minWidth: 220,
-                          maxWidth: 320,
+                          maxWidth: 520,
                           fontSize: 14,
                           boxShadow: "0 1px 4px #e0e0e0",
                           marginLeft: "auto",
@@ -328,6 +330,7 @@ function InventariosObraAdmin() {
                         <div><strong>Empresa:</strong> {r.empresa || "—"}</div>
                         <div><strong>Obra:</strong> {r.obra || "—"}</div>
                         <div><strong>Constructora:</strong> {r.constructora || "—"}</div>
+                        {/* campos adicionales: cargo, observaciones */}
                         <button
                           className="permiso-trabajo-btn"
                           style={{ marginTop: 8, fontSize: 13, padding: "4px 10px" }}

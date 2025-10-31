@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "../../styles/permiso_trabajo.css";
+import "../../styles/permiso_trabajo.css"
 
 function toYMD(date) {
   if (!date) return '';
   if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+  // Ajuste de zona horaria Colombia (-5 UTC)
   const d = new Date(date);
+  // Si la hora local es después de las 7pm, restar un día para que coincida con la fecha local colombiana
+  const localHour = d.getHours();
+  if (localHour >= 19) {
+    d.setDate(d.getDate() - 1);
+  }
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -110,12 +116,12 @@ function PlanillaBombeoAdmin() {
   }
 
   useEffect(() => {
-    // Nombres operarios
     async function fetchNombres() {
       try {
         const res = await axios.get("http://localhost:3000/datos_basicos");
         if (Array.isArray(res.data.datos)) {
-          setNombresOperarios(res.data.datos.map(d => d.nombre));
+          // Filtrar solo empresa_id=1
+          setNombresOperarios(res.data.datos.filter(d => d.empresa_id === 2).map(d => d.nombre));
         } else {
           setNombresOperarios([]);
         }
@@ -125,10 +131,9 @@ function PlanillaBombeoAdmin() {
     }
     fetchNombres();
 
-    // Obras y constructoras
     axios.get("http://localhost:3000/obras")
       .then(res => {
-        const obras = res.data.obras || [];
+        const obras = (res.data.obras || []).filter(o => o.empresa_id === 2);
         setListaObras(obras);
         const constructoras = Array.from(new Set(obras.map(o => o.constructora).filter(Boolean)));
         setListaConstructoras(constructoras);
@@ -248,11 +253,9 @@ function PlanillaBombeoAdmin() {
             Buscar
           </button>
         ) : (
-          <>
-            <button className="permiso-trabajo-btn" onClick={() => handleDescargar(forAction)} style={{ width: "100%", marginTop: 8 }} disabled={loading}>
-              Descargar
-            </button>
-          </>
+          <button className="permiso-trabajo-btn" onClick={() => handleDescargar(forAction)} style={{ width: "100%", marginTop: 8 }} disabled={loading}>
+            Descargar
+          </button>
         )}
       </div>
     </div>
@@ -295,12 +298,17 @@ function PlanillaBombeoAdmin() {
               <p className="permiso-trabajo-label">Cargando datos...</p>
             ) : (
               <>
-                <div style={{ marginBottom: 10, fontSize: 14, color: "#222" }}>
-                  {total > 0 && (
-                    <span>
-                      Mostrando {filters.offset + 1} - {Math.min(filters.offset + (filters.limit || 50), total)} de {total} resultados
-                    </span>
-                  )}
+                <div style={{ marginBottom: 10, fontSize: 14, color: "#222", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    {total > 0 && (
+                      <span>
+                        Mostrando {filters.offset + 1} - {Math.min(filters.offset + (filters.limit || 50), total)} de {total} resultados
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#666" }}>
+                    Página {Math.floor((filters.offset || 0) / (filters.limit || 50)) + 1} — {filters.limit} por página
+                  </div>
                 </div>
                 <ul style={{ listStyle: "none", padding: 0 }}>
                   {resultados.length === 0 ? (
@@ -308,14 +316,14 @@ function PlanillaBombeoAdmin() {
                   ) : (
                     resultados.map((r, idx) => (
                       <li
-                        key={r.id || idx}
+                        key={r.raw?.id || r.id || idx}
                         style={{
                           background: "#f7fbff",
                           marginBottom: 12,
                           padding: "10px 12px",
                           borderRadius: 8,
                           minWidth: 220,
-                          maxWidth: 320,
+                          maxWidth: 520,
                           fontSize: 14,
                           boxShadow: "0 1px 4px #e0e0e0",
                           marginLeft: "auto",
@@ -325,9 +333,10 @@ function PlanillaBombeoAdmin() {
                         <div><strong>Fecha:</strong> {r.fecha ? r.fecha.slice(0, 10) : "—"}</div>
                         <div><strong>Nombre:</strong> {r.nombre || "—"}</div>
                         <div><strong>Cédula:</strong> {r.cedula || r.numero_identificacion || "—"}</div>
-                        <div><strong>Empresa:</strong> {r.empresa || "—"}</div>
+                        {/* <div><strong>Empresa:</strong> {r.empresa || "—"}</div> */}
                         <div><strong>Obra:</strong> {r.obra || "—"}</div>
                         <div><strong>Constructora:</strong> {r.constructora || "—"}</div>
+                        {/* campos adicionales: bomba_numero, observaciones */}
                         <button
                           className="permiso-trabajo-btn"
                           style={{ marginTop: 8, fontSize: 13, padding: "4px 10px" }}
@@ -353,6 +362,19 @@ function PlanillaBombeoAdmin() {
                                   : (val === null || val === undefined || val === "") ? "—" : String(val)}
                               </div>
                             ))}
+                            {/* Mostrar remisiones si existen */}
+                            {Array.isArray(r.remisiones) && r.remisiones.length > 0 && (
+                              <div style={{ marginTop: 10 }}>
+                                <strong>Remisiones:</strong>
+                                {r.remisiones.map((rem, i) => (
+                                  <div key={i} style={{ margin: "8px 0", padding: "8px", background: "#f1f8e9", borderRadius: 6 }}>
+                                    {Object.entries(rem).map(([k, v]) => (
+                                      <div key={k}><strong>{k.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}:</strong> {v === null || v === undefined || v === "" ? "—" : String(v)}</div>
+                                    ))}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
                       </li>

@@ -31,7 +31,7 @@ import AdministradorBomberman from "./components/administrador_bomberman/adminis
 import PlanillaBombeoAdmin from "./components/administrador_bomberman/planilla_bombeo_admin";
 import InventariosObraAdmin from "./components/administrador_bomberman/inventarios_obra_admin";
 import ChecklistAdmin from "./components/administrador_bomberman/checklist_admin";
-import InspeccionEPCCBombermanAdmin from "./components/administrador_bomberman/inspeccion_epcc_bomberman";
+import InspeccionEPCCBombermanAdmin from "./components/administrador_bomberman/inspeccion_epcc_bomberman_admin";
 
 // Función para obtener usuario y obra de localStorage
 function getUsuarioObra() {

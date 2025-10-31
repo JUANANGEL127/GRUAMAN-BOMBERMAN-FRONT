@@ -23,7 +23,7 @@ function normalizaFlag(val) {
   return val;
 }
 
-function InspeccionEPCCBomberman() {
+function InspeccionEPCCBombermanAdmin() {
   const [activeBar, setActiveBar] = useState(""); // "ver", "excel", "pdf"
   const [filters, setFilters] = useState({
     nombre: "",
@@ -68,7 +68,7 @@ function InspeccionEPCCBomberman() {
         limit: filters.limit || 50,
         offset: filters.offset || 0
       };
-      const res = await axios.post('http://localhost:3000/inspeccion_epcc_bomberman/buscar', body);
+      const res = await axios.post('http://localhost:3000/inspeccion_epcc_bomberman_admin/buscar', body);
       setResultados(res.data?.rows || []);
       setTotal(res.data?.count || 0);
     } catch (e) {
@@ -92,7 +92,7 @@ function InspeccionEPCCBomberman() {
         formato: tipo,
         limit: 50000
       };
-      const res = await axios.post('http://localhost:3000/inspeccion_epcc_bomberman/descargar', body, { responseType: 'blob' });
+      const res = await axios.post('http://localhost:3000/inspeccion_epcc_bomberman_admin/descargar', body, { responseType: 'blob' });
       const blob = new Blob([res.data], { type: tipo === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/zip' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -110,12 +110,12 @@ function InspeccionEPCCBomberman() {
   }
 
   useEffect(() => {
-    // Nombres operarios
     async function fetchNombres() {
       try {
         const res = await axios.get("http://localhost:3000/datos_basicos");
         if (Array.isArray(res.data.datos)) {
-          setNombresOperarios(res.data.datos.map(d => d.nombre));
+          // Filtrar solo empresa_id=2
+          setNombresOperarios(res.data.datos.filter(d => d.empresa_id === 2).map(d => d.nombre));
         } else {
           setNombresOperarios([]);
         }
@@ -125,10 +125,9 @@ function InspeccionEPCCBomberman() {
     }
     fetchNombres();
 
-    // Obras y constructoras
     axios.get("http://localhost:3000/obras")
       .then(res => {
-        const obras = res.data.obras || [];
+        const obras = (res.data.obras || []).filter(o => o.empresa_id === 2);
         setListaObras(obras);
         const constructoras = Array.from(new Set(obras.map(o => o.constructora).filter(Boolean)));
         setListaConstructoras(constructoras);
@@ -248,11 +247,9 @@ function InspeccionEPCCBomberman() {
             Buscar
           </button>
         ) : (
-          <>
-            <button className="permiso-trabajo-btn" onClick={() => handleDescargar(forAction)} style={{ width: "100%", marginTop: 8 }} disabled={loading}>
-              Descargar
-            </button>
-          </>
+          <button className="permiso-trabajo-btn" onClick={() => handleDescargar(forAction)} style={{ width: "100%", marginTop: 8 }} disabled={loading}>
+            Descargar
+          </button>
         )}
       </div>
     </div>
@@ -263,30 +260,9 @@ function InspeccionEPCCBomberman() {
       <div className="card-section" style={{ marginBottom: 24 }}>
         <h3 className="card-title">Inspección EPCC - Administrador Bomberman</h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 18, alignItems: "center", marginBottom: 18 }}>
-          <button
-            className="permiso-trabajo-btn"
-            style={{ minWidth: 140 }}
-            onClick={() => handleOpenBar("ver")}
-            disabled={loading}
-          >
-            Ver
-          </button>
-          <button
-            className="permiso-trabajo-btn"
-            style={{ minWidth: 140 }}
-            onClick={() => handleOpenBar("excel")}
-            disabled={loading}
-          >
-            Descargar en Excel
-          </button>
-          <button
-            className="permiso-trabajo-btn"
-            style={{ minWidth: 140 }}
-            onClick={() => handleOpenBar("pdf")}
-            disabled={loading}
-          >
-            Descargar en PDF
-          </button>
+          <button className="permiso-trabajo-btn" style={{ minWidth: 140 }} onClick={() => handleOpenBar("ver")} disabled={loading}>Ver</button>
+          <button className="permiso-trabajo-btn" style={{ minWidth: 140 }} onClick={() => handleOpenBar("excel")} disabled={loading}>Descargar en Excel</button>
+          <button className="permiso-trabajo-btn" style={{ minWidth: 140 }} onClick={() => handleOpenBar("pdf")} disabled={loading}>Descargar en PDF</button>
         </div>
         {activeBar && renderBarraBusqueda(activeBar)}
         {activeBar === "ver" && (
@@ -295,12 +271,17 @@ function InspeccionEPCCBomberman() {
               <p className="permiso-trabajo-label">Cargando datos...</p>
             ) : (
               <>
-                <div style={{ marginBottom: 10, fontSize: 14, color: "#222" }}>
-                  {total > 0 && (
-                    <span>
-                      Mostrando {filters.offset + 1} - {Math.min(filters.offset + (filters.limit || 50), total)} de {total} resultados
-                    </span>
-                  )}
+                <div style={{ marginBottom: 10, fontSize: 14, color: "#222", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    {total > 0 && (
+                      <span>
+                        Mostrando {filters.offset + 1} - {Math.min(filters.offset + (filters.limit || 50), total)} de {total} resultados
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#666" }}>
+                    Página {Math.floor((filters.offset || 0) / (filters.limit || 50)) + 1} — {filters.limit} por página
+                  </div>
                 </div>
                 <ul style={{ listStyle: "none", padding: 0 }}>
                   {resultados.length === 0 ? (
@@ -308,14 +289,14 @@ function InspeccionEPCCBomberman() {
                   ) : (
                     resultados.map((r, idx) => (
                       <li
-                        key={r.id || idx}
+                        key={r.raw?.id || r.id || idx}
                         style={{
                           background: "#f7fbff",
                           marginBottom: 12,
                           padding: "10px 12px",
                           borderRadius: 8,
                           minWidth: 220,
-                          maxWidth: 320,
+                          maxWidth: 520,
                           fontSize: 14,
                           boxShadow: "0 1px 4px #e0e0e0",
                           marginLeft: "auto",
@@ -328,6 +309,7 @@ function InspeccionEPCCBomberman() {
                         <div><strong>Empresa:</strong> {r.empresa || "—"}</div>
                         <div><strong>Obra:</strong> {r.obra || "—"}</div>
                         <div><strong>Constructora:</strong> {r.constructora || "—"}</div>
+                        {/* campos adicionales: cargo, observaciones_generales */}
                         <button
                           className="permiso-trabajo-btn"
                           style={{ marginTop: 8, fontSize: 13, padding: "4px 10px" }}
@@ -388,4 +370,4 @@ function InspeccionEPCCBomberman() {
   );
 }
 
-export default InspeccionEPCCBomberman;
+export default InspeccionEPCCBombermanAdmin;
