@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import AdminObrasBomberman from "./admin_obras_bomberman"; // importar el componente
 
 // Panel administrador visual tipo menú, similar a eleccion.jsx pero sin barra de progreso ni lógica de botones
 function AdministradorBomberman() {
@@ -44,7 +45,7 @@ function AdministradorBomberman() {
           <button
             className="button"
             style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
-            onClick={() => navigate("/bomberman_obras")}
+            onClick={() => navigate("/admin_obras_bomberman")}
           >
             Administrar Obras
           </button>

@@ -5,6 +5,7 @@ import ChequeoAlturasAdmin from "./chequeo_alturas_admin";
 import ChequeoTorreGruasAdmin from "./chequeo_torregruas_admin";
 import ChequeoElevadorAdmin from "./chequeo_elevador_admin";
 import LlegadaSalidaAdmin from "./llegada_salida_admin";
+import AdminsObras from "./admins_obras"; // importar el componente
 import { useNavigate } from "react-router-dom";
 
 // Panel administrador visual tipo menú, similar a eleccion.jsx pero sin barra de progreso ni lógica de botones

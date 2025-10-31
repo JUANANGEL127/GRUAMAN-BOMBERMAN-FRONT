@@ -12,7 +12,11 @@ function BienvenidaSeleccion({ usuario }) {
 
   useEffect(() => {
     axios.get("http://localhost:3000/obras")
-      .then(res => setListaObras(res.data.obras || []))
+      .then(res => {
+        // Solo mostrar obras con activa === true
+        const obrasActivas = (res.data.obras || []).filter(o => o.activa === true);
+        setListaObras(obrasActivas);
+      })
       .catch(() => setListaObras([]));
   }, []);
 

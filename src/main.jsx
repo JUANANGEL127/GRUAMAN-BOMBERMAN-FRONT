@@ -34,6 +34,8 @@ import ChecklistAdmin from "./components/administrador_bomberman/checklist_admin
 import InspeccionEPCCBombermanAdmin from "./components/administrador_bomberman/inspeccion_epcc_bomberman_admin";
 import AdminUsuarios from "./components/administrador_gruaman/admin_usuarios";
 import AdminUsuariosBomberman from "./components/administrador_bomberman/admin_usuarios_bomberman";
+import AdminsObras from "./components/administrador_gruaman/admins_obras";
+import AdminObrasBomberman from "./components/administrador_bomberman/admin_obras_bomberman";
 
 // Función para obtener usuario y obra de localStorage
 function getUsuarioObra() {
@@ -238,6 +240,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/inspeccion_epcc_bomberman_admin" element={<InspeccionEPCCBombermanAdmin />} />
             <Route path="/admin_usuarios" element={<AdminUsuarios />} />
             <Route path="/admin_usuarios_bomberman" element={<AdminUsuariosBomberman />} />
+            <Route path="/admins_obras" element={<AdminsObras />} />
+            <Route path="/admin_obras_bomberman" element={<AdminObrasBomberman />} />
           </Routes>
           {/* <Footer /> */}
         </div>

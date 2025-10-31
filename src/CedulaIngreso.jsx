@@ -23,8 +23,8 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
     try {
       const resp = await axios.get(`http://localhost:3000/datos_basicos`);
       const datosArray = Array.isArray(resp.data.datos) ? resp.data.datos : (Array.isArray(resp.data) ? resp.data : []);
+      // Solo permitir ingreso si activo === true
       const usuario = datosArray.find(u => {
-        // Normalizar posible campo de identificación
         const id = u.numero_identificacion || u.cedula || u.id || "";
         return id === cedula && u.activo === true;
       }) || null;
