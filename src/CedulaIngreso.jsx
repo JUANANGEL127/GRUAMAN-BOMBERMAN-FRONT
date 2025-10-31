@@ -26,7 +26,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
       const usuario = datosArray.find(u => {
         // Normalizar posible campo de identificación
         const id = u.numero_identificacion || u.cedula || u.id || "";
-        return id === cedula;
+        return id === cedula && u.activo === true;
       }) || null;
 
       if (usuario) {
@@ -59,7 +59,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           numero_identificacion: usuario.numero_identificacion
         });
       } else {
-        setError("No haces parte de nuestros super héroes.");
+        setError("No haces parte de nuestros super héroes o tu usuario está inactivo.");
       }
     } catch (err) {
       console.error("Error obteniendo datos básicos:", err);

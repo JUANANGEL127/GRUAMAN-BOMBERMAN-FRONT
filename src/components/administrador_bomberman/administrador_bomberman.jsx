@@ -37,7 +37,7 @@ function AdministradorBomberman() {
           <button
             className="button"
             style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
-            onClick={() => navigate("/bomberman_usuarios")}
+            onClick={() => navigate("/admin_usuarios_bomberman")}
           >
             Administrar Usuarios
           </button>
