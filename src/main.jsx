@@ -250,3 +250,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   </React.StrictMode>
 );
 
+// No hay registro manual de service worker aquí, ¡perfecto!
+
