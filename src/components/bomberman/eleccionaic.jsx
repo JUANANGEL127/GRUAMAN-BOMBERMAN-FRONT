@@ -135,28 +135,28 @@ function BienvenidaAIC() {
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/permiso_trabajo", "permiso_trabajo")}
           >
-            Permiso de Trabajo
+            Permiso de Trabajo diario precargado
           </button>
           <button
             className={getButtonClass(usados.planillabombeo)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/planillabombeo", "planillabombeo")}
           >
-            Planilla de Bombeo
+            Planilla de Bombeo diario sin precargar
           </button>
           <button
             className={getButtonClass(usados.checklist)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/checklist", "checklist")}
           >
-            Checklist
+            Checklist diario precargado
           </button>
           <button
             className={getButtonClass(usados.inventariosobra)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/inventariosobra", "inventariosobra")}
           >
-            Inventario de Obra
+            Inventario de Obra mensual sin validacion y mostrar lleno 
           </button>
           <button
             className={getButtonClass(usados.administrador)}
@@ -175,14 +175,14 @@ function BienvenidaAIC() {
             }}
             onClick={() => handleNavigate("/chequeo_alturas", "chequeo_alturas")}
           >
-            Chequeo Alturas
+            Chequeo Alturas diario precargado
           </button>
           <button
             className={getButtonClass(usados.inspeccion_epcc_bomberman)} // clase para el nuevo botón
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/inspeccion_epcc_bomberman", "inspeccion_epcc_bomberman")}
           >
-            Inspección EPCC
+            Inspección EPCC diario precargado
           </button>
           <button
             className="button"

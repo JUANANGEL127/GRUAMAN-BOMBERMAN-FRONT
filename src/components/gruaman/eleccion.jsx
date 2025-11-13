@@ -126,7 +126,7 @@ function Bienvenida() {
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/formulario1", "formulario1")}
           >
-            Formulario de llegada y salida
+            Formulario de llegada y salida diario
           </button>
           <button
             className={getButtonClass(usados.administrador)}
@@ -140,42 +140,42 @@ function Bienvenida() {
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/permiso_trabajo", "permiso_trabajo")}
           >
-            Permiso de Trabajo
+            Permiso de Trabajo diario precargado
           </button>
           <button
             className={getButtonClass(usados.chequeo_alturas)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/chequeo_alturas", "chequeo_alturas")}
           >
-            Chequeo Alturas
+            Chequeo Alturas diario precargado
           </button>
           <button
             className={getButtonClass(usados.chequeo_torregruas)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/chequeo_torregruas", "chequeo_torregruas")}
           >
-            Chequeo Torre Grúa
+            Chequeo Torre Grúa diario precargado
           </button>
           <button
             className={getButtonClass(usados.chequeo_elevador)} // <- usar la nueva clave
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/chequeo_elevador", "chequeo_elevador")}
           >
-            Chequeo Elevador
+            Chequeo Elevador diario precargado
           </button>
           <button
             className={getButtonClass(usados.inspeccion_epcc)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/inspeccion_epcc", "inspeccion_epcc")}
           >
-            Inspección EPCC
+            Inspección EPCC diario precargado
           </button>
           <button
             className={getButtonClass(usados.inspeccion_izaje)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/inspeccion_izaje", "inspeccion_izaje")}
           >
-            Inspección Izaje
+            Inspección Izaje diario precargado
           </button>
           <button
             className="button"
