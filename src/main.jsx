@@ -178,6 +178,41 @@ function SOSButton() {
   );
 }
 
+// Componente del botón STP flotante
+function STPButton() {
+  return (
+    <button
+      style={{
+        position: "fixed",
+        right: 14,
+        bottom: "80px",
+        zIndex: 1000,
+        borderRadius: "50%",
+        width: 64,
+        height: 64,
+        background: "#FFD600",
+        color: "#fff",
+        border: "none",
+        fontSize: 24,
+        fontWeight: "bold",
+        boxShadow: "0 2px 12px #FFD600",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 0,
+        lineHeight: "1",
+      }}
+      title="STP"
+    >
+      <span style={{ fontSize: 24, fontWeight: "bold", letterSpacing: 2 }}>
+        <span style={{ color: "#fff" }}>S</span>
+        <span style={{ color: "#1976d2" }}>T</span>
+        <span style={{ color: "#fff" }}>P</span>
+      </span>
+    </button>
+  );
+}
+
 // Renderizado principal y rutas de la aplicación
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -207,6 +242,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           }}
         />
         <SOSButton />
+        <STPButton />
         <div style={{ position: "relative", zIndex: 1 }}>
           <Routes>
             <Route path="/" element={<App />} />

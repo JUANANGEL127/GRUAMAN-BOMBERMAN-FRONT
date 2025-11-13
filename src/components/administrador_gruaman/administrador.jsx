@@ -27,7 +27,7 @@ function AdministradorGruaman() {
     <div className="form-container">
       <div className="card-section">
         <h3 className="card-title">
-          Bienvenido Administrador
+          Bienvenido Administrador Gruaman
         </h3>
         <p className="label" style={{ marginBottom: 32 }}>
           Selecciona que deseas administrar:

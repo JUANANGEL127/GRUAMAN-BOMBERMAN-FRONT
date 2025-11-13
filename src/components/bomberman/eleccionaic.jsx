@@ -159,13 +159,6 @@ function BienvenidaAIC() {
             Inventario de Obra mensual sin validacion y mostrar lleno 
           </button>
           <button
-            className={getButtonClass(usados.administrador)}
-            style={{ maxWidth: 320 }}
-            onClick={() => handleNavigate("/administrador_bomberman", "administrador")}
-          >
-            Panel Administrador
-          </button>
-          <button
             className={getButtonClass(usados.chequeo_alturas)}
             style={{
               maxWidth: 320,

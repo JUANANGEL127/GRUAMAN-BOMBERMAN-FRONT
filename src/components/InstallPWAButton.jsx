@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 function InstallPWAButton() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [visible, setVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
 
   useEffect(() => {
     const handler = (e) => {
@@ -11,7 +12,15 @@ function InstallPWAButton() {
       setVisible(true);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+
+    // Detectar cambio de tamaño para modo móvil
+    const resizeHandler = () => setIsMobile(window.innerWidth <= 600);
+    window.addEventListener("resize", resizeHandler);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("resize", resizeHandler);
+    };
   }, []);
 
   const handleInstall = async () => {
@@ -22,7 +31,7 @@ function InstallPWAButton() {
     }
   };
 
-  if (!visible) return null;
+  if (!visible || !isMobile) return null;
 
   return (
     <button

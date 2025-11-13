@@ -129,13 +129,6 @@ function Bienvenida() {
             Formulario de llegada y salida diario
           </button>
           <button
-            className={getButtonClass(usados.administrador)}
-            style={{ maxWidth: 320 }}
-            onClick={() => handleNavigate("/administrador", "administrador")}
-          >
-            Panel Administrador
-          </button>
-          <button
             className={getButtonClass(usados.permiso_trabajo)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/permiso_trabajo", "permiso_trabajo")}
