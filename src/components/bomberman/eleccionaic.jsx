@@ -10,6 +10,9 @@ import PermisoTrabajo from "../compartido/permiso_trabajo";
 import ChequeoAlturas from "../compartido/chequeo_alturas";
 import inspeccionEpccBomberman from "./inspeccion_epcc_bomberman"; // importación del nuevo componente
 
+// Usa variable de entorno para la base de la API (por si se usa en este archivo en el futuro)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 // Utiliza localStorage para persistir el estado de los botones usados
 function getUsadosFromStorage(usuario) {
   try {

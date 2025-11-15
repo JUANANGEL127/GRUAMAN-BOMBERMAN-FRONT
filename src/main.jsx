@@ -89,6 +89,9 @@ function getUsuarioObra() {
   return { usuario, obra };
 }
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 // Componente del botón SOS flotante
 function SOSButton() {
   const [enviando, setEnviando] = React.useState(false);
@@ -104,7 +107,7 @@ function SOSButton() {
       return;
     }
     try {
-      const res = await fetch("http://localhost:3000/api/emergencia", {
+      const res = await fetch(`${API_BASE_URL}/api/emergencia`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ usuario, ubicacion: obra }),

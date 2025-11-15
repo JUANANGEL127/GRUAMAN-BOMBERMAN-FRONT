@@ -3,6 +3,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 const accesorios = [
   { desc: "BOLA DE LIMPIEZA PARA TUBERIA DE 5.5\" CIFA" },
   { desc: "JOSTICK" },
@@ -187,7 +190,7 @@ function inventariosobra() {
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
     const fechaHoy = new Date().toISOString().slice(0, 10);
 
-    axios.get("http://localhost:3000/obras")
+    axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
         let obras = [];
         if (Array.isArray(res.data.obras)) obras = res.data.obras;
@@ -320,8 +323,8 @@ function inventariosobra() {
     console.log("Payload enviado a backend:", payload);
 
     try {
-      await axios.post("http://localhost:3000/bomberman/inventariosobra", payload);
-      window.alert("Inventario guardado correctamente en localhost.");
+      await axios.post(`${API_BASE_URL}/bomberman/inventariosobra`, payload);
+      window.alert("Inventario guardado correctamente en backend.");
       setMostrarFlechaGuardar(false);
       navigate(-1);
     } catch (err) {

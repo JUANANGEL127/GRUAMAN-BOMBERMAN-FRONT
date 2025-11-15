@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 
+// Usa variable de entorno para la base de la API (por si se usa en el futuro)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 function IntroVideo({ onVideoEnd }) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
@@ -47,6 +50,9 @@ function IntroVideo({ onVideoEnd }) {
           borderRadius: 0
         }}
       >
+        {/* Si el video estuviera en la API, usar: 
+        <source src={`${API_BASE_URL}/intro.mp4`} type="video/mp4" /> 
+        */}
         <source src="/intro.mp4" type="video/mp4" />
         Tu navegador no soporta el elemento de video.
       </video>

@@ -35,4 +35,7 @@ function App() {
   );
 }
 
+// Si necesitas hacer llamadas a la API desde este archivo en el futuro, usa:
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 export default App;

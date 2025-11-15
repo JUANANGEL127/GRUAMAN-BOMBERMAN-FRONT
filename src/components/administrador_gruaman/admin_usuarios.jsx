@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 function capitalizeWords(str) {
   return str.replace(/\b\w/g, l => l.toUpperCase());
 }
@@ -33,7 +36,7 @@ function AdminUsuarios() {
     async function fetchTrabajadores() {
       setLoading(true);
       try {
-        const res = await axios.get("http://localhost:3000/admin_usuarios/listar", {
+        const res = await axios.get(`${API_BASE_URL}/admin_usuarios/listar`, {
           params: {
             empresa_id: 1,
             offset,
@@ -64,7 +67,7 @@ function AdminUsuarios() {
     try {
       const nombreFormateado = capitalizeWords(nuevo.nombre.trim());
       const numero_identificacion = nuevo.numero_identificacion.replace(/[.,]/g, "");
-      await axios.post("http://localhost:3000/admin_usuarios/agregar", {
+      await axios.post(`${API_BASE_URL}/admin_usuarios/agregar`, {
         nombre: nombreFormateado,
         empresa_id: 1,
         numero_identificacion,
@@ -83,7 +86,7 @@ function AdminUsuarios() {
   const handleToggleActivo = async (id, actual) => {
     setLoading(true);
     try {
-      await axios.patch(`http://localhost:3000/admin_usuarios/estado/${id}`, {
+      await axios.patch(`${API_BASE_URL}/admin_usuarios/estado/${id}`, {
         activo: !actual
       });
       setTrabajadores(trabajadores =>

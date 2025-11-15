@@ -3,6 +3,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 
 // ✅ CORRECCIÓN 1: El componente ahora acepta 'props' (aunque no la usaremos, es buena práctica)
 function Checklist(props) { 
@@ -180,7 +183,7 @@ function Checklist(props) {
     // Lógica de carga de datos... (sin cambios)
     const fecha_hoy = new Date().toISOString().slice(0, 10);
     axios
-      .get("http://localhost:3000/obras")
+      .get(`${API_BASE_URL}/obras`)
       .then((res) => {
         const obras = Array.isArray(res.data.obras) ? res.data.obras : res.data || [];
         const obra_encontrada = obras.find((o) => o.nombre_obra === nombre_obra_local);
@@ -207,7 +210,7 @@ function Checklist(props) {
   useEffect(() => {
     // Lógica de carga de bombas... (sin cambios)
     axios
-      .get("http://localhost:3000/bombas")
+      .get(`${API_BASE_URL}/bombas`)
       .then((res) => {
         const bombas = Array.isArray(res.data.bombas) ? res.data.bombas : res.data || [];
         set_lista_bombas(bombas);
@@ -344,7 +347,7 @@ function Checklist(props) {
     
     // 5. Envío y Navegación
     try {
-      await axios.post("http://localhost:3000/bomberman/checklist", payload);
+      await axios.post(`${API_BASE_URL}/bomberman/checklist`, payload);
       
       // La confirmación se realiza antes de la navegación
       console.log("Checklist enviado correctamente.");

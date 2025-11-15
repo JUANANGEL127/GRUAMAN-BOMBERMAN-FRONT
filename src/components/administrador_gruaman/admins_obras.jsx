@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 function capitalizeWords(str) {
   return str.replace(/\b\w/g, l => l.toUpperCase());
 }
@@ -27,7 +30,7 @@ function AdminObrasBomberman() {
     async function fetchObras() {
       setLoading(true);
       try {
-        const res = await axios.get("http://localhost:3000/admin_obras/listar", {
+        const res = await axios.get(`${API_BASE_URL}/admin_obras/listar`, {
           params: {
             empresa_id: 1,
             offset,
@@ -58,7 +61,7 @@ function AdminObrasBomberman() {
     try {
       const nombreObraFormateado = capitalizeWords(nuevo.nombre_obra.trim());
       const constructoraFormateada = capitalizeWords(nuevo.constructora.trim());
-      await axios.post("http://localhost:3000/admin_obras/agregar", {
+      await axios.post(`${API_BASE_URL}/admin_obras/agregar`, {
         nombre_obra: nombreObraFormateado,
         empresa_id: 1,
         constructora: constructoraFormateada,
@@ -85,7 +88,7 @@ function AdminObrasBomberman() {
   const handleToggleActiva = async (id, actual) => {
     setLoading(true);
     try {
-      await axios.patch(`http://localhost:3000/admin_obras/estado/${id}`, {
+      await axios.patch(`${API_BASE_URL}/admin_obras/estado/${id}`, {
         activa: !actual
       });
       setObras(obras =>

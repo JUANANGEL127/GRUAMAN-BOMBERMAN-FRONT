@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 /**
  * Formulario de Control de Bombeo con estructura y clases compatibles con permiso_trabajo.css
  */
@@ -67,7 +70,7 @@ function PlanillaBombeo(props) {
   }, [nombre_operador_local]);
 
   useEffect(() => {
-    axios.get("http://localhost:3000/nombres_trabajadores")
+    axios.get(`${API_BASE_URL}/nombres_trabajadores`)
       .then(res => {
         let nombres = [];
         if (Array.isArray(res.data)) {
@@ -82,7 +85,7 @@ function PlanillaBombeo(props) {
   }, []);
 
   useEffect(() => {
-    axios.get("http://localhost:3000/obras")
+    axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
         let obras = [];
         if (Array.isArray(res.data.obras)) {
@@ -109,7 +112,7 @@ function PlanillaBombeo(props) {
   }, [nombre_operador_local]);
 
   useEffect(() => {
-    axios.get("http://localhost:3000/bombas")
+    axios.get(`${API_BASE_URL}/bombas`)
       .then(res => {
         let bombas = [];
         if (Array.isArray(res.data.bombas)) {
@@ -306,7 +309,7 @@ function PlanillaBombeo(props) {
     };
 
     try {
-      const res = await fetch("http://localhost:3000/bomberman/planillabombeo", {
+      const res = await fetch(`${API_BASE_URL}/bomberman/planillabombeo`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)

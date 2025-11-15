@@ -3,6 +3,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 const preguntas = [
 	{
 		categoria: "CONDICIONES DE SALUD",
@@ -79,7 +82,7 @@ function ChequeoAlturas({ value = {}, onChange }) {
 		const cargo = localStorage.getItem("cargo_trabajador") || "";
 
 		// Obtener cliente/constructora como en permiso_trabajo.jsx
-		axios.get("http://localhost:3000/obras")
+		axios.get(`${API_BASE_URL}/obras`)
 			.then(res => {
 				let obras = [];
 				if (Array.isArray(res.data.obras)) {
@@ -222,7 +225,7 @@ function ChequeoAlturas({ value = {}, onChange }) {
 		}
 
 		try {
-			await axios.post("http://localhost:3000/compartido/chequeo_alturas", payload);
+			await axios.post(`${API_BASE_URL}/compartido/chequeo_alturas`, payload);
 			alert("Lista de chequeo enviada correctamente.");
 			if (onChange) onChange({});
 			setRespuestas({});

@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 
+// Usa variable de entorno para la base de la API (por si se usa en el futuro)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 function InstallPWAButton() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [visible, setVisible] = useState(false);

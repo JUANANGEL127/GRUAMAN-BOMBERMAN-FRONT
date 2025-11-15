@@ -8,6 +8,9 @@ import LlegadaSalidaAdmin from "./llegada_salida_admin";
 import AdminsObras from "./admins_obras"; // importar el componente
 import { useNavigate } from "react-router-dom";
 
+// Usa variable de entorno para la base de la API (por si se usa en este archivo en el futuro)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 // Panel administrador visual tipo menú, similar a eleccion.jsx pero sin barra de progreso ni lógica de botones
 function AdministradorGruaman() {
   // Estado para registros, carga y búsqueda

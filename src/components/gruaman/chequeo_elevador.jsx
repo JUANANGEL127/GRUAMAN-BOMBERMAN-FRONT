@@ -3,6 +3,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 // Mapeo de las preguntas (items) a los nombres de las columnas de la DB
 const MAPEO_DB = {
   // CONDICIONES DE SEGURIDAD
@@ -134,7 +137,7 @@ function ChequeoElevador() {
       let constructora = "";
       try {
         // Asumiendo que esta URL es correcta y funcional
-        const res = await axios.get("http://localhost:3000/obras");
+        const res = await axios.get(`${API_BASE_URL}/obras`);
         const obras = Array.isArray(res.data.obras) ? res.data.obras : res.data || [];
         const obra_obj = obras.find(
           (o) => (o.nombre_obra || o.nombre || "") === proyecto
@@ -237,7 +240,7 @@ function ChequeoElevador() {
     };
 
     try {
-      await axios.post("http://localhost:3000/gruaman/chequeo_elevador", payload);
+      await axios.post(`${API_BASE_URL}/gruaman/chequeo_elevador`, payload);
       alert("Chequeo de elevador enviado correctamente.");
       navigate(-1); // vuelve al componente anterior
     } catch (err) {

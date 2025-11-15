@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 function toYMD(date) {
   if (!date) return '';
   if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
@@ -68,7 +71,7 @@ function ChequeoTorreGruasAdmin() {
         limit: filters.limit || 50,
         offset: filters.offset || 0
       };
-      const res = await axios.post('http://localhost:3000/chequeo_torregruas_admin/buscar', body);
+      const res = await axios.post(`${API_BASE_URL}/chequeo_torregruas_admin/buscar`, body);
       setResultados(res.data?.rows || []);
       setTotal(res.data?.count || 0);
     } catch (e) {
@@ -92,7 +95,7 @@ function ChequeoTorreGruasAdmin() {
         formato: tipo,
         limit: 50000
       };
-      const res = await axios.post('http://localhost:3000/chequeo_torregruas_admin/descargar', body, { responseType: 'blob' });
+      const res = await axios.post(`${API_BASE_URL}/chequeo_torregruas_admin/descargar`, body, { responseType: 'blob' });
       const blob = new Blob([res.data], { type: tipo === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/zip' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -113,7 +116,7 @@ function ChequeoTorreGruasAdmin() {
     // Nombres operarios
     async function fetchNombres() {
       try {
-        const res = await axios.get("http://localhost:3000/datos_basicos");
+        const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
         if (Array.isArray(res.data.datos)) {
           // Filtrar solo los que tengan empresa_id=1
           setNombresOperarios(res.data.datos.filter(d => d.empresa_id === 1).map(d => d.nombre));
@@ -127,7 +130,7 @@ function ChequeoTorreGruasAdmin() {
     fetchNombres();
 
     // Obras y constructoras
-    axios.get("http://localhost:3000/obras")
+    axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
         const obras = (res.data.obras || []).filter(o => o.empresa_id === 1);
         setListaObras(obras);

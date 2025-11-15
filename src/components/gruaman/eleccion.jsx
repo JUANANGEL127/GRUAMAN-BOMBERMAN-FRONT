@@ -10,6 +10,9 @@ import InspeccionEPCC from "./inspeccion_epcc";
 import InspeccionIzaje from "./inspeccion_izaje";
 import ChequeoElevador from "./chequeo_elevador"; // <- nuevo import
 
+// Usa variable de entorno para la base de la API (por si se usa en este archivo en el futuro)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 // Utiliza localStorage para persistir el estado de los botones usados por usuario
 function getUsadosFromStorage(usuario) {
   try {

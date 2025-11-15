@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../styles/formulario1.css";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 // Componente principal para el registro de jornada
 function formulario_1() {
   const navigate = useNavigate();
@@ -18,7 +21,8 @@ function formulario_1() {
   const obra = localStorage.getItem("obra") || "";
   const numero_identificacion = localStorage.getItem("numero_identificacion") || "";
 
-  const api_url = "http://localhost:3000/formulario_1";
+  // Cambia la url base de la API
+  const api_url = `${API_BASE_URL}/formulario_1`;
 
   // Obtener trabajador_id desde el backend
   useEffect(() => {
@@ -26,7 +30,7 @@ function formulario_1() {
       if (nombre_trabajador && empresa && obra && numero_identificacion) {
         try {
           const res = await axios.get(
-            `http://localhost:3000/trabajador-id?nombre=${encodeURIComponent(
+            `${API_BASE_URL}/trabajador-id?nombre=${encodeURIComponent(
               nombre_trabajador
             )}&empresa=${encodeURIComponent(empresa)}&obra=${encodeURIComponent(
               obra

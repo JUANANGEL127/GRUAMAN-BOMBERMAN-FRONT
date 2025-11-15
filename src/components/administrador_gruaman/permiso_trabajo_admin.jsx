@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 // Helper para formato fecha YYYY-MM-DD
 function toYMD(date) {
   if (!date) return '';
@@ -67,7 +70,7 @@ function PermisoTrabajoAdmin() {
   useEffect(() => {
     async function fetchNombres() {
       try {
-        const res = await axios.get("http://localhost:3000/datos_basicos");
+        const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
         if (Array.isArray(res.data.datos)) {
           setNombresOperarios(res.data.datos.map(d => d.nombre));
         } else {
@@ -82,7 +85,7 @@ function PermisoTrabajoAdmin() {
 
   // Obtener lista de obras y constructoras al montar el componente
   useEffect(() => {
-    axios.get("http://localhost:3000/obras")
+    axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
         const obras = res.data.obras || [];
         setListaObras(obras);
@@ -130,7 +133,7 @@ function PermisoTrabajoAdmin() {
         offset: filters.offset || 0
       };
       console.log("Datos enviados en búsqueda:", body);
-      const res = await axios.post('http://localhost:3000/permiso_trabajo_admin/buscar', body);
+      const res = await axios.post(`${API_BASE_URL}/permiso_trabajo_admin/buscar`, body);
       setResultados(res.data?.rows || []);
       setTotal(res.data?.count || 0);
     } catch (e) {
@@ -156,7 +159,7 @@ function PermisoTrabajoAdmin() {
         limit: 50000
       };
       console.log("Datos enviados en descarga:", body);
-      const res = await axios.post('http://localhost:3000/permiso_trabajo_admin/descargar', body, { responseType: 'blob' });
+      const res = await axios.post(`${API_BASE_URL}/permiso_trabajo_admin/descargar`, body, { responseType: 'blob' });
       const blob = new Blob([res.data], { type: tipo === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/zip' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');

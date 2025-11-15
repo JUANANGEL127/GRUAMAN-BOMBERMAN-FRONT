@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 function BienvenidaSeleccion({ usuario }) {
   const [obra_busqueda, setObraBusqueda] = useState("");
   const [lista_obras, setListaObras] = useState([]);
@@ -11,7 +14,7 @@ function BienvenidaSeleccion({ usuario }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get("http://localhost:3000/obras")
+    axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
         // Solo mostrar obras con activa === true
         const obrasActivas = (res.data.obras || []).filter(o => o.activa === true);
@@ -75,7 +78,7 @@ function BienvenidaSeleccion({ usuario }) {
       return;
     }
     try {
-      const resp = await axios.post("http://localhost:3000/validar_ubicacion", {
+      const resp = await axios.post(`${API_BASE_URL}/validar_ubicacion`, {
         obra_id: obra_id_seleccionada,
         lat: ubicacion.lat,
         lon: ubicacion.lon

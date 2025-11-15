@@ -3,6 +3,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 const datosGeneralesFields = [
   { name: "nombre", label: "Nombre" },
   { name: "cedula", label: "Cédula" },
@@ -155,7 +158,7 @@ function inspeccion_epcc_bomberman() {
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
     const fechaHoy = getColombiaDateString();
 
-    axios.get("http://localhost:3000/obras")
+    axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
         let obras = [];
         if (Array.isArray(res.data.obras)) obras = res.data.obras;
@@ -278,10 +281,10 @@ function inspeccion_epcc_bomberman() {
 
     const payload = buildPayload();
     try {
-      await axios.post("http://localhost:3000/bomberman/inspeccion_epcc_bomberman", payload, {
+      await axios.post(`${API_BASE_URL}/bomberman/inspeccion_epcc_bomberman`, payload, {
         headers: { "Content-Type": "application/json" }
       });
-      window.alert("Inspección guardada correctamente en localhost.");
+      window.alert("Inspección guardada correctamente en backend.");
       setMostrarFlechaGuardar(false);
       navigate(-1);
     } catch (err) {

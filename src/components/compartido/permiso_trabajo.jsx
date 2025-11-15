@@ -3,6 +3,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 function PermisoTrabajo(props) {
   const [generales, setGenerales] = useState({
     cliente: "",
@@ -181,7 +184,7 @@ function PermisoTrabajo(props) {
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
     const fechaHoy = new Date().toISOString().slice(0, 10);
 
-    axios.get("http://localhost:3000/obras")
+    axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
         let obras = [];
         if (Array.isArray(res.data.obras)) {
@@ -344,7 +347,7 @@ function PermisoTrabajo(props) {
     console.log("Payload enviado a backend:", payload);
 
     try {
-      const res = await axios.post("http://localhost:3000/compartido/permiso_trabajo", payload);
+      const res = await axios.post(`${API_BASE_URL}/compartido/permiso_trabajo`, payload);
       alert("Permiso de trabajo guardado correctamente.");
       if (props.onFinish) props.onFinish();
       navigate(-1);

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 function LlegadaSalidaAdmin() {
   const [activeBar, setActiveBar] = useState(""); // "ver", "excel", "pdf"
   const [filters, setFilters] = useState({
@@ -49,7 +52,7 @@ function LlegadaSalidaAdmin() {
         fecha_inicio: toYMD(filters.fecha_inicio),
         fecha_fin: toYMD(filters.fecha_fin)
       };
-      const res = await axios.post("http://localhost:3000/llegada_salida_admin/buscar", body);
+      const res = await axios.post(`${API_BASE_URL}/llegada_salida_admin/buscar`, body);
       setResultados(res.data || []);
     } catch (err) {
       setResultados([]);
@@ -67,7 +70,7 @@ function LlegadaSalidaAdmin() {
         formato: tipo
       };
       const res = await axios.post(
-        `http://localhost:3000/llegada_salida_admin/descargar`,
+        `${API_BASE_URL}/llegada_salida_admin/descargar`,
         body,
         { responseType: "blob" }
       );
@@ -88,7 +91,7 @@ function LlegadaSalidaAdmin() {
     // Nombres operarios
     async function fetchNombres() {
       try {
-        const res = await axios.get("http://localhost:3000/datos_basicos");
+        const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
         if (Array.isArray(res.data.datos)) {
           setNombresOperarios(res.data.datos.map(d => d.nombre));
         } else {
@@ -101,7 +104,7 @@ function LlegadaSalidaAdmin() {
     fetchNombres();
 
     // Obras y constructoras
-    axios.get("http://localhost:3000/obras")
+    axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
         const obras = res.data.obras || [];
         setListaObras(obras);

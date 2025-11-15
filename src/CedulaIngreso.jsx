@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
+// Usa variable de entorno para la base de la API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 function CedulaIngreso({ onUsuarioEncontrado }) {
   const [cedula, setCedula] = useState("");
   const [error, setError] = useState("");
@@ -25,7 +28,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
       return;
     }
     try {
-      const resp = await axios.get(`http://localhost:3000/datos_basicos`);
+      const resp = await axios.get(`${API_BASE_URL}/datos_basicos`);
       const datosArray = Array.isArray(resp.data.datos) ? resp.data.datos : (Array.isArray(resp.data) ? resp.data : []);
       // Solo permitir ingreso si activo === true
       const usuario = datosArray.find(u => {
@@ -75,7 +78,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
     setAdminError("");
     setAdminLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/admin/login', {
+      const response = await fetch(`${API_BASE_URL}/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: adminPass }),
