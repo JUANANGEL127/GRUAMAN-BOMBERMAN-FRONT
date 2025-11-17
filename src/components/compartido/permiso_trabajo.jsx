@@ -6,6 +6,19 @@ import "../../styles/permiso_trabajo.css";
 // Usa variable de entorno para la base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
+function getCurrentWeekKey() {
+  const now = new Date();
+  // Get ISO week number
+  const firstJan = new Date(now.getFullYear(), 0, 1);
+  const days = Math.floor((now - firstJan) / (24 * 60 * 60 * 1000));
+  const week = Math.ceil((days + firstJan.getDay() + 1) / 7);
+  return `${now.getFullYear()}-W${week}`;
+}
+
+function isSunday() {
+  return new Date().getDay() === 0; // 0 = Sunday
+}
+
 function PermisoTrabajo(props) {
   const [generales, setGenerales] = useState({
     cliente: "",
@@ -216,6 +229,241 @@ function PermisoTrabajo(props) {
     }));
   }, []);
 
+  // --- NUEVO: Manejo de respuestas precargadas por semana ---
+  useEffect(() => {
+    const weekKey = getCurrentWeekKey();
+    const saved = localStorage.getItem("permiso_trabajo_respuestas");
+    let shouldClear = false;
+
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Si es domingo, limpiar respuestas
+        if (isSunday() || parsed.weekKey !== weekKey) {
+          shouldClear = true;
+        } else {
+          // Precargar respuestas si la semana coincide
+          setGenerales(parsed.generales || generales);
+          setTareas(parsed.tareas || tareasInicial);
+          setDescripcion(parsed.descripcion || "");
+          setHerramientas(parsed.herramientas || "");
+          setHerramientasLista(parsed.herramientasLista || herramientasLista);
+          setTrabajadores(parsed.trabajadores || [
+            { id: 1, numero_id: "", nombres: "", cargo: "", apto: false, ppe: false, observacion: "" },
+          ]);
+          setMedidasPrevencion(parsed.medidasPrevencion || {
+            procedimiento: false,
+            info_y_demarcacion: false,
+            epp_correcto: false,
+            inspeccion_previas: false,
+            plan_rescate: false,
+          });
+          setEquiposAcceso(parsed.equiposAcceso || {
+            escaleras: false,
+            vertical_fija: false,
+            portal: false,
+            andamios: false,
+            colgante: false,
+            elevador_carga: false,
+            canastilla: false,
+            ascensores_personas: false,
+          });
+          setFirmas(parsed.firmas || {
+            trabajador_autorizado: "",
+            cargo_autorizado: "",
+            firma_coordinador: "",
+            fecha_validacion: "",
+          });
+          setTrabajoRutinario(parsed.trabajoRutinario || "");
+          setAlturaTiene(parsed.alturaTiene || "");
+          setAlturaInicial(parsed.alturaInicial || "");
+          setAlturaFinal(parsed.alturaFinal || "");
+          setRequisitosAptitud(parsed.requisitosAptitud || {
+            explicacion_procedimiento: false,
+            buenas_condiciones_salud: false,
+            entiende_ats: false,
+            consumio_alimentos: false,
+            dormio_suficiente: false,
+            no_bebidas_embriagantes: false,
+            sin_accesorios: false,
+            sin_medicamentos: false,
+            capacitado_certificado: false,
+          });
+          setEpp(parsed.epp || {
+            cuenta_certificado_alturas: "",
+            seguridad_social_arl: "",
+            casco_tipo1: "",
+            gafas: "",
+            proteccion_auditiva: "",
+            proteccion_respiratoria: "",
+            guantes_seguridad: "",
+            botas_dielectricas: "",
+            overol_dotacion: "",
+          });
+          setSrpdc(parsed.srpdc || {
+            arnes_cuerpo_entero: "",
+            arnes_dielectrico: "",
+            mosqueton: "",
+            arrestador_caidas: "",
+            eslinga_y_absorbedor: "",
+            eslinga_posicionamiento: "",
+            linea_vida: "",
+            verificacion_anclaje: "",
+          });
+          setPrecaucionesGenerales(parsed.precaucionesGenerales || {
+            procedimiento_charla: "",
+            medidas_colectivas_prevencion: "",
+            epp_epcc_inspeccion: "",
+            equipos_herramientas_inspeccion: "",
+            inspeccion_sistema_ta: "",
+            plan_emergencias_rescate: "",
+            medidas_caida_objetos: "",
+            kit_rescate: "",
+            permiso_trabajo_ats: "",
+            verificacion_atmosfericas: "",
+            distancia_vertical_caida: "",
+            otro: "",
+          });
+          setEquiposAccesoP8(parsed.equiposAccesoP8 || {
+            vertical_fija: "",
+            vertical_portatil: "",
+            andamio_multidireccional: "",
+            andamio_colgante: "",
+            elevador_carga: "",
+            canastilla: "",
+            ascensor_personas: "",
+            acceso_cuerdas: "",
+            otro: "",
+          });
+        }
+      } catch (e) {
+        shouldClear = true;
+      }
+    }
+    if (shouldClear) {
+      localStorage.removeItem("permiso_trabajo_respuestas");
+      // Limpiar todos los estados a sus valores iniciales
+      setGenerales({
+        cliente: "",
+        proyecto: "",
+        fecha: "",
+        operador: "",
+      });
+      setTareas(tareasInicial);
+      setDescripcion("");
+      setHerramientas("");
+      setHerramientasLista({
+        MARTILLO: false,
+        LLAVES: false,
+        "PALANCA DE FUERZA": false,
+        ALMADANA: false,
+        NIVEL: false,
+        ESPÁTULA: false,
+        ALICATE: false,
+        PINZAS: false,
+        "PALUSTRE PALA BARRA": false,
+        DECAMETRO: false,
+        PICA: false,
+        "PALA DRAGA": false,
+        MACHETE: false,
+        "CORTA FRIO": false,
+        MULTIMETRO: false,
+        FLEXOMETRO: false,
+        CINCEL: false,
+      });
+      setTrabajadores([
+        { id: 1, numero_id: "", nombres: "", cargo: "", apto: false, ppe: false, observacion: "" },
+      ]);
+      setMedidasPrevencion({
+        procedimiento: false,
+        info_y_demarcacion: false,
+        epp_correcto: false,
+        inspeccion_previas: false,
+        plan_rescate: false,
+      });
+      setEquiposAcceso({
+        escaleras: false,
+        vertical_fija: false,
+        portal: false,
+        andamios: false,
+        colgante: false,
+        elevador_carga: false,
+        canastilla: false,
+        ascensores_personas: false,
+      });
+      setFirmas({
+        trabajador_autorizado: "",
+        cargo_autorizado: "",
+        firma_coordinador: "",
+        fecha_validacion: "",
+      });
+      setTrabajoRutinario("");
+      setAlturaTiene("");
+      setAlturaInicial("");
+      setAlturaFinal("");
+      setRequisitosAptitud({
+        explicacion_procedimiento: false,
+        buenas_condiciones_salud: false,
+        entiende_ats: false,
+        consumio_alimentos: false,
+        dormio_suficiente: false,
+        no_bebidas_embriagantes: false,
+        sin_accesorios: false,
+        sin_medicamentos: false,
+        capacitado_certificado: false,
+      });
+      setEpp({
+        cuenta_certificado_alturas: "",
+        seguridad_social_arl: "",
+        casco_tipo1: "",
+        gafas: "",
+        proteccion_auditiva: "",
+        proteccion_respiratoria: "",
+        guantes_seguridad: "",
+        botas_dielectricas: "",
+        overol_dotacion: "",
+      });
+      setSrpdc({
+        arnes_cuerpo_entero: "",
+        arnes_dielectrico: "",
+        mosqueton: "",
+        arrestador_caidas: "",
+        eslinga_y_absorbedor: "",
+        eslinga_posicionamiento: "",
+        linea_vida: "",
+        verificacion_anclaje: "",
+      });
+      setPrecaucionesGenerales({
+        procedimiento_charla: "",
+        medidas_colectivas_prevencion: "",
+        epp_epcc_inspeccion: "",
+        equipos_herramientas_inspeccion: "",
+        inspeccion_sistema_ta: "",
+        plan_emergencias_rescate: "",
+        medidas_caida_objetos: "",
+        kit_rescate: "",
+        permiso_trabajo_ats: "",
+        verificacion_atmosfericas: "",
+        distancia_vertical_caida: "",
+        otro: "",
+      });
+      setEquiposAccesoP8({
+        vertical_fija: "",
+        vertical_portatil: "",
+        andamio_multidireccional: "",
+        andamio_colgante: "",
+        elevador_carga: "",
+        canastilla: "",
+        ascensor_personas: "",
+        acceso_cuerdas: "",
+        otro: "",
+      });
+    }
+    // ...existing code...
+  // eslint-disable-next-line
+  }, []);
+  // --- FIN NUEVO ---
+
   const handleGeneralChange = (e) => {
     setGenerales({ ...generales, [e.target.name]: e.target.value });
   };
@@ -356,6 +604,34 @@ function PermisoTrabajo(props) {
       alert("Error al guardar el permiso de trabajo: " + msg);
       console.error(err);
     }
+
+    // --- NUEVO: Guardar respuestas en localStorage por semana ---
+    const weekKey = getCurrentWeekKey();
+    localStorage.setItem(
+      "permiso_trabajo_respuestas",
+      JSON.stringify({
+        weekKey,
+        generales,
+        tareas,
+        descripcion,
+        herramientas,
+        herramientasLista,
+        trabajadores,
+        medidasPrevencion,
+        equiposAcceso,
+        firmas,
+        trabajoRutinario,
+        alturaTiene,
+        alturaInicial,
+        alturaFinal,
+        requisitosAptitud,
+        epp,
+        srpdc,
+        precaucionesGenerales,
+        equiposAccesoP8,
+      })
+    );
+    // --- FIN NUEVO ---
   };
 
   return (
@@ -614,21 +890,13 @@ function PermisoTrabajo(props) {
 
       <div className="card-section">
         <h3 className="card-title">Equipos / Sistema de acceso para trabajo en alturas</h3>
-        <div>
-          <table>
-            <thead>
-              <tr>
-                <th>Tipo</th>
-                <th></th>
-                <th>SI</th>
-                <th>NO</th>
-                <th>NA</th>
-              </tr>
-            </thead>
+        {/* Sub-card Escaleras */}
+        <div className="sub-card-section" style={{ border: "1px solid #e0e0e0", borderRadius: 8, padding: 16, marginBottom: 16 }}>
+          <h4 style={{ margin: 0, marginBottom: 10 }}>Escaleras</h4>
+          <table style={{ width: "100%" }}>
+           
             <tbody>
-              {/* Escaleras */}
               <tr>
-                <td rowSpan={2}>Escaleras</td>
                 <td>Vertical fija</td>
                 <td colSpan={3}>
                   <select
@@ -660,9 +928,18 @@ function PermisoTrabajo(props) {
                   </select>
                 </td>
               </tr>
-              {/* Andamios */}
+            </tbody>
+          </table>
+        </div>
+        {/* Sub-card Andamios */}
+        <div className="sub-card-section" style={{ border: "1px solid #e0e0e0", borderRadius: 8, padding: 16, marginBottom: 16 }}>
+          <h4 style={{ margin: 0, marginBottom: 10 }}>Andamios</h4>
+          <table style={{ width: "100%" }}>
+            <thead>
+              
+            </thead>
+            <tbody>
               <tr>
-                <td rowSpan={2}>Andamios</td>
                 <td>Multidireccional</td>
                 <td colSpan={3}>
                   <select
@@ -694,10 +971,19 @@ function PermisoTrabajo(props) {
                   </select>
                 </td>
               </tr>
-              {/* Equipos elevadores */}
+            </tbody>
+          </table>
+        </div>
+        {/* Sub-card Equipos elevadores */}
+        <div className="sub-card-section" style={{ border: "1px solid #e0e0e0", borderRadius: 8, padding: 16, marginBottom: 16 }}>
+          <h4 style={{ margin: 0, marginBottom: 10 }}>Equipos elevadores</h4>
+          <table style={{ width: "100%" }}>
+            <thead>
+             
+            </thead>
+            <tbody>
               <tr>
-                <td rowSpan={3}>Equipos elevadores</td>
-                <td>Elevadoresde carga</td>
+                <td>Elevadores de carga</td>
                 <td colSpan={3}>
                   <select
                     name="elevador_carga"
@@ -744,37 +1030,33 @@ function PermisoTrabajo(props) {
                   </select>
                 </td>
               </tr>
-              {/* Acceso por cuerdas */}
-              <tr>
-                <td>Acceso por cuerdas:</td>
-                <td colSpan={3}>
-                  <select
-                    name="acceso_cuerdas"
-                    value={equiposAccesoP8.acceso_cuerdas}
-                    onChange={handleEquiposAccesoP8Change}
-                    style={{ width: "100%" }}
-                  >
-                    <option value="">--</option>
-                    <option value="SI">SI</option>
-                    <option value="NO">NO</option>
-                    <option value="NA">NA</option>
-                  </select>
-                </td>
-              </tr>
-              {/* Otro */}
-              <tr>
-                <td>otro (cual):</td>
-                <td colSpan={4}>
-                  <input
-                    type="text"
-                    name="otro"
-                    value={equiposAccesoP8.otro}
-                    onChange={handleEquiposAccesoP8Change}
-                  />
-                </td>
-              </tr>
             </tbody>
           </table>
+        </div>
+        {/* Acceso por cuerdas y otro quedan fuera de las sub-cards pero dentro de la card principal */}
+        <div style={{ marginBottom: 12 }}>
+          <label>Acceso por cuerdas:</label>
+          <select
+            name="acceso_cuerdas"
+            value={equiposAccesoP8.acceso_cuerdas}
+            onChange={handleEquiposAccesoP8Change}
+            style={{ width: "97%" }}
+          >
+            <option value="">--</option>
+            <option value="SI">SI</option>
+            <option value="NO">NO</option>
+            <option value="NA">NA</option>
+          </select>
+        </div>
+        <div>
+          <label>otro (cual):</label>
+          <input
+            type="text"
+            name="otro"
+            value={equiposAccesoP8.otro}
+            onChange={handleEquiposAccesoP8Change}
+            style={{ width: "91%" }}
+          />
         </div>
       </div>
 

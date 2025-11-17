@@ -137,6 +137,17 @@ function getColombiaDateString() {
     .slice(0, 10);
 }
 
+function getCurrentWeekKey() {
+  const now = new Date();
+  const firstJan = new Date(now.getFullYear(), 0, 1);
+  const days = Math.floor((now - firstJan) / (24 * 60 * 60 * 1000));
+  const week = Math.ceil((days + firstJan.getDay() + 1) / 7);
+  return `${now.getFullYear()}-W${week}`;
+}
+function isSunday() {
+  return new Date().getDay() === 0;
+}
+
 function inspeccion_epcc_bomberman() {
   // 🔑 Cambiado: cliente -> nombre_cliente, proyecto -> nombre_proyecto
   const [datosGenerales, setDatosGenerales] = useState({
@@ -184,6 +195,47 @@ function inspeccion_epcc_bomberman() {
           cargo: localStorage.getItem("cargo_trabajador") || ""
         });
       });
+  }, []);
+
+  // Precarga semanal de respuestas
+  useEffect(() => {
+    const weekKey = getCurrentWeekKey();
+    const saved = localStorage.getItem("bomberman_inspeccion_epcc_respuestas");
+    let shouldClear = false;
+
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (isSunday() || parsed.weekKey !== weekKey) {
+          shouldClear = true;
+        } else {
+          setDatosGenerales(parsed.datosGenerales || {
+            nombre_cliente: "",
+            nombre_proyecto: "",
+            fecha: "",
+            nombre_operador: "",
+            cargo: ""
+          });
+          setRespuestas(parsed.respuestas || {});
+          setObservaciones(parsed.observaciones || "");
+        }
+      } catch {
+        shouldClear = true;
+      }
+    }
+    if (shouldClear) {
+      localStorage.removeItem("bomberman_inspeccion_epcc_respuestas");
+      setDatosGenerales({
+        nombre_cliente: "",
+        nombre_proyecto: "",
+        fecha: "",
+        nombre_operador: "",
+        cargo: ""
+      });
+      setRespuestas({});
+      setObservaciones("");
+    }
+    // eslint-disable-next-line
   }, []);
 
   const handleGeneralChange = (e) => {
@@ -280,6 +332,19 @@ function inspeccion_epcc_bomberman() {
     if (!validarCamposObligatorios()) return;
 
     const payload = buildPayload();
+
+    // Guardar respuestas en localStorage por semana
+    const weekKey = getCurrentWeekKey();
+    localStorage.setItem(
+      "bomberman_inspeccion_epcc_respuestas",
+      JSON.stringify({
+        weekKey,
+        datosGenerales,
+        respuestas,
+        observaciones,
+      })
+    );
+
     try {
       await axios.post(`${API_BASE_URL}/bomberman/inspeccion_epcc_bomberman`, payload, {
         headers: { "Content-Type": "application/json" }

@@ -168,6 +168,14 @@ const getAccesorioValue = (obj, idx) => obj[idx] || "";
 const getTuberiaValue = (obj, idx) => obj[idx]?.estado || "";
 const getTuberiaObs = (obj, idx) => obj[idx]?.observaciones || "";
 
+function getCurrentMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+function isFirstDayOfMonth() {
+  return new Date().getDate() === 1;
+}
+
 function inventariosobra() {
   const [generales, setGenerales] = useState({
     cliente: "",
@@ -213,6 +221,51 @@ function inventariosobra() {
           cargo: localStorage.getItem("cargo_trabajador") || ""
         });
       });
+  }, []);
+
+  // Precarga mensual de respuestas (no editable)
+  useEffect(() => {
+    const monthKey = getCurrentMonthKey();
+    const saved = localStorage.getItem("bomberman_inventariosobra_respuestas");
+    let shouldClear = false;
+
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (isFirstDayOfMonth() || parsed.monthKey !== monthKey) {
+          shouldClear = true;
+        } else {
+          setGenerales(parsed.generales || {
+            cliente: "",
+            proyecto: "",
+            fecha: "",
+            nombre_operador: "",
+            cargo: ""
+          });
+          setAccesoriosCant(parsed.accesoriosCant || {});
+          setAccesoriosTuberiaCant(parsed.accesoriosTuberiaCant || {});
+          setTuberiaEstado(parsed.tuberiaEstado || {});
+          setObservaciones(parsed.observaciones || "");
+        }
+      } catch {
+        shouldClear = true;
+      }
+    }
+    if (shouldClear) {
+      localStorage.removeItem("bomberman_inventariosobra_respuestas");
+      setGenerales({
+        cliente: "",
+        proyecto: "",
+        fecha: "",
+        nombre_operador: "",
+        cargo: ""
+      });
+      setAccesoriosCant({});
+      setAccesoriosTuberiaCant({});
+      setTuberiaEstado({});
+      setObservaciones("");
+    }
+    // eslint-disable-next-line
   }, []);
 
   const scrollToItem = (id) => {
@@ -319,6 +372,22 @@ function inventariosobra() {
       observaciones_generales: observaciones
     };
 
+    // Guardar solo si no existe para este mes
+    const monthKey = getCurrentMonthKey();
+    if (!localStorage.getItem("bomberman_inventariosobra_respuestas")) {
+      localStorage.setItem(
+        "bomberman_inventariosobra_respuestas",
+        JSON.stringify({
+          monthKey,
+          generales,
+          accesoriosCant,
+          accesoriosTuberiaCant,
+          tuberiaEstado,
+          observaciones,
+        })
+      );
+    }
+
     // Depuración: muestra el payload en consola antes de enviar
     console.log("Payload enviado a backend:", payload);
 
@@ -333,6 +402,19 @@ function inventariosobra() {
       window.alert("Error al guardar inventario. Revisa la consola para detalles.");
     }
   };
+
+  // En los inputs y selects, hacer que sean readonly/disabled si hay datos precargados de este mes
+  const monthKey = getCurrentMonthKey();
+  const saved = localStorage.getItem("bomberman_inventariosobra_respuestas");
+  let isReadOnly = false;
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed.monthKey === monthKey) {
+        isReadOnly = true;
+      }
+    } catch {}
+  }
 
   return (
     <form className="form-container" onSubmit={handleSubmit}>
@@ -366,6 +448,7 @@ function inventariosobra() {
               onChange={e => setGenerales(prev => ({ ...prev, cargo: e.target.value }))}
               className="permiso-trabajo-input"
               style={{ width: "100%" }}
+              readOnly={isReadOnly}
             />
           </div>
         </div>
@@ -410,6 +493,7 @@ function inventariosobra() {
                 }}
                 className={`permiso-trabajo-input${errores[`acc_${idx}`] ? " campo-error" : ""}`}
                 style={errores[`acc_${idx}`] ? { width: 70, borderColor: "red", background: "#ffeaea" } : { width: 70 }}
+                readOnly={isReadOnly}
               />
               {mostrarFlechaGuardar && errores[`acc_${idx}`] && (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -479,6 +563,7 @@ function inventariosobra() {
                 }}
                 className={`permiso-trabajo-input${errores[`acct_${idx}`] ? " campo-error" : ""}`}
                 style={errores[`acct_${idx}`] ? { width: 70, borderColor: "red", background: "#ffeaea" } : { width: 70 }}
+                readOnly={isReadOnly}
               />
               {mostrarFlechaGuardar && errores[`acct_${idx}`] && (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -541,6 +626,7 @@ function inventariosobra() {
                     className={`permiso-trabajo-select${errores[`tub_${idx}`] ? " campo-error" : ""}`}
                     style={errores[`tub_${idx}`] ? { width: 100, borderColor: "red", background: "#ffeaea" } : { width: 100, marginBottom: 6 }}
                     id={`tub_${idx}`}
+                    disabled={isReadOnly}
                   >
                     <option value="">--</option>
                     <option value="buena">Buena</option>
@@ -582,6 +668,7 @@ function inventariosobra() {
                     className={`permiso-trabajo-input${errores[`tub_obs_${idx}`] ? " campo-error" : ""}`}
                     style={errores[`tub_obs_${idx}`] ? { width: "93%", borderColor: "red", background: "#ffeaea", marginBottom: 6 } : { width: "93%", marginBottom: 6 }}
                     id={`tub_obs_${idx}`}
+                    readOnly={isReadOnly}
                   />
                   {mostrarFlechaGuardar && errores[`tub_obs_${idx}`] && (
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -621,11 +708,18 @@ function inventariosobra() {
           style={{ width: "93%", minHeight: 80 }}
           value={observaciones}
           onChange={e => setObservaciones(e.target.value)}
+          readOnly={isReadOnly}
         />
       </div>
 
       <div style={{ textAlign: "right", marginTop: 18 }}>
-        <button type="submit" className="button" style={{ background: "#ff9800", color: "#fff" }} ref={guardarBtnRef}>
+        <button
+          type="submit"
+          className="button"
+          style={{ background: "#ff9800", color: "#fff" }}
+          ref={guardarBtnRef}
+          disabled={isReadOnly}
+        >
           Guardar
         </button>
       </div>

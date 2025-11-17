@@ -21,7 +21,6 @@ function getUsadosFromStorage(usuario) {
   } catch {}
   return {
     formulario1: false,
-    administrador: false,
     permiso_trabajo: false,
     chequeo_alturas: false,
     chequeo_torregruas: false,
@@ -120,58 +119,64 @@ function Bienvenida() {
             {completados} de {total} formularios completados
           </div>
         </div>
-        <p className="label" style={{ marginBottom: 32 }}>
+        <p className="label" style={{ marginBottom: 20 }}>
           Selecciona el formulario que deseas usar:
         </p>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+        <div style={{display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+             <p className="label" style={{ marginBottom: 20,fontSize:20 }}>
+         Diario
+        </p>
           <button
             className={getButtonClass(usados.formulario1)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/formulario1", "formulario1")}
           >
-            Formulario de llegada y salida diario
+            Formulario de llegada y salida 
           </button>
           <button
             className={getButtonClass(usados.permiso_trabajo)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/permiso_trabajo", "permiso_trabajo")}
           >
-            Permiso de Trabajo diario precargado
+            Permiso de Trabajo
           </button>
+          <p className="label" style={{ marginBottom: 20,fontSize:20 }}>
+         Mensual
+        </p>
           <button
             className={getButtonClass(usados.chequeo_alturas)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/chequeo_alturas", "chequeo_alturas")}
           >
-            Chequeo Alturas diario precargado
+            Chequeo Alturas
           </button>
           <button
             className={getButtonClass(usados.chequeo_torregruas)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/chequeo_torregruas", "chequeo_torregruas")}
           >
-            Chequeo Torre Grúa diario precargado
+            Chequeo Torre Grúa
           </button>
           <button
             className={getButtonClass(usados.chequeo_elevador)} // <- usar la nueva clave
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/chequeo_elevador", "chequeo_elevador")}
           >
-            Chequeo Elevador diario precargado
+            Chequeo Elevador
           </button>
           <button
             className={getButtonClass(usados.inspeccion_epcc)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/inspeccion_epcc", "inspeccion_epcc")}
           >
-            Inspección EPCC diario precargado
+            Inspección EPCC
           </button>
           <button
             className={getButtonClass(usados.inspeccion_izaje)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/inspeccion_izaje", "inspeccion_izaje")}
           >
-            Inspección Izaje diario precargado
+            Inspección Izaje
           </button>
           <button
             className="button"

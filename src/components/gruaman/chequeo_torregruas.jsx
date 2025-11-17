@@ -46,6 +46,17 @@ const preguntas = [
 	},
 ];
 
+function getCurrentWeekKey() {
+	const now = new Date();
+	const firstJan = new Date(now.getFullYear(), 0, 1);
+	const days = Math.floor((now - firstJan) / (24 * 60 * 60 * 1000));
+	const week = Math.ceil((days + firstJan.getDay() + 1) / 7);
+	return `${now.getFullYear()}-W${week}`;
+}
+function isSunday() {
+	return new Date().getDay() === 0;
+}
+
 function ChequeoTorreGruas({ value = {}, onChange }) {
 	const [respuestas, setRespuestas] = useState(value);
 	const [generales, setGenerales] = useState({
@@ -58,6 +69,46 @@ function ChequeoTorreGruas({ value = {}, onChange }) {
 	const [errores, setErrores] = useState({});
 	const guardarBtnRef = useRef(null);
 	const navigate = useNavigate();
+
+	// --- NUEVO: Manejo de respuestas precargadas por semana ---
+	useEffect(() => {
+		const weekKey = getCurrentWeekKey();
+		const saved = localStorage.getItem("chequeo_torregruas_respuestas");
+		let shouldClear = false;
+
+		if (saved) {
+			try {
+				const parsed = JSON.parse(saved);
+				if (isSunday() || parsed.weekKey !== weekKey) {
+					shouldClear = true;
+				} else {
+					setRespuestas(parsed.respuestas || {});
+					setGenerales(parsed.generales || {
+						cliente: "",
+						proyecto: "",
+						fecha: "",
+						operador: "",
+						cargo: "",
+					});
+				}
+			} catch {
+				shouldClear = true;
+			}
+		}
+		if (shouldClear) {
+			localStorage.removeItem("chequeo_torregruas_respuestas");
+			setRespuestas({});
+			setGenerales({
+				cliente: "",
+				proyecto: "",
+				fecha: "",
+				operador: "",
+				cargo: "",
+			});
+		}
+		// ...existing code...
+	}, []);
+	// --- FIN NUEVO ---
 
 	useEffect(() => {
 		const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
@@ -190,6 +241,18 @@ function ChequeoTorreGruas({ value = {}, onChange }) {
 		}
 
 		try {
+			// --- NUEVO: Guardar respuestas en localStorage por semana ---
+			const weekKey = getCurrentWeekKey();
+			localStorage.setItem(
+				"chequeo_torregruas_respuestas",
+				JSON.stringify({
+					weekKey,
+					respuestas,
+					generales,
+				})
+			);
+			// --- FIN NUEVO ---
+
 			await axios.post(`${API_BASE_URL}/gruaman/chequeo_torregruas`, payload);
 			alert("Lista de chequeo enviada correctamente.");
 			if (onChange) onChange({});

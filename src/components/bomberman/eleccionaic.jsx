@@ -25,7 +25,6 @@ function getUsadosFromStorage(usuario) {
     planillabombeo: false,
     checklist: false,
     inventariosobra: false,
-    administrador: false,
     chequeo_alturas: false,
     inspeccion_epcc_bomberman: false, // debe estar este key para la barra
   };
@@ -37,6 +36,15 @@ function setUsadosToStorage(usados, usuario) {
 
 function limpiarUsados(usuario) {
   localStorage.removeItem(`aic_usados_${usuario}`);
+}
+
+// --- NUEVO: Helpers para control mensual de inventario de obra ---
+function getCurrentMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+function isFirstDayOfMonth() {
+  return new Date().getDate() === 1;
 }
 
 function BienvenidaAIC() {
@@ -82,9 +90,51 @@ function BienvenidaAIC() {
   const getButtonClass = (usado) =>
     usado ? "button button-green" : "button";
 
-  // Barra de progreso
-  const total = 7; // número real de formularios (botones)
-  const completados = Object.values(usados).filter(Boolean).length;
+  // --- NUEVO: Control mensual para inventariosobra ---
+  useEffect(() => {
+    // Solo para el botón de inventariosobra
+    const monthKey = getCurrentMonthKey();
+    const saved = localStorage.getItem("bomberman_inventariosobra_respuestas");
+    let shouldClear = false;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (isFirstDayOfMonth() || parsed.monthKey !== monthKey) {
+          shouldClear = true;
+        }
+      } catch {
+        shouldClear = true;
+      }
+    }
+    if (shouldClear) {
+      // Limpiar progreso solo para inventariosobra
+      setUsados(prev => {
+        if (!prev.inventariosobra) return prev;
+        const nuevos = { ...prev, inventariosobra: false };
+        setUsadosToStorage(nuevos, usuarioActual);
+        return nuevos;
+      });
+    }
+    // eslint-disable-next-line
+  }, []);
+  // --- FIN NUEVO ---
+
+  // Barra de progreso (ajustar para contar inventariosobra solo si está vigente este mes)
+  const monthKey = getCurrentMonthKey();
+  const savedInv = localStorage.getItem("bomberman_inventariosobra_respuestas");
+  let inventarioObraVigente = false;
+  if (savedInv) {
+    try {
+      const parsed = JSON.parse(savedInv);
+      if (parsed.monthKey === monthKey) {
+        inventarioObraVigente = true;
+      }
+    } catch {}
+  }
+  // Ajustar usados para barra y color
+  const usadosParaBarra = { ...usados, inventariosobra: inventarioObraVigente ? true : false };
+  const total = 7;
+  const completados = Object.values(usadosParaBarra).filter(Boolean).length;
   const porcentaje = Math.round((completados / total) * 100);
 
   return (
@@ -133,33 +183,29 @@ function BienvenidaAIC() {
           Selecciona el formulario que deseas usar:
         </p>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+          <p className="label" style={{ marginBottom: 20,fontSize:20 }}>
+         Diario
+        </p>
           <button
             className={getButtonClass(usados.permiso_trabajo)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/permiso_trabajo", "permiso_trabajo")}
           >
-            Permiso de Trabajo diario precargado
+            Permiso de Trabajo 
           </button>
           <button
             className={getButtonClass(usados.planillabombeo)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/planillabombeo", "planillabombeo")}
           >
-            Planilla de Bombeo diario sin precargar
+            Planilla de Bombeo 
           </button>
           <button
             className={getButtonClass(usados.checklist)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/checklist", "checklist")}
           >
-            Checklist diario precargado
-          </button>
-          <button
-            className={getButtonClass(usados.inventariosobra)}
-            style={{ maxWidth: 320 }}
-            onClick={() => handleNavigate("/inventariosobra", "inventariosobra")}
-          >
-            Inventario de Obra mensual sin validacion y mostrar lleno 
+            Checklist 
           </button>
           <button
             className={getButtonClass(usados.chequeo_alturas)}
@@ -171,14 +217,24 @@ function BienvenidaAIC() {
             }}
             onClick={() => handleNavigate("/chequeo_alturas", "chequeo_alturas")}
           >
-            Chequeo Alturas diario precargado
+            Chequeo Alturas 
           </button>
           <button
             className={getButtonClass(usados.inspeccion_epcc_bomberman)} // clase para el nuevo botón
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/inspeccion_epcc_bomberman", "inspeccion_epcc_bomberman")}
           >
-            Inspección EPCC diario precargado
+            Inspección EPCC 
+          </button>
+          <p className="label" style={{ marginBottom: 20,fontSize:20 }}>
+         Mensual
+        </p>
+           <button
+            className={inventarioObraVigente ? "button button-green" : "button"}
+            style={{ maxWidth: 320 }}
+            onClick={() => handleNavigate("/inventariosobra", "inventariosobra")}
+          >
+            Inventario de Obra 
           </button>
           <button
             className="button"

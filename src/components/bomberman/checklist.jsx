@@ -170,6 +170,18 @@ function Checklist(props) {
     { titulo: "SEGURIDAD Y SALUD EN EL TRABAJO (SST)", fields: itemToField.slice(55) },
   ];
 
+  // --- FUNCIONES AUXILIARES ---
+  function getCurrentWeekKey() {
+    const now = new Date();
+    const firstJan = new Date(now.getFullYear(), 0, 1);
+    const days = Math.floor((now - firstJan) / (24 * 60 * 60 * 1000));
+    const week = Math.ceil((days + firstJan.getDay() + 1) / 7);
+    return `${now.getFullYear()}-W${week}`;
+  }
+  function isSunday() {
+    return new Date().getDay() === 0;
+  }
+
   // --- EFECTOS (Inicialización y carga de datos) ---
   useEffect(() => {
     const inicial = itemToField.reduce((acc, field) => {
@@ -217,7 +229,52 @@ function Checklist(props) {
       })
       .catch(() => set_lista_bombas([]));
   }, []);
-  
+
+  useEffect(() => {
+    const weekKey = getCurrentWeekKey();
+    const saved = localStorage.getItem("bomberman_checklist_respuestas");
+    let shouldClear = false;
+
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (isSunday() || parsed.weekKey !== weekKey) {
+          shouldClear = true;
+        } else {
+          setDatos(parsed.datos || {
+            nombre_cliente: "",
+            nombre_proyecto: "",
+            fecha_servicio: "",
+            bomba_numero: "",
+            horometro_motor: "",
+            nombre_operador: "",
+            observaciones: ""
+          });
+          setEstadoItems(parsed.estadoItems || {});
+        }
+      } catch {
+        shouldClear = true;
+      }
+    }
+    if (shouldClear) {
+      localStorage.removeItem("bomberman_checklist_respuestas");
+      setDatos({
+        nombre_cliente: "",
+        nombre_proyecto: "",
+        fecha_servicio: "",
+        bomba_numero: "",
+        horometro_motor: "",
+        nombre_operador: "",
+        observaciones: ""
+      });
+      setEstadoItems(itemToField.reduce((acc, field) => {
+        acc[field] = { estado: "", observacion: "" };
+        return acc;
+      }, {}));
+    }
+    // eslint-disable-next-line
+  }, []);
+
   // --- HANDLERS (Sin cambios en la lógica interna) ---
   const handle_change = (e) => {
     const { name, value } = e.target;

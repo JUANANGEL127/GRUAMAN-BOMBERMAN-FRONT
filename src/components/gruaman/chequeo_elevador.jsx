@@ -41,6 +41,17 @@ const MAPEO_DB = {
   "La cabina ha sido previamente desinfectada antes de iniciar labores de operación de torre grúa (limpieza para la prevención del virus COVID-19)?": "cabina_desinfectada_previamente",
 };
 
+function getCurrentWeekKey() {
+  const now = new Date();
+  const firstJan = new Date(now.getFullYear(), 0, 1);
+  const days = Math.floor((now - firstJan) / (24 * 60 * 60 * 1000));
+  const week = Math.ceil((days + firstJan.getDay() + 1) / 7);
+  return `${now.getFullYear()}-W${week}`;
+}
+function isSunday() {
+  return new Date().getDay() === 0;
+}
+
 function ChequeoElevador() {
   const navigate = useNavigate();
 
@@ -123,6 +134,47 @@ function ChequeoElevador() {
     setRespuestas(initial);
   }, []); // eslint-disable-line
 
+  // --- NUEVO: Manejo de respuestas precargadas por semana ---
+  useEffect(() => {
+    const weekKey = getCurrentWeekKey();
+    const saved = localStorage.getItem("chequeo_elevador_respuestas");
+    let shouldClear = false;
+
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (isSunday() || parsed.weekKey !== weekKey) {
+          shouldClear = true;
+        } else {
+          setRespuestas(parsed.respuestas || {});
+          setGenerales(parsed.generales || {
+            nombre_cliente: "",
+            nombre_proyecto: "",
+            fecha_servicio: "",
+            nombre_operador: "",
+            cargo: "",
+            observaciones: "",
+          });
+        }
+      } catch {
+        shouldClear = true;
+      }
+    }
+    if (shouldClear) {
+      localStorage.removeItem("chequeo_elevador_respuestas");
+      setRespuestas({});
+      setGenerales({
+        nombre_cliente: "",
+        nombre_proyecto: "",
+        fecha_servicio: "",
+        nombre_operador: "",
+        cargo: "",
+        observaciones: "",
+      });
+    }
+  }, []);
+  // --- FIN NUEVO ---
+
   useEffect(() => {
     const init = async () => {
       const fechaHoy = new Date().toISOString().slice(0, 10);
@@ -200,7 +252,7 @@ function ChequeoElevador() {
   // Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMostrarFlecha(false); // reinicia la flecha
+    setMostrarFlecha(false);
     const faltantes = [];
 
     // Validar Datos Generales (usando las nuevas claves)
@@ -222,6 +274,18 @@ function ChequeoElevador() {
       scrollToFirstError(faltantes);
       return;
     }
+
+    // --- NUEVO: Guardar respuestas en localStorage por semana ---
+    const weekKey = getCurrentWeekKey();
+    localStorage.setItem(
+      "chequeo_elevador_respuestas",
+      JSON.stringify({
+        weekKey,
+        respuestas,
+        generales,
+      })
+    );
+    // --- FIN NUEVO ---
 
     // 🔑 CONSTRUCCIÓN DEL PAYLOAD: Renombrado de claves
     const payload = {

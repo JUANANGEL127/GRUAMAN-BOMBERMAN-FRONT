@@ -102,6 +102,17 @@ const secciones = [
 	},
 ];
 
+function getCurrentWeekKey() {
+	const now = new Date();
+	const firstJan = new Date(now.getFullYear(), 0, 1);
+	const days = Math.floor((now - firstJan) / (24 * 60 * 60 * 1000));
+	const week = Math.ceil((days + firstJan.getDay() + 1) / 7);
+	return `${now.getFullYear()}-W${week}`;
+}
+function isSunday() {
+	return new Date().getDay() === 0;
+}
+
 function InspeccionIzaje({ value = {}, onChange }) {
 	const [respuestas, setRespuestas] = useState(value);
 	const [generales, setGenerales] = useState({
@@ -116,6 +127,50 @@ function InspeccionIzaje({ value = {}, onChange }) {
 	const [errores, setErrores] = useState({});
 	const guardarBtnRef = useRef(null);
 	const navigate = useNavigate();
+
+	// --- NUEVO: Manejo de respuestas precargadas por semana ---
+	useEffect(() => {
+		const weekKey = getCurrentWeekKey();
+		const saved = localStorage.getItem("inspeccion_izaje_respuestas");
+		let shouldClear = false;
+
+		if (saved) {
+			try {
+				const parsed = JSON.parse(saved);
+				if (isSunday() || parsed.weekKey !== weekKey) {
+					shouldClear = true;
+				} else {
+					setRespuestas(parsed.respuestas || {});
+					setGenerales(parsed.generales || {
+						cliente_constructora: "",
+						modelo_grua: "",
+						proyecto_constructora: "",
+						altura_gancho: "",
+						fecha_final: "",
+						nombre_operador: "",
+						cargo: "",
+					});
+				}
+			} catch {
+				shouldClear = true;
+			}
+		}
+		if (shouldClear) {
+			localStorage.removeItem("inspeccion_izaje_respuestas");
+			setRespuestas({});
+			setGenerales({
+				cliente_constructora: "",
+				modelo_grua: "",
+				proyecto_constructora: "",
+				altura_gancho: "",
+				fecha_final: "",
+				nombre_operador: "",
+				cargo: "",
+			});
+		}
+		// ...existing code...
+	}, []);
+	// --- FIN NUEVO ---
 
 	useEffect(() => {
 		const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
@@ -295,6 +350,18 @@ function InspeccionIzaje({ value = {}, onChange }) {
 			}
 			return;
 		}
+
+		// --- NUEVO: Guardar respuestas en localStorage por semana ---
+		const weekKey = getCurrentWeekKey();
+		localStorage.setItem(
+			"inspeccion_izaje_respuestas",
+			JSON.stringify({
+				weekKey,
+				respuestas,
+				generales,
+			})
+		);
+		// --- FIN NUEVO ---
 
 		try {
 			// Eliminar el campo si existe en el payload por compatibilidad
