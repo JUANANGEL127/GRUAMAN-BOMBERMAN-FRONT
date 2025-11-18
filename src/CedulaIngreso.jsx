@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { subscribeUser } from "./pushNotifications";
 
 // Usa variable de entorno para la base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
@@ -58,6 +59,20 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           }
         } catch (e) {
           console.error("Error guardando datos en localStorage:", e);
+        }
+
+        // Solicitar permiso de notificaciones push al guardar usuario
+        if ("Notification" in window && "serviceWorker" in navigator) {
+          try {
+            const permission = await Notification.requestPermission();
+            if (permission === "granted") {
+              // Llama a subscribeUser de pushNotifications.js pasando el id/cédula
+              const numeroId = usuario.numero_identificacion || usuario.cedula || usuario.id || cedula;
+              subscribeUser(numeroId);
+            }
+          } catch (e) {
+            console.error("Error solicitando permiso de notificaciones:", e);
+          }
         }
 
         // Mantener callback existente
