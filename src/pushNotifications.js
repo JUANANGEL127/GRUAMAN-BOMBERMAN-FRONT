@@ -1,6 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
-export async function subscribeUser(trabajadorId) {
+export async function subscribeUser(numeroIdentificacion) {
   try {
     // Obtén la clave pública VAPID del backend
     const vapidKeyRes = await fetch(`${API_BASE_URL}/vapid-public-key`);
@@ -16,14 +16,18 @@ export async function subscribeUser(trabajadorId) {
       applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
     });
 
+    // Prepara el payload según lo que espera el backend
+    const payload = {
+      numero_identificacion: numeroIdentificacion,
+      subscription: typeof subscription.toJSON === "function" ? subscription.toJSON() : subscription
+    };
+    console.log("Enviando payload a /push/subscribe:", payload);
+
     // Envía la suscripción al backend
     const resp = await fetch(`${API_BASE_URL}/push/subscribe`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        trabajador_id: trabajadorId,
-        subscription
-      })
+      body: JSON.stringify(payload)
     });
     if (!resp.ok) throw new Error("No se pudo registrar la suscripción push");
   } catch (err) {

@@ -66,9 +66,13 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           try {
             const permission = await Notification.requestPermission();
             if (permission === "granted") {
-              // Llama a subscribeUser de pushNotifications.js pasando el id/cédula
               const numeroId = usuario.numero_identificacion || usuario.cedula || usuario.id || cedula;
-              subscribeUser(numeroId);
+              try {
+                await subscribeUser(numeroId);
+              } catch (pushErr) {
+                setError("No se pudo registrar la suscripción a notificaciones push.");
+                console.error("Error al suscribir usuario a notificaciones push:", pushErr);
+              }
             }
           } catch (e) {
             console.error("Error solicitando permiso de notificaciones:", e);
