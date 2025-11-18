@@ -12,6 +12,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
   const [adminPass, setAdminPass] = useState("");
   const [adminError, setAdminError] = useState("");
   const [adminLoading, setAdminLoading] = useState(false);
+  const [adminShowPass, setAdminShowPass] = useState(false);
 
   useEffect(() => {
     const gifs = ["/gruaman1.1.gif", "/bomberman1.1.gif"];
@@ -196,26 +197,83 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
             <h3 style={{ marginBottom: 18, color: "#1976d2", fontWeight: 700, letterSpacing: 1 }}>
               Bienvenido administrador
             </h3>
-            <input
-              type="password"
-              placeholder="Contraseña"
-              value={adminPass}
-              onChange={e => setAdminPass(e.target.value)}
+            <div
               style={{
-                padding: "10px 14px",
+                position: "relative",
+                width: "100%",
+                maxWidth: 320,
+                margin: "0 auto 14px auto",
+                display: "flex",
+                alignItems: "center",
+                background: "#f7faff",
                 borderRadius: 8,
                 border: "1.5px solid #1976d2",
-                width: "90%",
-                marginBottom: 14,
-                fontSize: 16,
-                outline: "none",
-                background: "#f7faff",
-                color: "#222",
-                fontFamily: "inherit"
+                boxShadow: "0 2px 8px rgba(25,118,210,0.07)",
+                transition: "box-shadow 0.2s",
               }}
-              onKeyDown={e => { if (e.key === "Enter") handleAdminLogin(); }}
-              autoFocus
-            />
+            >
+              <input
+                type={adminShowPass ? "text" : "password"}
+                placeholder="Contraseña"
+                value={adminPass}
+                onChange={e => setAdminPass(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: "12px 44px 12px 14px",
+                  border: "none",
+                  borderRadius: 8,
+                  fontSize: 16,
+                  background: "transparent",
+                  color: "#222",
+                  fontFamily: "inherit",
+                  outline: "none",
+                  minWidth: 0,
+                }}
+                onKeyDown={e => { if (e.key === "Enter") handleAdminLogin(); }}
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => setAdminShowPass(v => !v)}
+                tabIndex={-1}
+                style={{
+                  position: "absolute",
+                  right: 10,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  margin: 0,
+                  outline: "none",
+                  zIndex: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  height: 32,
+                  width: 32,
+                  justifyContent: "center",
+                  borderRadius: "50%",
+                  transition: "background 0.15s",
+                }}
+                aria-label={adminShowPass ? "Ocultar contraseña" : "Mostrar contraseña"}
+                onMouseDown={e => e.preventDefault()}
+              >
+                {adminShowPass ? (
+                  // Ojo abierto SVG
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <ellipse cx="12" cy="12" rx="7" ry="5" />
+                    <circle cx="12" cy="12" r="2.5" />
+                  </svg>
+                ) : (
+                  // Ojo cerrado SVG
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-5 0-9.27-3.11-11-7 1.21-2.61 3.36-4.77 6-6.11" />
+                    <path d="M1 1l22 22" />
+                  </svg>
+                )}
+              </button>
+            </div>
             <div style={{ display: "flex", justifyContent: "center", gap: 12 }}>
               <button
                 className="button"

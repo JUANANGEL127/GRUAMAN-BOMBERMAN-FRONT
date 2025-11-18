@@ -216,6 +216,19 @@ function STPButton() {
   );
 }
 
+// Registro del Service Worker para notificaciones push
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => {
+        console.log('Service Worker registrado', reg);
+      })
+      .catch(err => {
+        console.error('Error registrando Service Worker', err);
+      });
+  });
+}
+
 // Renderizado principal y rutas de la aplicación
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
