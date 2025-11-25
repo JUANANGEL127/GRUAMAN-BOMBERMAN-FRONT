@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
-import formulario1 from "./formulario1";
 import administrador from "../administrador_gruaman/administrador";
 import "../../App.css";
 import PermisoTrabajo from "../compartido/permiso_trabajo";
@@ -8,7 +7,9 @@ import ChequeoAlturas from "../compartido/chequeo_alturas";
 import ChequeoTorreGruas from "./chequeo_torregruas";
 import InspeccionEPCC from "./inspeccion_epcc";
 import InspeccionIzaje from "./inspeccion_izaje";
-import ChequeoElevador from "./chequeo_elevador"; // <- nuevo import
+import ChequeoElevador from "./chequeo_elevador";
+import HoraIngreso from "../compartido/horada_ingreso";
+import HoraSalida from "../compartido/hora_salida";
 
 // Usa variable de entorno para la base de la API (por si se usa en este archivo en el futuro)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
@@ -20,13 +21,14 @@ function getUsadosFromStorage(usuario) {
     if (data) return JSON.parse(data);
   } catch {}
   return {
-    formulario1: false,
+    hora_ingreso: false, // <- nuevo
     permiso_trabajo: false,
     chequeo_alturas: false,
     chequeo_torregruas: false,
+    chequeo_elevador: false,
     inspeccion_epcc: false,
     inspeccion_izaje: false,
-    chequeo_elevador: false, // <- nueva clave por defecto
+    hora_salida: false // <- nuevo
   };
 }
 
@@ -123,16 +125,17 @@ function Bienvenida() {
           Selecciona el formulario que deseas usar:
         </p>
         <div style={{display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-             <p className="label" style={{ marginBottom: 20,fontSize:20 }}>
-         Diario
-        </p>
+          {/* Hora de ingreso - primero */}
           <button
-            className={getButtonClass(usados.formulario1)}
+            className={getButtonClass(usados.hora_ingreso)}
             style={{ maxWidth: 320 }}
-            onClick={() => handleNavigate("/formulario1", "formulario1")}
+            onClick={() => handleNavigate("/hora_ingreso", "hora_ingreso")}
           >
-            Formulario de llegada y salida 
+            Hora de Ingreso
           </button>
+          <p className="label" style={{ marginBottom: 20,fontSize:20 }}>
+            Diario
+          </p>
           <button
             className={getButtonClass(usados.permiso_trabajo)}
             style={{ maxWidth: 320 }}
@@ -141,8 +144,8 @@ function Bienvenida() {
             Permiso de Trabajo
           </button>
           <p className="label" style={{ marginBottom: 20,fontSize:20 }}>
-         Mensual
-        </p>
+            Mensual
+          </p>
           <button
             className={getButtonClass(usados.chequeo_alturas)}
             style={{ maxWidth: 320 }}
@@ -158,7 +161,7 @@ function Bienvenida() {
             Chequeo Torre Grúa
           </button>
           <button
-            className={getButtonClass(usados.chequeo_elevador)} // <- usar la nueva clave
+            className={getButtonClass(usados.chequeo_elevador)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/chequeo_elevador", "chequeo_elevador")}
           >
@@ -177,6 +180,14 @@ function Bienvenida() {
             onClick={() => handleNavigate("/inspeccion_izaje", "inspeccion_izaje")}
           >
             Inspección Izaje
+          </button>
+          {/* Hora de salida - último */}
+          <button
+            className={getButtonClass(usados.hora_salida)}
+            style={{ maxWidth: 320, marginTop: 16 }}
+            onClick={() => handleNavigate("/hora_salida", "hora_salida")}
+          >
+            Hora de Salida
           </button>
           <button
             className="button"
@@ -213,12 +224,14 @@ function eleccion() {
       <Route path="/" element={<Bienvenida />} />
       <Route path="/formulario1" element={<formulario1 />} />
       <Route path="/administrador" element={<administrador />} />
+      <Route path="/hora_ingreso" element={<HoraIngreso />} />
       <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />
       <Route path="/chequeo_alturas" element={<ChequeoAlturas />} />
       <Route path="/chequeo_torregruas" element={<ChequeoTorreGruas />} />
-      <Route path="/chequeo_elevador" element={<ChequeoElevador />} /> {/* <- nueva ruta */}
+      <Route path="/chequeo_elevador" element={<ChequeoElevador />} />
       <Route path="/inspeccion_epcc" element={<InspeccionEPCC />} />
       <Route path="/inspeccion_izaje" element={<InspeccionIzaje />} />
+      <Route path="/hora_salida" element={<HoraSalida />} />
     </Routes>
   );
 }

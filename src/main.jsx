@@ -3,7 +3,6 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import Eleccion from "./components/gruaman/eleccion";
 import EleccionAIC from "./components/bomberman/eleccionaic";
-import Formulario1 from "./components/gruaman/formulario1";
 import PlanillaBombeo from "./components/bomberman/planillabombeo";
 import Checklist from "./components/bomberman/checklist";
 import InventarioObra from "./components/bomberman/inventariosobra";
@@ -36,6 +35,10 @@ import AdminUsuarios from "./components/administrador_gruaman/admin_usuarios";
 import AdminUsuariosBomberman from "./components/administrador_bomberman/admin_usuarios_bomberman";
 import AdminsObras from "./components/administrador_gruaman/admins_obras";
 import AdminObrasBomberman from "./components/administrador_bomberman/admin_obras_bomberman";
+import HoraIngreso from "./components/compartido/horada_ingreso";
+import HoraSalida from "./components/compartido/hora_salida";
+import HorasExtraBombermanAdmin from "./components/administrador_bomberman/horas_extra_bomberman";
+import HorasExtraGruamanAdmin from "./components/administrador_gruaman/horas_extra_gruaman";
 
 // Función para obtener usuario y obra de localStorage
 function getUsuarioObra() {
@@ -266,7 +269,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/bienvenida" element={<BienvenidaSeleccion usuario={{ nombre: "Invitado", empresa: "GyE" }} />} />
             <Route path="/eleccion/*" element={<Eleccion />} />
             <Route path="/eleccionaic/*" element={<EleccionAIC />} />
-            <Route path="/formulario1" element={<Formulario1 />} />
             <Route path="/administrador" element={<Administrador />} />
             <Route path="/planillabombeo" element={<PlanillaBombeo />} />
             <Route path="/checklist" element={<Checklist />} />
@@ -294,6 +296,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/admin_usuarios_bomberman" element={<AdminUsuariosBomberman />} />
             <Route path="/admins_obras" element={<AdminsObras />} />
             <Route path="/admin_obras_bomberman" element={<AdminObrasBomberman />} />
+            <Route path="/hora_ingreso" element={<HoraIngreso />} />
+            <Route path="/hora_salida" element={<HoraSalida />} />
+            <Route path="/horas_extra_bomberman" element={<HorasExtraBombermanAdmin />} />
+            <Route path="/horas_extra_gruaman" element={<HorasExtraGruamanAdmin />} />
           </Routes>
           {/* <Footer /> */}
         </div>

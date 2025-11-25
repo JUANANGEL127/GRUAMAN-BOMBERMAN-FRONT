@@ -9,6 +9,8 @@ import "../../App.css";
 import PermisoTrabajo from "../compartido/permiso_trabajo";
 import ChequeoAlturas from "../compartido/chequeo_alturas";
 import inspeccionEpccBomberman from "./inspeccion_epcc_bomberman"; // importación del nuevo componente
+import HoraIngreso from "../compartido/horada_ingreso";
+import HoraSalida from "../compartido/hora_salida";
 
 // Usa variable de entorno para la base de la API (por si se usa en este archivo en el futuro)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
@@ -19,14 +21,15 @@ function getUsadosFromStorage(usuario) {
     const data = localStorage.getItem(`aic_usados_${usuario}`);
     if (data) return JSON.parse(data);
   } catch {}
-  // Asegura que todos los keys estén presentes
   return {
+    hora_ingreso: false, // nuevo
     permiso_trabajo: false,
     planillabombeo: false,
     checklist: false,
     inventariosobra: false,
     chequeo_alturas: false,
-    inspeccion_epcc_bomberman: false, // debe estar este key para la barra
+    inspeccion_epcc_bomberman: false,
+    hora_salida: false // nuevo
   };
 }
 
@@ -133,8 +136,12 @@ function BienvenidaAIC() {
   }
   // Ajustar usados para barra y color
   const usadosParaBarra = { ...usados, inventariosobra: inventarioObraVigente ? true : false };
-  const total = 7;
-  const completados = Object.values(usadosParaBarra).filter(Boolean).length;
+  const total = 9; // ahora hay 9 formularios
+  const completados = Object.values({
+    ...usadosParaBarra,
+    hora_ingreso: usados.hora_ingreso,
+    hora_salida: usados.hora_salida
+  }).filter(Boolean).length;
   const porcentaje = Math.round((completados / total) * 100);
 
   return (
@@ -183,9 +190,17 @@ function BienvenidaAIC() {
           Selecciona el formulario que deseas usar:
         </p>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-          <p className="label" style={{ marginBottom: 20,fontSize:20 }}>
-         Diario
-        </p>
+          {/* Hora de ingreso - primero */}
+          <button
+            className={getButtonClass(usados.hora_ingreso)}
+            style={{ maxWidth: 320 }}
+            onClick={() => handleNavigate("/hora_ingreso", "hora_ingreso")}
+          >
+            Hora de Ingreso
+          </button>
+          <p className="label" style={{ marginBottom: 20, fontSize: 20 }}>
+            Diario
+          </p>
           <button
             className={getButtonClass(usados.permiso_trabajo)}
             style={{ maxWidth: 320 }}
@@ -220,21 +235,29 @@ function BienvenidaAIC() {
             Chequeo Alturas 
           </button>
           <button
-            className={getButtonClass(usados.inspeccion_epcc_bomberman)} // clase para el nuevo botón
+            className={getButtonClass(usados.inspeccion_epcc_bomberman)}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/inspeccion_epcc_bomberman", "inspeccion_epcc_bomberman")}
           >
             Inspección EPCC 
           </button>
-          <p className="label" style={{ marginBottom: 20,fontSize:20 }}>
-         Mensual
-        </p>
-           <button
+          <p className="label" style={{ marginBottom: 20, fontSize: 20 }}>
+            Mensual
+          </p>
+          <button
             className={inventarioObraVigente ? "button button-green" : "button"}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/inventariosobra", "inventariosobra")}
           >
             Inventario de Obra 
+          </button>
+          {/* Hora de salida - último */}
+          <button
+            className={getButtonClass(usados.hora_salida)}
+            style={{ maxWidth: 320, marginTop: 16 }}
+            onClick={() => handleNavigate("/hora_salida", "hora_salida")}
+          >
+            Hora de Salida
           </button>
           <button
             className="button"
@@ -269,6 +292,7 @@ function EleccionAIC() {
   return (
     <Routes>
       <Route path="/" element={<BienvenidaAIC />} />
+      <Route path="/hora_ingreso" element={<HoraIngreso />} />
       <Route path="/planillabombeo" element={<PlanillaDeBombeo />} />
       <Route path="/checklist" element={<Checklist />} />
       <Route path="/inventariosobra" element={<InventariosObra />} />
@@ -276,7 +300,8 @@ function EleccionAIC() {
       <Route path="/administrador_bomberman" element={<AdministradorBomberman />} />
       <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />
       <Route path="/chequeo_alturas" element={<ChequeoAlturas />} />
-      <Route path="/inspeccion_epcc_bomberman" element={<inspeccionEpccBomberman />} /> {/* nuevo route */}
+      <Route path="/inspeccion_epcc_bomberman" element={<inspeccionEpccBomberman />} />
+      <Route path="/hora_salida" element={<HoraSalida />} />
     </Routes>
   );
 }

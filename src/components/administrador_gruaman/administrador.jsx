@@ -6,6 +6,7 @@ import ChequeoTorreGruasAdmin from "./chequeo_torregruas_admin";
 import ChequeoElevadorAdmin from "./chequeo_elevador_admin";
 import LlegadaSalidaAdmin from "./llegada_salida_admin";
 import AdminsObras from "./admins_obras"; // importar el componente
+import HorasExtraGruamanAdmin from "./horas_extra_gruaman";
 import { useNavigate } from "react-router-dom";
 
 // Usa variable de entorno para la base de la API (por si se usa en este archivo en el futuro)
@@ -99,6 +100,13 @@ function AdministradorGruaman() {
           onClick={() => navigate("/admins_obras")}
           >
             Administrar Obras
+          </button>
+          <button
+            className="button"
+            style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
+            onClick={() => navigate("/horas_extra_gruaman")}
+          >
+            Horas Extra Gruaman
           </button>
         </div>
         {showLlegadaSalidaAdmin && (

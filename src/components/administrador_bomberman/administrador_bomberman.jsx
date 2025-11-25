@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminObrasBomberman from "./admin_obras_bomberman"; // importar el componente
+import AdminObrasBomberman from "./admin_obras_bomberman";
+import HorasExtraGruamanAdmin from "../administrador_gruaman/horas_extra_gruaman"; // Importa el componente de horas extra gruaman
 
 // Usa variable de entorno para la base de la API (por si se usa en este archivo en el futuro)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
@@ -80,6 +81,13 @@ function AdministradorBomberman() {
             onClick={() => navigate("/inspeccion_epcc_bomberman_admin")}
           >
             Inspección EPCC 
+          </button>
+          <button
+            className="button"
+            style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
+            onClick={() => navigate("/horas_extra_gruaman")}
+          >
+            Horas Extra Gruaman
           </button>
         </div>
       </div>
