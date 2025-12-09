@@ -8,7 +8,7 @@ self.addEventListener('push', function(event) {
   event.waitUntil(
     self.registration.showNotification(data.title || 'Notificación', {
       body: data.body || '',
-      icon: '/icon.png'
+      icon: '../public/icon-192.png'
     })
   );
 });

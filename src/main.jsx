@@ -100,7 +100,8 @@ function SOSButton() {
   const [enviando, setEnviando] = React.useState(false);
   const [mensaje, setMensaje] = React.useState("");
 
-  const enviarSOS = async () => {
+  // Nuevo handler para abrir el marcador con el número recibido del backend
+  const handleSOS = async () => {
     setEnviando(true);
     setMensaje("");
     const { usuario, obra } = getUsuarioObra();
@@ -117,14 +118,20 @@ function SOSButton() {
       });
       if (!res.ok) {
         const errorText = await res.text();
-        console.error(`Error del servidor: ${res.status} ${errorText}`);
         setMensaje("Error al enviar mensaje.");
+        setEnviando(false);
+        return;
+      }
+      const data = await res.json();
+      setMensaje("¡Mensaje de emergencia enviado!");
+      // Abrir el marcador con el número recibido del backend (campo telefono_sos)
+      if (data.telefono_sos) {
+        window.location.href = `tel:${data.telefono_sos}`;
       } else {
-        await res.json();
-        setMensaje("¡Mensaje de emergencia enviado!");
+        // fallback: número fijo si el backend no lo envía
+        window.location.href = "tel:573043660371";
       }
     } catch (err) {
-      console.error("Error al enviar mensaje:", err);
       setMensaje("Error al enviar mensaje.");
     }
     setEnviando(false);
@@ -153,7 +160,7 @@ function SOSButton() {
           padding: 0,
           lineHeight: "1",
         }}
-        onClick={enviarSOS}
+        onClick={handleSOS}
         disabled={enviando}
         title="SOS Emergencia"
       >
