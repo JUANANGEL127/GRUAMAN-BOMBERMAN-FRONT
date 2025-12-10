@@ -165,9 +165,7 @@ function SOSButton() {
     setShowModal(false);
     const { usuario, obra } = getUsuarioObra();
     const baseUrl = "https://chat.whatsapp.com/F9SaM1zAVuw5EoS7SKQ6rK";
-    // Mensaje predeterminado
     const mensaje = `Soy ${usuario || "un usuario"} en la obra ${obra || "desconocida"}, tuve un accidente o incidente`;
- 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(mensaje);
       setTimeout(() => {
@@ -178,6 +176,8 @@ function SOSButton() {
       window.location.href = baseUrl;
       setMensaje("Copia y pega este mensaje en el grupo: " + mensaje);
     }
+    // Ocultar mensaje después de 3 segundos
+    setTimeout(() => setMensaje(""), 3000);
   };
 
   return (
@@ -353,7 +353,7 @@ function STPButton() {
     setShowModal(false);
     const { usuario, obra } = getUsuarioObra();
     const baseUrl = "https://chat.whatsapp.com/FUZyTMGqpXu36uXHhUIAWh";
-    const mensajeTexto = `Soy ${usuario || "un usuario"} en la obra ${obra || "desconocida"}, tuve un accidente o incidente`;
+    const mensajeTexto = `Soy ${usuario || "un usuario"} en la obra ${obra || "desconocida"}, tuve un paro en obra, necesito asistencia`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(mensajeTexto);
       setTimeout(() => {
@@ -364,6 +364,8 @@ function STPButton() {
       window.location.href = baseUrl;
       setMensaje("Copia y pega este mensaje en el grupo: " + mensajeTexto);
     }
+    // Ocultar mensaje después de 3 segundos
+    setTimeout(() => setMensaje(""), 3000);
   };
 
   // Handler para mostrar opciones de llamada
