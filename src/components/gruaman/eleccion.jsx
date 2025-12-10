@@ -21,14 +21,14 @@ function getUsadosFromStorage(usuario) {
     if (data) return JSON.parse(data);
   } catch {}
   return {
-    hora_ingreso: false, // <- nuevo
+    hora_ingreso: false,
     permiso_trabajo: false,
     chequeo_alturas: false,
     chequeo_torregruas: false,
     chequeo_elevador: false,
     inspeccion_epcc: false,
     inspeccion_izaje: false,
-    hora_salida: false // <- nuevo
+    hora_salida: false
   };
 }
 
@@ -38,6 +38,16 @@ function setUsadosToStorage(usados, usuario) {
 
 function limpiarUsados(usuario) {
   localStorage.removeItem(`gruaman_usados_${usuario}`);
+  localStorage.removeItem(`gruaman_usados_fecha_${usuario}`);
+}
+
+// Helper para obtener la fecha actual en formato YYYY-MM-DD
+function getTodayDateStr() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function Bienvenida() {
@@ -46,6 +56,28 @@ function Bienvenida() {
   const usuario = nombre || "anonimo";
   const [usados, setUsados] = useState(() => getUsadosFromStorage(usuario));
   const [usuarioActual, setUsuarioActual] = useState(usuario);
+
+  // Reinicio automático cada día a las 12:00am
+  useEffect(() => {
+    const fechaHoy = getTodayDateStr();
+    const fechaGuardada = localStorage.getItem(`gruaman_usados_fecha_${usuarioActual}`);
+    if (fechaGuardada !== fechaHoy) {
+      limpiarUsados(usuarioActual);
+      setUsados(getUsadosFromStorage(usuarioActual));
+      localStorage.setItem(`gruaman_usados_fecha_${usuarioActual}`, fechaHoy);
+    }
+    // Programar reinicio para la próxima medianoche
+    const now = new Date();
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1, 0);
+    const msUntilMidnight = nextMidnight.getTime() - now.getTime();
+    const timer = setTimeout(() => {
+      limpiarUsados(usuarioActual);
+      setUsados(getUsadosFromStorage(usuarioActual));
+      localStorage.setItem(`gruaman_usados_fecha_${usuarioActual}`, getTodayDateStr());
+    }, msUntilMidnight);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line
+  }, [usuarioActual]);
 
   // Si cambia el usuario (por ejemplo, cierre de sesión), reinicia el progreso
   useEffect(() => {
@@ -60,6 +92,8 @@ function Bienvenida() {
 
   useEffect(() => {
     setUsadosToStorage(usados, usuarioActual);
+    // Guardar la fecha del último uso
+    localStorage.setItem(`gruaman_usados_fecha_${usuarioActual}`, getTodayDateStr());
   }, [usados, usuarioActual]);
 
   const handleNavigate = (ruta, key) => {

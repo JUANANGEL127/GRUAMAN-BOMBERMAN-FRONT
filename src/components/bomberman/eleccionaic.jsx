@@ -39,6 +39,17 @@ function setUsadosToStorage(usados, usuario) {
 
 function limpiarUsados(usuario) {
   localStorage.removeItem(`aic_usados_${usuario}`);
+  // eliminar la marca de fecha para forzar recreación al guardar de nuevo
+  try { localStorage.removeItem(`aic_usados_date_${usuario}`); } catch {}
+}
+
+// Helper para obtener la fecha actual en formato YYYY-MM-DD
+function getTodayDateStr() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 // --- NUEVO: Helpers para control mensual de inventario de obra ---
@@ -78,8 +89,36 @@ function BienvenidaAIC() {
   }, [localStorage.getItem("nombre_trabajador"), localStorage.getItem("empresa")]);
 
   useEffect(() => {
+    // Guardar usados y anotar la fecha para saber si tocar reiniciar al día siguiente
     setUsadosToStorage(usados, usuarioActual);
+    try { localStorage.setItem(`aic_usados_date_${usuarioActual}`, getTodayDateStr()); } catch {}
   }, [usados, usuarioActual]);
+
+  // Efecto: reinicio diario a medianoche (y comprobación inicial)
+  useEffect(() => {
+    const dateKey = `aic_usados_date_${usuarioActual}`;
+    const today = getTodayDateStr();
+    const storedDate = localStorage.getItem(dateKey);
+    if (storedDate !== today) {
+      // si la fecha guardada no es hoy, reiniciar usados ahora
+      limpiarUsados(usuarioActual);
+      setUsados(getUsadosFromStorage(usuarioActual));
+      try { localStorage.setItem(dateKey, today); } catch {}
+    }
+
+    // programar reinicio justo a la próxima medianoche
+    const now = new Date();
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+    const msUntilMidnight = nextMidnight.getTime() - now.getTime();
+    const timer = setTimeout(() => {
+      limpiarUsados(usuarioActual);
+      setUsados(getUsadosFromStorage(usuarioActual));
+      try { localStorage.setItem(dateKey, getTodayDateStr()); } catch {}
+    }, msUntilMidnight);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line
+  }, [usuarioActual]);
 
   const handleNavigate = (ruta, key) => {
     setUsados(prev => {
@@ -136,7 +175,7 @@ function BienvenidaAIC() {
   }
   // Ajustar usados para barra y color
   const usadosParaBarra = { ...usados, inventariosobra: inventarioObraVigente ? true : false };
-  const total = 9; // ahora hay 9 formularios
+  const total = 8; // ahora hay 9 formularios
   const completados = Object.values({
     ...usadosParaBarra,
     hora_ingreso: usados.hora_ingreso,
