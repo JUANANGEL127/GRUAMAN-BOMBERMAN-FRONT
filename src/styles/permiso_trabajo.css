@@ -255,3 +255,241 @@ button:active {
   color: #fff !important;
   border: none !important;
 }
+
+/* === OVERRIDES RESPONSIVE: TABLET Y DESKTOP === */
+
+/* Tablet: desde ~600px */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .form-container {
+    max-width: 900px;
+    padding: 1.5rem;
+    margin-bottom: 10%;
+    gap: 2rem;
+  }
+
+  .card-section {
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+  }
+
+  .herramientas-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px 20px;
+  }
+
+  button {
+    width: auto;
+    padding: 0.85rem 1.25rem;
+  }
+
+  .divider {
+    border-bottom-width: 8px;
+  }
+}
+
+/* Desktop: desde 1024px */
+@media (min-width: 1024px) {
+  .form-container {
+    max-width: 1100px;
+    padding: 2rem;
+    margin-bottom: 5%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: flex-start;
+  }
+
+  /* Permitir dos columnas de tarjetas para aprovechar ancho */
+  .card-section {
+    flex: 1 1 calc(50% - 2rem);
+    max-width: calc(50% - 2rem);
+    min-width: 360px;
+  }
+
+  .card-title {
+    font-size: 1.15rem;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    font-size: 1rem;
+  }
+
+  .herramientas-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px 24px;
+  }
+
+  .herramienta-recuadro {
+    min-height: 44px;
+    padding: 10px 12px;
+  }
+
+  button {
+    width: auto;
+    padding: 0.9rem 1.5rem;
+  }
+
+  .divider {
+    border-bottom-width: 10px;
+  }
+}
+
+/* pequeño ajuste para pantallas muy grandes */
+@media (min-width: 1400px) {
+  .form-container {
+    max-width: 1300px;
+    gap: 2.5rem;
+  }
+}
+
+/* === REFINES ADICIONALES: CENTRADO Y ORGANIZACIÓN EN TABLET/DESKTOP === */
+
+/* Asegura contenedor centrado en pantallas grandes y mejora distribución de cards */
+@media (min-width: 900px) {
+  .form-container {
+    /* centro horizontal con gap consistente y limitación máxima */
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+    gap: 2rem;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  /* Dos columnas limpias y centradas; espacio entre cards controlado */
+  .card-section {
+    flex: 0 1 calc(50% - 2rem);
+    max-width: calc(50% - 2rem);
+    margin: 0.75rem;
+    min-height: 260px; /* altura homogénea para apariencia ordenada */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  /* Asegura que el título y el contenido mantengan proporciones */
+  .card-title {
+    margin-bottom: 0.75rem;
+  }
+
+  /* Formularios e inputs ocupan todo el ancho interno de la card */
+  input,
+  select,
+  textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Botones centrados y consistentes en desktop */
+  button {
+    display: inline-block;
+    margin: 0.75rem auto;
+    padding: 0.9rem 1.4rem;
+  }
+
+  /* Si hay una fila de acciones, forzar centrado y separación */
+  .form-actions,
+  .actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  /* Mejora visual de rejilla de herramientas en desktop */
+  .herramientas-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px 20px;
+  }
+
+  .herramienta-recuadro {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 12px;
+  }
+
+  /* Ajustes en divisores y espaciamiento para mejor equilibrio visual */
+  .divider {
+    margin: 1.25rem 0;
+  }
+}
+
+/* Ajustes intermedios para tablets (empleo de 2-3 columnas según ancho) */
+@media (min-width: 600px) and (max-width: 899px) {
+  .form-container {
+    max-width: 920px;
+    margin: 1.5rem auto;
+    padding: 1.5rem;
+    gap: 1.6rem;
+    justify-content: center;
+  }
+
+  .card-section {
+    flex: 0 1 calc(50% - 1.5rem);
+    max-width: calc(50% - 1.5rem);
+    margin: 0.6rem;
+    min-height: 240px;
+  }
+
+  .herramientas-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px 18px;
+  }
+
+  button {
+    margin: 0.6rem auto;
+  }
+}
+
+/* === UNIFORM BUTTON SIZE EN DESKTOP === */
+@media (min-width: 1024px) {
+  /* variables de botón para fácil ajuste */
+  :root {
+    --btn-desktop-width: 260px;
+    --btn-desktop-height: 48px;
+    --btn-desktop-padding-x: 18px;
+  }
+
+  /* Selección amplia para abarcar variantes de botones */
+  button,
+  .button-green,
+  input[type="submit"],
+  .btn {
+    width: var(--btn-desktop-width) !important;
+    min-width: var(--btn-desktop-width) !important;
+    height: var(--btn-desktop-height) !important;
+    padding: 0 var(--btn-desktop-padding-x) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Asegura que botones en filas de acciones queden centrados y separados */
+  .form-actions,
+  .actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+}

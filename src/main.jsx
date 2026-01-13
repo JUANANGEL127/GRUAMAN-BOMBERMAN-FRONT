@@ -95,8 +95,29 @@ function getUsuarioObra() {
 // Usa variable de entorno para la base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
+// Hook para detectar mobile (max-width: 599px)
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(
+    typeof window !== "undefined" ? window.innerWidth < 600 : true
+  );
+  React.useEffect(() => {
+    const mq = window.matchMedia("(max-width: 599px)");
+    const onChange = (e) => setIsMobile(e.matches);
+    if (mq.addEventListener) mq.addEventListener("change", onChange);
+    else mq.addListener(onChange);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener("change", onChange);
+      else mq.removeListener(onChange);
+    };
+  }, []);
+  return isMobile;
+}
+
 // Componente del botón SOS flotante
 function SOSButton() {
+  const isMobile = useIsMobile(); // <-- ocultar en tablet/desktop
+  if (!isMobile) return null;
+
   const [enviando, setEnviando] = React.useState(false);
   const [mensaje, setMensaje] = React.useState("");
   const [showModal, setShowModal] = React.useState(false);
@@ -291,6 +312,9 @@ function SOSButton() {
 
 // Componente del botón STP flotante
 function STPButton() {
+  const isMobile = useIsMobile(); // <-- ocultar en tablet/desktop
+  if (!isMobile) return null;
+
   const [showModal, setShowModal] = React.useState(false);
   const [showCallModal, setShowCallModal] = React.useState(false);
   const [mensaje, setMensaje] = React.useState("");

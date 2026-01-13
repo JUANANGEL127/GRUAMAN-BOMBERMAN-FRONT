@@ -5,6 +5,24 @@ import { subscribeUser } from "./pushNotifications";
 // Usa variable de entorno para la base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
+// Hook para detectar mobile (max-width: 599px)
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(
+    typeof window !== "undefined" ? window.innerWidth < 600 : true
+  );
+  React.useEffect(() => {
+    const mq = window.matchMedia("(max-width: 599px)");
+    const onChange = (e) => setIsMobile(e.matches);
+    if (mq.addEventListener) mq.addEventListener("change", onChange);
+    else mq.addListener(onChange);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener("change", onChange);
+      else mq.removeListener(onChange);
+    };
+  }, []);
+  return isMobile;
+}
+
 function CedulaIngreso({ onUsuarioEncontrado }) {
   const [cedula, setCedula] = useState("");
   const [error, setError] = useState("");
@@ -14,6 +32,11 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
   const [adminError, setAdminError] = useState("");
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminShowPass, setAdminShowPass] = useState(false);
+
+  const isMobile = useIsMobile(); // <-- ocultar animación en tablet/desktop
+
+  // NO ocultar todo el componente: solo mostraremos el panel principal en mobile.
+  // El botón "Ingreso administrador" y su modal deben permanecer siempre visibles.
 
   useEffect(() => {
     const gifs = ["/gruaman1.1.gif", "/bomberman1.1.gif"];
@@ -128,35 +151,39 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
 
   return (
     <div className="form-container" style={{ position: "relative", minHeight: "100vh" }}>
-      <div
-        className="card-section"
-        style={{
-          background: "rgba(255,255,255,0.22)",
-          borderRadius: "18px",
-          boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
-          backdropFilter: "blur(8px)",
-          WebkitBackdropFilter: "blur(8px)",
-          border: "1px solid rgba(255,255,255,0.28)",
-          padding: "32px 24px",
-          maxWidth: 400,
-          margin: "0 auto",
-          position: "relative",
-          zIndex: 2,
-        }}
-      >
-        <h2 className="card-title">Ingresa tu cédula para iniciar tu aventura</h2>
-        <input
-          className="input"
-          type="text"
-          value={cedula}
-          onChange={e => setCedula(e.target.value)}
-          placeholder="Número de identificación"
-        />
-        <button className="button" onClick={handleBuscar} style={{ marginTop: 16 }}>
-          Continuar
-        </button>
-        {error && <div style={{ color: "red", marginTop: 12 }}>{error}</div>}
-      </div>
+      {/* Panel principal: solo visible en mobile */}
+      {isMobile && (
+        <div
+          className="card-section"
+          style={{
+            background: "rgba(255,255,255,0.22)",
+            borderRadius: "18px",
+            boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            border: "1px solid rgba(255,255,255,0.28)",
+            padding: "32px 24px",
+            maxWidth: 400,
+            margin: "0 auto",
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
+          <h2 className="card-title">Ingresa tu cédula para iniciar tu aventura</h2>
+          <input
+            className="input"
+            type="text"
+            value={cedula}
+            onChange={e => setCedula(e.target.value)}
+            placeholder="Número de identificación"
+          />
+          <button className="button" onClick={handleBuscar} style={{ marginTop: 16 }}>
+            Continuar
+          </button>
+          {error && <div style={{ color: "red", marginTop: 12 }}>{error}</div>}
+        </div>
+      )}
+
       {/* Botón de ingreso administrador en la misma posición que Instalar App */}
       <button
         className="button"
@@ -337,21 +364,24 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           </div>
         </div>
       )}
-      <img
-        src={gifIndex === 0 ? "/gruaman1.1.gif" : "/bomberman1.1.gif"}
-        alt={gifIndex === 0 ? "GruaMan animado" : "BomberMan animado"}
-        style={{
-          position: "absolute",
-          top: "30%",
-          left: 0,
-          width: "95vw",
-          height: "60vh",
-          objectFit: "cover",
-          zIndex: 1,
-          pointerEvents: "none",
-          userSelect: "none",
-        }}
-      />
+      {/* Mostrar la animación solo en mobile */}
+      {isMobile && (
+        <img
+          src={gifIndex === 0 ? "/gruaman1.1.gif" : "/bomberman1.1.gif"}
+          alt={gifIndex === 0 ? "GruaMan animado" : "BomberMan animado"}
+          style={{
+            position: "absolute",
+            top: "30%",
+            left: 0,
+            width: "95vw",
+            height: "60vh",
+            objectFit: "cover",
+            zIndex: 1,
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
+        />
+      )}
     </div>
   );
 }
