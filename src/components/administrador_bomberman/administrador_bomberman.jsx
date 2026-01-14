@@ -85,9 +85,9 @@ function AdministradorBomberman() {
           <button
             className="button"
             style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
-            onClick={() => navigate("/horas_extra_gruaman")}
+            onClick={() => navigate("/horas_extra_bomberman")}
           >
-            Horas Extra Gruaman
+            Horas Extra Bomberman
           </button>
         </div>
       </div>

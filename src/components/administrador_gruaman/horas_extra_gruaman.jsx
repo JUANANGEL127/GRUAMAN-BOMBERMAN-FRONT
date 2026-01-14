@@ -86,8 +86,12 @@ function horasExtraGruaman() {
           headers: { "Content-Type": "application/json" }
         });
         data = res.data || {};
-        setResultados(data.rows || []);
-        setTotal(data.count || 0);
+        // Filtrar en frontend por empresa_id === 1 por seguridad
+        const filteredRows = Array.isArray(data.rows)
+          ? data.rows.filter(r => (r.empresa_id === 1 || (r.raw && r.raw.empresa_id === 1)))
+          : [];
+        setResultados(filteredRows);
+        setTotal(filteredRows.length);
         setHasSearched(true);
         try {
           // Usar solo el endpoint POST /administrador/admin_horas_extra/resumen
@@ -379,7 +383,6 @@ function horasExtraGruaman() {
                         <div><strong>Fecha:</strong> { (r.fecha_servicio || r.fecha) ? String(r.fecha_servicio || r.fecha).slice(0,10) : "—" }</div>
                         <div><strong>Nombre:</strong> { r.nombre_operador || r.nombre || "—" }</div>
                         <div><strong>Cédula:</strong> { r.numero_identificacion || r.cedula || "—" }</div>
-                        <div><strong>Empresa:</strong> { r.nombre_responsable || r.empresa || "—" }</div>
                         <div><strong>Obra:</strong> { r.nombre_proyecto || r.obra || "—" }</div>
                         <div><strong>Constructora:</strong> { r.nombre_cliente || r.constructora || "—" }</div>
 

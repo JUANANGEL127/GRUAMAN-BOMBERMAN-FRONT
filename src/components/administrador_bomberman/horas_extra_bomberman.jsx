@@ -36,7 +36,8 @@ function horasExtraBomberman() {
     fecha_inicio: "",
     fecha_fin: "",
     limit: 50,
-    offset: 0
+    offset: 0,
+    empresa_id: 2
   });
   const [resultados, setResultados] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -72,7 +73,7 @@ function horasExtraBomberman() {
         nombre: filters.nombre || "",
         obra: filters.obra || "",
         constructora: filters.constructora || "",
-        empresa_id: 1,
+        empresa_id: 2,
         fecha_inicio: toYMD(filters.fecha_inicio),
         fecha_fin: toYMD(filters.fecha_fin),
         limit: filters.limit || 20,
@@ -86,8 +87,12 @@ function horasExtraBomberman() {
           headers: { "Content-Type": "application/json" }
         });
         data = res.data || {};
-        setResultados(data.rows || []);
-        setTotal(data.count || 0);
+        // Filtrar en frontend por empresa_id === 2 por seguridad
+        const filteredRows = Array.isArray(data.rows)
+          ? data.rows.filter(r => (r.empresa_id === 2 || (r.raw && r.raw.empresa_id === 2)))
+          : [];
+        setResultados(filteredRows);
+        setTotal(filteredRows.length);
         setHasSearched(true);
         try {
           // Usar solo el endpoint POST /administrador/admin_horas_extra/resumen
@@ -122,7 +127,7 @@ function horasExtraBomberman() {
         nombre: filters.nombre || "",
         obra: filters.obra || "",
         constructora: filters.constructora || "",
-        empresa_id: 1,
+        empresa_id: 2,
         fecha_inicio: toYMD(filters.fecha_inicio),
         fecha_fin: toYMD(filters.fecha_fin),
         formato: tipo,
@@ -164,7 +169,7 @@ function horasExtraBomberman() {
   };
 
   useEffect(() => {
-    // Nombres operarios (solo empresa_id === 1)
+    // Nombres operarios (solo empresa_id === 2)
     async function fetchNombres() {
       try {
         const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
@@ -180,7 +185,7 @@ function horasExtraBomberman() {
     }
     fetchNombres();
 
-    // Obras y constructoras (solo empresa_id === 1)
+    // Obras y constructoras (solo empresa_id === 2)
     axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
         const obrasAll = res.data.obras || [];
