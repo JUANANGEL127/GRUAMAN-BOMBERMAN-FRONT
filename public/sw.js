@@ -4,14 +4,13 @@ self.addEventListener('push', function(event) {
     try {
       data = event.data.json();
     } catch (e) {
-      data = { title: 'Notificación', body: event.data.text() };
+      data = {};
     }
   }
-  const title = data.title || 'Título por defecto';
+  const title = data.title || 'Notificación';
   const options = {
-    body: data.body || 'Mensaje por defecto',
-    icon: data.icon || '/icon-192.png',
-    data: data.url ? { url: data.url } : {}
+    body: data.body || '',
+    icon: data.icon || '/icon-192.png'
   };
   event.waitUntil(
     self.registration.showNotification(title, options)
