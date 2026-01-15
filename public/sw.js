@@ -1,15 +1,20 @@
 self.addEventListener('push', function(event) {
   let data = {};
-  try {
-    data = event.data ? event.data.json() : {};
-  } catch (e) {
-    data = { title: 'Notificación', body: 'Tienes una nueva notificación.' };
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { title: 'Notificación', body: event.data.text() };
+    }
   }
+  const title = data.title || 'Título por defecto';
+  const options = {
+    body: data.body || 'Mensaje por defecto',
+    icon: data.icon || '/icon-192.png',
+    data: data.url ? { url: data.url } : {}
+  };
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Notificación', {
-      body: data.body || '',
-      icon: '../public/icon-192.png'
-    })
+    self.registration.showNotification(title, options)
   );
 });
 
