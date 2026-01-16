@@ -78,3 +78,19 @@ self.addEventListener('notificationclick', event => {
   );
 });
 
+// Handler fetch para SPA routing - permite que el servidor maneje las navigation requests
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  
+  // Solo interceptar navigation requests (no assets, API calls, etc.)
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).catch(() => {
+        // Si falla el fetch (offline), intentar devolver index.html del cache
+        return caches.match('/index.html');
+      })
+    );
+  }
+  // Para otros requests (assets, API), dejar pasar normalmente sin interceptar
+});
+
