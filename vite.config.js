@@ -46,7 +46,8 @@ export default defineConfig({
         background_color: "#ffffff"
       },
       injectManifest: {
-        injectionPoint: undefined
+        injectionPoint: undefined,
+        swDest: 'sw.js'
       },
       devOptions: {
         enabled: true
