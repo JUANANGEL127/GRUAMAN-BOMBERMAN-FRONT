@@ -1,6 +1,20 @@
 
 
+// Evento install - se activa inmediatamente sin esperar
+self.addEventListener('install', event => {
+  console.log('[SW] Instalando Service Worker...');
+  self.skipWaiting(); // Forzar activación inmediata
+});
+
+// Evento activate - toma control de todas las pestañas abiertas
+self.addEventListener('activate', event => {
+  console.log('[SW] Service Worker activado');
+  event.waitUntil(clients.claim()); // Tomar control inmediato de los clientes
+});
+
 self.addEventListener('push', event => {
+  console.log('[SW] Push recibido:', event);
+  
   let data = {
     title: 'Nueva notificación',
     body: 'Tienes un nuevo mensaje',
@@ -12,10 +26,19 @@ self.addEventListener('push', event => {
   try {
     if (event.data) {
       const parsed = event.data.json();
+      console.log('[SW] Datos parseados:', parsed);
       data = { ...data, ...parsed };
     }
   } catch (error) {
-    console.error('Error parseando payload push:', error);
+    console.error('[SW] Error parseando payload push:', error);
+    // Intentar como texto si JSON falla
+    try {
+      if (event.data) {
+        data.body = event.data.text();
+      }
+    } catch (e) {
+      console.error('[SW] Error parseando como texto:', e);
+    }
   }
 
   const options = {
@@ -25,7 +48,8 @@ self.addEventListener('push', event => {
     data: {
       url: data.url
     },
-    requireInteraction: true
+    requireInteraction: true,
+    tag: 'push-notification-' + Date.now() // Evita que se agrupen/reemplacen
   };
 
   event.waitUntil(

@@ -580,9 +580,23 @@ function STPButton() {
 // Registro del Service Worker para notificaciones push
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => {
-        console.log('Service Worker registrado', reg);
+    navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+      .then(registration => {
+        console.log('Service Worker registrado', registration);
+        // Forzar actualización del SW
+        registration.update();
+        
+        // Detectar cuando hay una nueva versión disponible
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          console.log('[SW] Nueva versión encontrada, instalando...');
+          
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'activated') {
+              console.log('[SW] Nueva versión activada');
+            }
+          });
+        });
       })
       .catch(err => {
         console.error('Error registrando Service Worker', err);
