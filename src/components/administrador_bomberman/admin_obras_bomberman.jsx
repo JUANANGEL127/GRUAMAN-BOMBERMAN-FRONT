@@ -20,8 +20,8 @@ function AdminObrasBomberman() {
   const [nuevo, setNuevo] = useState({
     nombre_obra: "",
     constructora: "",
-    latitud: "",
-    longitud: "",
+    direccion: "",
+    ciudad: "",
     activa: true
   });
   const [agregando, setAgregando] = useState(false);
@@ -61,20 +61,21 @@ function AdminObrasBomberman() {
     try {
       const nombreObraFormateado = capitalizeWords(nuevo.nombre_obra.trim());
       const constructoraFormateada = capitalizeWords(nuevo.constructora.trim());
+      const ciudadFormateada = capitalizeWords(nuevo.ciudad.trim());
       await axios.post(`${API_BASE_URL}/admin_obras/agregar`, {
         nombre_obra: nombreObraFormateado,
         constructora: constructoraFormateada,
-        latitud: nuevo.latitud,
-        longitud: nuevo.longitud,
+        direccion: nuevo.direccion.trim(),
+        ciudad: ciudadFormateada,
         activa: true,
-        empresa_id: 2 // fuerza empresa_id=2 siempre
+        empresa_id: 2
       });
       setShowModal(false);
       setNuevo({
         nombre_obra: "",
         constructora: "",
-        latitud: "",
-        longitud: "",
+        direccion: "",
+        ciudad: "",
         activa: true
       });
       setOffset(0);
@@ -282,29 +283,30 @@ function AdminObrasBomberman() {
                     />
                   </div>
                   <div style={{ marginBottom: 14, position: "relative", zIndex: 1 }}>
-                    <label style={{ fontSize: 14, fontWeight: 500, color: "#222" }}>Latitud</label>
+                    <label style={{ fontSize: 14, fontWeight: 500, color: "#222" }}>Dirección</label>
                     <input
                       className="permiso-trabajo-input"
                       type="text"
-                      value={nuevo.latitud}
-                      onChange={e => setNuevo(n => ({ ...n, latitud: e.target.value }))}
-                      placeholder="Ejemplo: 4.861"
+                      value={nuevo.direccion}
+                      onChange={e => setNuevo(n => ({ ...n, direccion: e.target.value }))}
+                      placeholder="Ejemplo: Calle 123 #45-67"
                       style={{ width: "98%", marginTop: 4 }}
                       required
                     />
                   </div>
                   <div style={{ marginBottom: 14, position: "relative", zIndex: 1 }}>
-                    <label style={{ fontSize: 14, fontWeight: 500, color: "#222" }}>Longitud</label>
+                    <label style={{ fontSize: 14, fontWeight: 500, color: "#222" }}>Ciudad</label>
                     <input
                       className="permiso-trabajo-input"
                       type="text"
-                      value={nuevo.longitud}
-                      onChange={e => setNuevo(n => ({ ...n, longitud: e.target.value }))}
-                      placeholder="Ejemplo: -74.057"
+                      value={nuevo.ciudad}
+                      onChange={e => setNuevo(n => ({ ...n, ciudad: e.target.value }))}
+                      placeholder="Ejemplo: Bogotá"
                       style={{ width: "98%", marginTop: 4 }}
                       required
                     />
                   </div>
+                  {/* Municipio eliminado */}
                   <div style={{ marginBottom: 18, position: "relative", zIndex: 1 }}>
                     <label style={{ fontSize: 14, fontWeight: 500, color: "#222" }}>Estado</label>
                     <div style={{ marginTop: 6 }}>
