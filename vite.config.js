@@ -8,7 +8,10 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'public',
+      filename: 'sw.js',
+      injectRegister: false,
       manifest: {
         short_name: "LA CENTRAL",
         name: "LA CENTRAL, super heroes de la construccion",
@@ -28,6 +31,12 @@ export default defineConfig({
         display: "standalone",
         theme_color: "#1976d2",
         background_color: "#ffffff"
+      },
+      injectManifest: {
+        injectionPoint: undefined
+      },
+      devOptions: {
+        enabled: true
       }
     })
   ],

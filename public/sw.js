@@ -1,4 +1,4 @@
-
+// SW Version: 2.0.1 - Push notifications fix
 
 // Evento install - se activa inmediatamente sin esperar
 self.addEventListener('install', event => {
