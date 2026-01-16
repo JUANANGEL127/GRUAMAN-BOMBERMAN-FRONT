@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { registerWebAuthn, authenticateWebAuthn } from "./components/webauthn";
 import { subscribeUser } from "./pushNotifications";
 
 // Usa variable de entorno para la base de la API
@@ -101,6 +102,36 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
             console.error("Error solicitando permiso de notificaciones:", e);
           }
         }
+
+        // --- INICIO INTEGRACIÓN WEBAUTHN ---
+        // Verificar si el usuario ya tiene credencial biométrica registrada
+        let biometriaRegistrada = false;
+        try {
+          const res = await axios.post(`${API_BASE_URL}/webauthn/hasCredential`, { numero_identificacion: cedula });
+          biometriaRegistrada = !!(res.data && res.data.hasCredential);
+        } catch (e) {
+          // Si el endpoint no existe, se asume que no está registrada
+          biometriaRegistrada = false;
+        }
+
+        if (!biometriaRegistrada) {
+          // Registrar credencial biométrica (solo la primera vez en el dispositivo)
+          try {
+            await registerWebAuthn({ numero_identificacion: cedula, nombre: usuario.nombre });
+          } catch (e) {
+            setError("No se pudo registrar la biometría en este dispositivo.");
+            return;
+          }
+        } else {
+          // Autenticación biométrica en cada acceso
+          try {
+            await authenticateWebAuthn({ numero_identificacion: cedula });
+          } catch (e) {
+            setError("No se pudo autenticar la biometría en este dispositivo.");
+            return;
+          }
+        }
+        // --- FIN INTEGRACIÓN WEBAUTHN ---
 
         // Mantener callback existente
         onUsuarioEncontrado && onUsuarioEncontrado({
