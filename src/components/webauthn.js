@@ -91,25 +91,86 @@ export async function registerWebAuthn({ numero_identificacion, nombre }) {
   }
 }
 
+// Clase de error personalizada para WebAuthn
+export class WebAuthnError extends Error {
+  constructor(message, code) {
+    super(message);
+    this.name = 'WebAuthnError';
+    this.code = code; // 'NO_CREDENTIALS', 'USER_CANCELLED', 'NOT_ALLOWED', 'UNKNOWN'
+  }
+}
+
 // 2. Autenticación biométrica
 export async function authenticateWebAuthn({ numero_identificacion }) {
+  console.log('[WebAuthn] Iniciando autenticación para:', numero_identificacion);
+  
   // a) Solicita opciones de autenticación al backend
-  const res = await fetch(`${API_BASE_URL}/webauthn/authenticate/options`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ numero_identificacion })
-  });
-  const options = await res.json();
-  options.challenge = base64ToUint8Array(options.challenge);
-  if (options.allowCredentials) {
-    options.allowCredentials = options.allowCredentials.map(c => ({
-      ...c,
-      id: base64ToUint8Array(c.id)
-    }));
+  let options;
+  try {
+    const res = await fetch(`${API_BASE_URL}/webauthn/authenticate/options`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ numero_identificacion })
+    });
+    options = await res.json();
+    console.log('[WebAuthn] Opciones de autenticación recibidas:', options);
+  } catch (e) {
+    console.error('[WebAuthn] Error obteniendo opciones de autenticación:', e);
+    throw new WebAuthnError('Error de conexión al obtener opciones de autenticación', 'NETWORK_ERROR');
+  }
+
+  try {
+    options.challenge = base64ToUint8Array(options.challenge);
+    if (options.allowCredentials) {
+      options.allowCredentials = options.allowCredentials.map(c => ({
+        ...c,
+        id: base64ToUint8Array(c.id)
+      }));
+    }
+  } catch (e) {
+    console.error('[WebAuthn] Error procesando opciones:', e);
+    throw new WebAuthnError('Error procesando opciones de autenticación', 'PARSE_ERROR');
   }
 
   // b) Autenticación biométrica
-  const assertion = await navigator.credentials.get({ publicKey: options });
+  let assertion;
+  try {
+    assertion = await navigator.credentials.get({ publicKey: options });
+  } catch (e) {
+    console.error('[WebAuthn] Error en navigator.credentials.get:', e);
+    
+    // Detectar errores específicos
+    const errorMessage = e.message?.toLowerCase() || '';
+    const errorName = e.name || '';
+    
+    // Detectar "no hay llaves de acceso disponibles" o errores similares
+    if (
+      errorName === 'NotAllowedError' ||
+      errorMessage.includes('no credentials') ||
+      errorMessage.includes('no passkey') ||
+      errorMessage.includes('no hay llaves') ||
+      errorMessage.includes('not available') ||
+      errorMessage.includes('no authenticator') ||
+      errorMessage.includes('cancel') ||
+      errorMessage.includes('abort')
+    ) {
+      // Podría ser que el usuario canceló o no hay credenciales en este dispositivo
+      throw new WebAuthnError(
+        'No hay llaves de acceso disponibles en este dispositivo. ¿Desea registrar una nueva llave?',
+        'NO_CREDENTIALS'
+      );
+    }
+    
+    if (errorName === 'InvalidStateError') {
+      throw new WebAuthnError('Estado inválido de autenticación', 'INVALID_STATE');
+    }
+    
+    throw new WebAuthnError('Error durante la autenticación biométrica', 'UNKNOWN');
+  }
+
+  if (!assertion) {
+    throw new WebAuthnError('No se recibió respuesta de autenticación', 'NO_RESPONSE');
+  }
 
   // c) Prepara la respuesta para el backend
   const assertionResponse = {

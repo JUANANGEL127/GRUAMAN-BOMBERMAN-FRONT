@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { registerWebAuthn, authenticateWebAuthn } from "./components/webauthn";
+import { registerWebAuthn, authenticateWebAuthn, WebAuthnError } from "./components/webauthn";
 import { subscribeUser } from "./pushNotifications";
 
 // Usa variable de entorno para la base de la API
@@ -33,6 +33,11 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
   const [adminError, setAdminError] = useState("");
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminShowPass, setAdminShowPass] = useState(false);
+  
+  // Estado para el modal de registro de nueva llave de acceso
+  const [showRegistrarLlaveModal, setShowRegistrarLlaveModal] = useState(false);
+  const [registrarLlaveLoading, setRegistrarLlaveLoading] = useState(false);
+  const [pendingUsuario, setPendingUsuario] = useState(null);
 
   const isMobile = useIsMobile(); // <-- ocultar animación en tablet/desktop
 
@@ -127,6 +132,15 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           try {
             await authenticateWebAuthn({ numero_identificacion: cedula });
           } catch (e) {
+            console.log('[CedulaIngreso] Error de autenticación WebAuthn:', e);
+            
+            // Si el error es por falta de llaves en este dispositivo, ofrecer registrar una nueva
+            if (e instanceof WebAuthnError && e.code === 'NO_CREDENTIALS') {
+              setPendingUsuario(usuario);
+              setShowRegistrarLlaveModal(true);
+              return;
+            }
+            
             setError("No se pudo autenticar la biometría en este dispositivo.");
             return;
           }
@@ -178,6 +192,46 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
     } finally {
       setAdminLoading(false);
     }
+  };
+
+  // Función para registrar nueva llave de acceso en este dispositivo
+  const handleRegistrarNuevaLlave = async () => {
+    if (!pendingUsuario) return;
+    
+    setRegistrarLlaveLoading(true);
+    setError("");
+    
+    try {
+      const numeroId = pendingUsuario.numero_identificacion || pendingUsuario.cedula || pendingUsuario.id || cedula;
+      const nombre = pendingUsuario.nombre || pendingUsuario.nombres || pendingUsuario.nombre_trabajador || "";
+      
+      await registerWebAuthn({ numero_identificacion: numeroId, nombre });
+      
+      // Registro exitoso, cerrar modal y continuar con el flujo
+      setShowRegistrarLlaveModal(false);
+      
+      // Continuar con el callback original
+      onUsuarioEncontrado && onUsuarioEncontrado({
+        nombre: pendingUsuario.nombre,
+        empresa: pendingUsuario.empresa_id === 1 ? "GyE" : "AIC",
+        numero_identificacion: pendingUsuario.numero_identificacion
+      });
+      
+      setPendingUsuario(null);
+    } catch (e) {
+      console.error('[CedulaIngreso] Error registrando nueva llave:', e);
+      setError("No se pudo registrar la nueva llave de acceso en este dispositivo.");
+      setShowRegistrarLlaveModal(false);
+      setPendingUsuario(null);
+    } finally {
+      setRegistrarLlaveLoading(false);
+    }
+  };
+
+  const handleCancelarRegistroLlave = () => {
+    setShowRegistrarLlaveModal(false);
+    setPendingUsuario(null);
+    setError("Debes registrar una llave de acceso para continuar.");
   };
 
   return (
@@ -395,6 +449,104 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           </div>
         </div>
       )}
+      
+      {/* Modal para registrar nueva llave de acceso */}
+      {showRegistrarLlaveModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(31,38,135,0.18)",
+            zIndex: 10001,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <div
+            style={{
+              background: "rgba(255,255,255,0.28)",
+              borderRadius: 18,
+              boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              border: "1.5px solid rgba(255,255,255,0.35)",
+              padding: "32px 24px",
+              minWidth: 300,
+              maxWidth: 360,
+              textAlign: "center",
+              position: "relative",
+              fontFamily: "inherit"
+            }}
+          >
+            {/* Icono de llave/huella */}
+            <div style={{ marginBottom: 16 }}>
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#1976d2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto" }}>
+                <path d="M12 11c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z" />
+                <path d="M19 11h-4" />
+                <path d="M15 7v8" />
+                <path d="M12 11h-3" />
+                <circle cx="9" cy="11" r="6" />
+              </svg>
+            </div>
+            
+            <h3 style={{ marginBottom: 14, color: "#1976d2", fontWeight: 700, fontSize: 18, letterSpacing: 0.5 }}>
+              Registrar llave de acceso
+            </h3>
+            
+            <p style={{ color: "#333", fontSize: 14, marginBottom: 8, lineHeight: 1.5 }}>
+              No hay llaves de acceso disponibles en este dispositivo.
+            </p>
+            
+            <p style={{ color: "#555", fontSize: 13, marginBottom: 20, lineHeight: 1.5 }}>
+              ¿Deseas registrar una nueva llave de acceso (huella dactilar o Face ID) para iniciar sesión desde este dispositivo?
+            </p>
+            
+            <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+              <button
+                className="button"
+                onClick={handleRegistrarNuevaLlave}
+                disabled={registrarLlaveLoading}
+                style={{
+                  background: "#1976d2",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "10px 24px",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  cursor: registrarLlaveLoading ? "not-allowed" : "pointer",
+                  boxShadow: "0 2px 8px rgba(25,118,210,0.18)",
+                  letterSpacing: 0.5,
+                  opacity: registrarLlaveLoading ? 0.7 : 1
+                }}
+              >
+                {registrarLlaveLoading ? "Registrando..." : "Sí, registrar"}
+              </button>
+              <button
+                className="button"
+                onClick={handleCancelarRegistroLlave}
+                disabled={registrarLlaveLoading}
+                style={{
+                  background: "#f5f5f5",
+                  color: "#666",
+                  border: "1px solid #ddd",
+                  borderRadius: 8,
+                  padding: "10px 20px",
+                  fontSize: 15,
+                  fontWeight: 500,
+                  cursor: registrarLlaveLoading ? "not-allowed" : "pointer",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                  letterSpacing: 0.5
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Mostrar la animación solo en mobile */}
       {isMobile && (
         <img
