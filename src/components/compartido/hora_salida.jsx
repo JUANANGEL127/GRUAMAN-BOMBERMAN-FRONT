@@ -28,8 +28,6 @@ export default function HoraSalida() {
   const navigate = useNavigate();
   const [datos] = useState(getDatosTrabajador());
   const [horaSalida, setHoraSalida] = useState("");
-  const [almuerzo, setAlmuerzo] = useState(""); // "si" o "no"
-  const [minutosAlmuerzo, setMinutosAlmuerzo] = useState("");
   const [guardado, setGuardado] = useState(false);
   const [error, setError] = useState("");
 
@@ -42,14 +40,12 @@ export default function HoraSalida() {
     const nombre_operador = datos.nombre;
     const fecha_servicio = new Date().toISOString().slice(0, 10);
     const hora_salida = horaSalida.slice(0,5);
-    const minutos_almuerzo = almuerzo === "si" ? Number(minutosAlmuerzo) : 1;
     const observaciones = "";
 
     const payload = {
       nombre_operador,
       fecha_servicio,
       hora_salida,
-      minutos_almuerzo,
       observaciones
     };
 
@@ -81,50 +77,7 @@ export default function HoraSalida() {
           <div><b>Obra:</b> {datos.obra}</div>
         </div>
       </div>
-      {/* Hora de almuerzo primero */}
-      <div className="card-section" style={{ marginBottom: 24 }}>
-        <label style={{ fontWeight: 500, display: "block", marginBottom: 8 }}>Hora de almuerzo</label>
-        <div style={{ marginBottom: 10 }}>
-          ¿Tomaste hora de almuerzo?
-          <div style={{ marginTop: 6 }}>
-            <select
-              className="input"
-              style={{ width: 180 }}
-              value={almuerzo}
-              onChange={e => setAlmuerzo(e.target.value)}
-            >
-              <option value="">--</option>
-              <option value="si">Sí</option>
-              <option value="no">No</option>
-            </select>
-          </div>
-        </div>
-        {almuerzo === "si" && (
-          <div style={{ marginTop: 10 }}>
-            <label>
-              ¿Cuántos minutos?{" "}
-              <input
-                type="number"
-                min={1}
-                max={60}
-                value={minutosAlmuerzo}
-                onChange={e => {
-                  let val = e.target.value.replace(/[^0-9]/g, "");
-                  if (val) {
-                    let num = Math.max(1, Math.min(60, parseInt(val, 10)));
-                    val = num.toString();
-                  }
-                  setMinutosAlmuerzo(val);
-                }}
-                style={{ width: 60, marginLeft: 8 }}
-                className="input"
-              />{" "}
-              min
-            </label>
-          </div>
-        )}
-      </div>
-      {/* Registro de hora de salida después */}
+      {/* Registro de hora de salida */}
       <div className="card-section" style={{ marginBottom: 24 }}>
         <h2 className="card-title">Registro de hora de salida</h2>
         <div style={{ marginBottom: 16 }}>
@@ -166,7 +119,7 @@ export default function HoraSalida() {
         className="button"
         style={{ width: "100%", background: "#1976d2", color: "#fff" }}
         onClick={handleGuardar}
-        disabled={!horaSalida || (almuerzo === "si" && (!minutosAlmuerzo || minutosAlmuerzo < 1 || minutosAlmuerzo > 60))}
+        disabled={!horaSalida}
       >
         Guardar
       </button>

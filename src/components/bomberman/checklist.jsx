@@ -6,16 +6,13 @@ import "../../styles/permiso_trabajo.css";
 // Usa variable de entorno para la base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
-
-// ✅ CORRECCIÓN 1: El componente ahora acepta 'props' (aunque no la usaremos, es buena práctica)
 function Checklist(props) { 
   const navigate = useNavigate();
 
   // 1. Referencias para campos obligatorios y el botón de guardar
   const [camposFaltantes, setCamposFaltantes] = useState([]);
-  const itemRefs = useRef({}); // Para almacenar referencias a los ítems del checklist
-  const submitRef = useRef(null); // Para la referencia del botón Guardar
-  // Referencias para los campos del encabezado que son obligatorios
+  const itemRefs = useRef({});
+  const submitRef = useRef(null);
   const bombaRef = useRef(null);
   const horometroRef = useRef(null);
 
@@ -32,7 +29,19 @@ function Checklist(props) {
   const [lista_bombas, set_lista_bombas] = useState([]);
   const [estadoItems, setEstadoItems] = useState({}); 
   const [enviando, setEnviando] = useState(false);
-  const [mensajeEnvio, setMensajeEnvio] = useState("");
+
+  // ==================== NUEVOS ESTADOS PARA FIRMA ELECTRÓNICA ====================
+  const [requiereFirma, setRequiereFirma] = useState(true);
+  const [firmantePrincipal, setFirmantePrincipal] = useState({
+    nombre: "",
+    cedula: "",
+    email: "",
+    celular: ""
+  });
+  const [firmantesExternos, setFirmantesExternos] = useState([
+    { nombre: "", cedula: "", email: "", celular: "" }
+  ]);
+  // ================================================================================
 
   const nombre_operador_local = localStorage.getItem("nombre_trabajador") || "";
   const nombre_obra_local = localStorage.getItem("obra") || "";
@@ -96,7 +105,7 @@ function Checklist(props) {
     "paso_masilla": "Revise los pistones y asegure que no exista paso de masilla para la caja de refrigeración.",
     "paso_agua": "Revise los pistones y asegure que no exista paso de agua a la tolva.",
     "partes_faltantes": "Revisar si hay partes faltantes tales como pasadores, pernos y tuercas.",
-    "mecanismo_s": "Revise que el mecanismo de cambio del tubo en “S” sea estructuralmente rígido.",
+    "mecanismo_s": "Revise que el mecanismo de cambio del tubo en \"S\" sea estructuralmente rígido.",
     "funcion_sensor": "Revisar que la rejilla de la tolva no este partida y que este funcionando el sensor.",
     "estado_oring": "Revise el estado del oring de la escotilla.",
     "funcion_vibrador": "Revisar que el vibrador esté montado en forma segura y que las conexiones de los cables estén aseguradas y este funcionando correctamente.",
@@ -114,7 +123,7 @@ function Checklist(props) {
     // SISTEMA LUBRICACION
     "superficie_nivel_deposito_grasa": "Revise el nivel del depósito de grasa.",
     "superficie_puntos_lubricacion": "Revise puntos de lubricación  (yugos, checks de distribución, ductos, mangueras distribución de grasa,  tarro general de autoengrase, arbol trasero.)",
-    "superficie_empaquetaduras_conexion": "Revise si las empaquetaduras de  conexión del tubo en “S” en los sellos de salida y cojinetes se encuentran lubricadas.",
+    "superficie_empaquetaduras_conexion": "Revise si las empaquetaduras de  conexión del tubo en \"S\" en los sellos de salida y cojinetes se encuentran lubricadas.",
     "superficie_fugas": "Revise el nivel de agua de caja de lubricación de los pistones.",
     // MANGUERAS Y ACOPLES
     "mangueras_interna_no_deshilachadas": "Revisión interna que la manguera no se encuentre deshilachada.",
@@ -189,10 +198,9 @@ function Checklist(props) {
       return acc;
     }, {});
     setEstadoItems(inicial);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
-    // Lógica de carga de datos... (sin cambios)
     const fecha_hoy = new Date().toISOString().slice(0, 10);
     axios
       .get(`${API_BASE_URL}/obras`)
@@ -207,6 +215,14 @@ function Checklist(props) {
           fecha_servicio: fecha_hoy,
           nombre_operador: nombre_operador_local,
         }));
+        
+        // ==================== AUTO-RELLENAR FIRMANTE PRINCIPAL ====================
+        // Usar el nombre del operador como firmante principal por defecto
+        setFirmantePrincipal(prev => ({
+          ...prev,
+          nombre: nombre_operador_local
+        }));
+        // =========================================================================
       })
       .catch(() => {
         setDatos((prev) => ({
@@ -220,7 +236,6 @@ function Checklist(props) {
   }, [nombre_operador_local, nombre_obra_local]);
 
   useEffect(() => {
-    // Lógica de carga de bombas... (sin cambios)
     axios
       .get(`${API_BASE_URL}/bombas`)
       .then((res) => {
@@ -275,10 +290,9 @@ function Checklist(props) {
     // eslint-disable-next-line
   }, []);
 
-  // --- HANDLERS (Sin cambios en la lógica interna) ---
+  // --- HANDLERS ---
   const handle_change = (e) => {
     const { name, value } = e.target;
-    // Limpiar el campo de error del encabezado si se corrige
     if (name === "bomba_numero" || name === "horometro_motor") {
         setCamposFaltantes(prev => prev.filter(field => field !== name));
     }
@@ -286,7 +300,6 @@ function Checklist(props) {
   };
 
   const handleItemStateChange = (fieldName, nuevoEstado) => {
-    // Limpia el campo de error de estado al seleccionar un estado
     setCamposFaltantes(prev => prev.filter(field => field !== fieldName));
     
     setEstadoItems((prev) => ({
@@ -294,7 +307,6 @@ function Checklist(props) {
       [fieldName]: {
         ...prev[fieldName],
         estado: nuevoEstado,
-        // Limpiar observación si se cambia a BUENO
         observacion: (nuevoEstado === 'BUENO' || nuevoEstado === '') 
             ? '' 
             : prev[fieldName].observacion,
@@ -303,7 +315,6 @@ function Checklist(props) {
   };
 
   const handleItemObservationChange = (fieldName, nuevaObservacion) => {
-    // Limpia el campo de error de observación al escribir
     setCamposFaltantes(prev => prev.filter(field => field !== `${fieldName}_observacion`));
     
     setEstadoItems((prev) => ({
@@ -314,8 +325,29 @@ function Checklist(props) {
       },
     }));
   };
+
+  // ==================== HANDLERS PARA FIRMANTES ====================
+  const handleFirmantePrincipalChange = (campo, valor) => {
+    setFirmantePrincipal(prev => ({ ...prev, [campo]: valor }));
+  };
+
+  const handleFirmanteExternoChange = (index, campo, valor) => {
+    const nuevos = [...firmantesExternos];
+    nuevos[index][campo] = valor;
+    setFirmantesExternos(nuevos);
+  };
+
+  const agregarFirmanteExterno = () => {
+    setFirmantesExternos(prev => [...prev, { nombre: "", cedula: "", email: "", celular: "" }]);
+  };
+
+  const eliminarFirmanteExterno = (index) => {
+    if (firmantesExternos.length > 1) {
+      setFirmantesExternos(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+  // ==================================================================
   
-  // 2. Función para desplazarse al primer error (Incluyendo encabezado)
   const scrollToFirstError = (errores) => {
     if (errores.length === 0) return;
     
@@ -327,18 +359,15 @@ function Checklist(props) {
     } else if (primerError === 'horometro_motor') {
         elemento = horometroRef.current;
     } else {
-        // Para errores del checklist, apuntamos al div contenedor para mejor visibilidad
         elemento = itemRefs.current[primerError];
     }
     
     if (elemento) {
-        // block: 'start' para asegurar que el elemento quede en la parte superior
         elemento.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
         elemento.focus?.();
     }
   };
   
-  // Función para desplazarse al botón Guardar
   const scrollToBottom = () => {
     if (submitRef.current) {
         submitRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -346,13 +375,11 @@ function Checklist(props) {
     }
   };
 
-
-  // --- SUBMIT (Lógica de payload modificada con validación y scroll) ---
+  // --- SUBMIT MODIFICADO CON FIRMA ELECTRÓNICA ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setEnviando(true);
-    setMensajeEnvio("");
-    setCamposFaltantes([]); // Limpiar errores previos
+    setCamposFaltantes([]);
 
     const erroresDetectados = [];
     const headerErrores = [];
@@ -372,57 +399,82 @@ function Checklist(props) {
     itemToField.forEach(field => {
         if ((estadoItems[field].estado === 'REGULAR' || estadoItems[field].estado === 'MALO') && 
             estadoItems[field].observacion.trim() === "") {
-            erroresDetectados.push(`${field}_observacion`); // Sufijo para error de observación
+            erroresDetectados.push(`${field}_observacion`);
         }
     });
+
+    // ==================== VALIDACIÓN DE FIRMANTES ====================
+    if (requiereFirma) {
+      if (!firmantePrincipal.nombre || !firmantePrincipal.cedula || !firmantePrincipal.email) {
+        headerErrores.push("firmante_principal");
+      }
+      // Validar firmantes externos que tengan algún dato
+      firmantesExternos.forEach((f, idx) => {
+        if (f.nombre || f.cedula || f.email) {
+          if (!f.nombre || !f.cedula || !f.email) {
+            headerErrores.push(`firmante_externo_${idx}`);
+          }
+        }
+      });
+    }
+    // ==================================================================
 
     const totalErrores = headerErrores.length + erroresDetectados.length;
     
     if (totalErrores > 0) {
-        
         const todosLosErrores = [...headerErrores, ...erroresDetectados];
-        setMensajeEnvio(`❌ Error: Se encontraron ${totalErrores} campos sin diligenciar. Revise los campos marcados en rojo.`);
+        console.log(`Error: Se encontraron ${totalErrores} campos sin diligenciar.`);
         setCamposFaltantes(todosLosErrores);
         setEnviando(false);
-        
-        // 🚨 Desplazarse al primer error
         scrollToFirstError(todosLosErrores);
         return;
     }
     
-    // --- LÓGICA DE ENVÍO ORIGINAL (Si no hay errores) ---
+    // --- PREPARAR PAYLOAD ---
     const checklistPayload = itemToField.reduce((acc, field) => {
         acc[field] = estadoItems[field].estado; 
         acc[`${field}_observacion`] = estadoItems[field].observacion.trim(); 
         return acc;
     }, {});
 
+    // ==================== AGREGAR DATOS DE FIRMA AL PAYLOAD ====================
+    const firmantesExternosValidos = firmantesExternos.filter(
+      f => f.nombre && f.cedula && f.email
+    );
+
     const payload = {
       ...datos, 
-      ...checklistPayload, 
+      ...checklistPayload,
+      // Datos de firma electrónica
+      requiere_firma: true,
+      firmante_principal: firmantePrincipal,
+      firmantes_externos: firmantesExternosValidos
     };
+    // ===========================================================================
     
-    // 5. Envío y Navegación
+    // 5. Envío
     try {
-      await axios.post(`${API_BASE_URL}/bomberman/checklist`, payload);
+      const response = await axios.post(`${API_BASE_URL}/bomberman/checklist`, payload);
+      const resultado = response.data;
       
-      // La confirmación se realiza antes de la navegación
-      console.log("Checklist enviado correctamente.");
-      alert("Checklist enviado correctamente."); 
-      
-      // ❌ LÍNEA ELIMINADA: if (props.onFinish) props.onFinish();
-      
-      // ✅ NAVEGACIÓN CORREGIDA: Devuelve al componente anterior, que es el comportamiento deseado.
-      navigate(-1); 
+      console.log("Checklist enviado correctamente:", resultado);
+
+      // ==================== MANEJAR RESPUESTA DE FIRMA ====================
+      if (resultado.firma && resultado.firma.success) {
+        // Redirigir directamente a la página de firma
+        window.location.href = resultado.firma.url_firma;
+      } else if (resultado.firma && !resultado.firma.success) {
+        alert(`⚠️ Checklist guardado, pero hubo un error con la firma: ${resultado.firma.error}`);
+        navigate(-1);
+      } else {
+        // Sin firma requerida
+        alert("✅ Checklist guardado correctamente."); 
+        navigate(-1); 
+      }
+      // ====================================================================
       
     } catch (err) {
       console.error("Error al enviar el checklist:", err.response ? err.response.data : err.message);
-      
-      const serverMessage = err.response && err.response.data 
-          ? JSON.stringify(err.response.data) 
-          : err.message;
-
-      setMensajeEnvio(`❌ Error al guardar el checklist. Detalle: ${serverMessage}`);
       alert("Error al guardar el checklist."); 
     } finally {
       setEnviando(false);
@@ -432,144 +484,61 @@ function Checklist(props) {
   // --- RENDERIZADO ---
   return (
     <form className="form-container" onSubmit={handleSubmit}>
+          {/* 1. Datos Generales (ENCABEZADO) */}
+          <div className="card-section" style={{ marginBottom: 16 }}>
+            <h3 className="card-title" style={{ marginBottom: 12 }}>
+              LISTA DE CHEQUEO PARA BOMBA ESTACIONARIA DE CONCRETO
+            </h3>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+              {[
+                { name: "nombre_cliente", label: "Cliente / Constructora" },
+                { name: "nombre_proyecto", label: "Obra / Proyecto" },
+                { name: "fecha_servicio", label: "Fecha", type: "date" },
+                { name: "nombre_operador", label: "Operario" },
+                { name: "bomba_numero", label: "BOMBA No.", type: "select" },
+                { name: "horometro_motor", label: "HOROMETRO MOTOR" },
+              ].map((item) => {
+                const isHeaderError = camposFaltantes.includes(item.name);
+                const isMandatory = item.name === "bomba_numero" || item.name === "horometro_motor";
 
-      {/* 1. Datos Generales (ENCABEZADO) */}
-      <div className="card-section" style={{ marginBottom: 16 }}>
-        <h3 className="card-title" style={{ marginBottom: 12 }}>
-          LISTA DE CHEQUEO PARA BOMBA ESTACIONARIA DE CONCRETO
-        </h3>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-          {[
-            { name: "nombre_cliente", label: "Cliente / Constructora" },
-            { name: "nombre_proyecto", label: "Obra / Proyecto" },
-            { name: "fecha_servicio", label: "Fecha", type: "date" },
-            { name: "nombre_operador", label: "Operario" },
-            { name: "bomba_numero", label: "BOMBA No.", type: "select" },
-            { name: "horometro_motor", label: "HOROMETRO MOTOR" },
-          ].map((item) => {
-            const isHeaderError = camposFaltantes.includes(item.name);
-            const isMandatory = item.name === "bomba_numero" || item.name === "horometro_motor";
-
-            return (
-              <div key={item.name} style={{ flex: 1, minWidth: 180 }}>
-                <label className="permiso-trabajo-label">{item.label}{isMandatory}</label>
-                
-                {item.type === "select" ? (
-                  <select
-                    ref={item.name === "bomba_numero" ? bombaRef : null}
-                    name={item.name}
-                    value={datos[item.name]}
-                    onChange={handle_change}
-                    className={`permiso-trabajo-select ${isHeaderError ? 'campo-error' : ''}`}
-                  >
-                    <option value="">Seleccionar</option>
-                    {lista_bombas.map((b, idx) => (
-                      <option key={idx} value={b.numero_bomba}>
-                        {b.numero_bomba}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    ref={item.name === "horometro_motor" ? horometroRef : null}
-                    type={item.type || "text"}
-                    name={item.name}
-                    value={datos[item.name]}
-                    onChange={handle_change}
-                    className="permiso-trabajo-input"
-                    readOnly={
-                      item.name === "nombre_cliente" ||
-                      item.name === "nombre_proyecto" ||
-                      item.name === "fecha_servicio" ||
-                      item.name === "nombre_operador"
-                    }
-                  />
-                )}
-                {/* Indicador de error y puntero */}
-                {isHeaderError && (
-                    <span style={{ color: "red", fontSize: 13 }}>
-                        Este campo es obligatorio.
-                        <span
-                            style={{ marginLeft: 8, cursor: "pointer", fontSize: 18, verticalAlign: "middle" }}
-                            onClick={scrollToBottom}
-                            title="Ir al botón Guardar"
-                        >
-                            &#8594;
-                        </span>
-                    </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 2. Secciones del Checklist (Cuerpo con Observaciones Condicionales y Errores) */}
-      {seccionesEstructura.map((seccion, idx) => (
-        <div className="card-section" key={idx} style={{ marginBottom: 16 }}>
-          <h4 className="card-title">{seccion.titulo}</h4>
-
-          {seccion.fields.map((field, i) => {
-            // Chequeo si el campo de estado o el campo de observación tienen error
-            const isStateError = camposFaltantes.includes(field);
-            const isObservationError = camposFaltantes.includes(`${field}_observacion`);
-            const needsObservation = estadoItems[field]?.estado === 'REGULAR' || estadoItems[field]?.estado === 'MALO';
-
-            return (
-              // 3. Añadir la referencia al div contenedor para el scroll
-              <div 
-                key={i} 
-                style={{ marginBottom: 16, paddingBottom: '16px' }}
-                ref={el => itemRefs.current[field] = el} // Ref para scroll al inicio del ítem
-              >
-                <div className="permiso-trabajo-label">{fieldToTextMap[field]}</div> 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <select
-                    value={estadoItems[field]?.estado || ""} 
-                    onChange={(e) => handleItemStateChange(field, e.target.value)} 
-                    className={`permiso-trabajo-select ${isStateError ? 'campo-error' : ''}`} // Aplicar clase de error
-                    style={{ minWidth: 160, maxWidth: 320 }}
-                    >
-                    <option value="">--</option>
-                    <option value="BUENO">Bueno</option>
-                    <option value="REGULAR">Regular</option>
-                    <option value="MALO">Malo</option>
-                    </select>
-
-                    {/* Indicador de error de Estado */}
-                    {isStateError && (
-                        <span style={{ color: "red", fontSize: 13 }}>
-                            Selección obligatoria.
-                            <span
-                                style={{ marginLeft: 8, cursor: "pointer", fontSize: 18, verticalAlign: "middle" }}
-                                onClick={scrollToBottom}
-                                title="Ir al botón Guardar"
-                            >
-                                &#8594;
-                            </span>
-                        </span>
+                return (
+                  <div key={item.name} style={{ flex: 1, minWidth: 180 }}>
+                    <label className="permiso-trabajo-label">{item.label}{isMandatory}</label>
+                    
+                    {item.type === "select" ? (
+                      <select
+                        ref={item.name === "bomba_numero" ? bombaRef : null}
+                        name={item.name}
+                        value={datos[item.name]}
+                        onChange={handle_change}
+                        className={`permiso-trabajo-select ${isHeaderError ? 'campo-error' : ''}`}
+                      >
+                        <option value="">Seleccionar</option>
+                        {lista_bombas.map((b, idx) => (
+                          <option key={idx} value={b.numero_bomba}>
+                            {b.numero_bomba}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        ref={item.name === "horometro_motor" ? horometroRef : null}
+                        type={item.type || "text"}
+                        name={item.name}
+                        value={datos[item.name]}
+                        onChange={handle_change}
+                        className="permiso-trabajo-input"
+                        readOnly={
+                          item.name === "nombre_cliente" ||
+                          item.name === "nombre_proyecto" ||
+                          item.name === "fecha_servicio" ||
+                          item.name === "nombre_operador"
+                        }
+                      />
                     )}
-                </div>
-
-                {/* Campo de Observación Condicional */}
-                {needsObservation && (
-                  <div style={{ marginTop: 8 }}>
-                    <label className="permiso-trabajo-label" style={{ fontSize: '0.9em', fontWeight: 'bold' }}>
-                      Observación (Detalle requerido):
-                    </label>
-                    <textarea
-                      ref={el => itemRefs.current[`${field}_observacion`] = el} // Ref para scroll al textarea
-                      name={`${field}_observacion`}
-                      value={estadoItems[field]?.observacion || ""}
-                      onChange={(e) => handleItemObservationChange(field, e.target.value)}
-                      className={`permiso-trabajo-input ${isObservationError ? 'campo-error' : ''}`} // Aplicar clase de error
-                      rows="2"
-                      style={{ width: '93%' }}
-                    />
-                    {/* Indicador de error de Observación */}
-                    {isObservationError && (
+                    {isHeaderError && (
                         <span style={{ color: "red", fontSize: 13 }}>
-                            Detalle de observación obligatorio.
+                            Este campo es obligatorio.
                             <span
                                 style={{ marginLeft: 8, cursor: "pointer", fontSize: 18, verticalAlign: "middle" }}
                                 onClick={scrollToBottom}
@@ -580,36 +549,287 @@ function Checklist(props) {
                         </span>
                     )}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      ))}
+                );
+              })}
+            </div>
+          </div>
 
-      {/* 3. Campo de Observaciones Generales */}
-      <div className="card-section" style={{ marginBottom: 24, padding: '20px' }}>
-          <label className="permiso-trabajo-label">Observaciones generales</label>
-          <textarea
-            name="observaciones"
-            value={datos.observaciones}
-            onChange={handle_change}
-            className="permiso-trabajo-input"
-            rows="4"
-          />
-      </div>
+          {/* 2. Secciones del Checklist */}
+          {seccionesEstructura.map((seccion, idx) => (
+            <div className="card-section" key={idx} style={{ marginBottom: 16 }}>
+              <h4 className="card-title">{seccion.titulo}</h4>
 
-      {/* 5. Botón de Guardar (con referencia) */}
-      <div style={{ textAlign: "right", marginTop: 24 }} ref={submitRef}>
-        <button
-          type="submit"
-          className="button"
-          style={{ background: "#ff9800", color: "#fff" }}
-          disabled={enviando}
-        >
-          {enviando ? "Guardando..." : "Guardar Checklist"}
-        </button>
-      </div>
+              {seccion.fields.map((field, i) => {
+                const isStateError = camposFaltantes.includes(field);
+                const isObservationError = camposFaltantes.includes(`${field}_observacion`);
+                const needsObservation = estadoItems[field]?.estado === 'REGULAR' || estadoItems[field]?.estado === 'MALO';
+
+                return (
+                  <div 
+                    key={i} 
+                    style={{ marginBottom: 16, paddingBottom: '16px' }}
+                    ref={el => itemRefs.current[field] = el}
+                  >
+                    <div className="permiso-trabajo-label">{fieldToTextMap[field]}</div> 
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <select
+                        value={estadoItems[field]?.estado || ""} 
+                        onChange={(e) => handleItemStateChange(field, e.target.value)} 
+                        className={`permiso-trabajo-select ${isStateError ? 'campo-error' : ''}`}
+                        style={{ minWidth: 160, maxWidth: 320 }}
+                        >
+                        <option value="">--</option>
+                        <option value="BUENO">Bueno</option>
+                        <option value="REGULAR">Regular</option>
+                        <option value="MALO">Malo</option>
+                        </select>
+
+                        {isStateError && (
+                            <span style={{ color: "red", fontSize: 13 }}>
+                                Selección obligatoria.
+                                <span
+                                    style={{ marginLeft: 8, cursor: "pointer", fontSize: 18, verticalAlign: "middle" }}
+                                    onClick={scrollToBottom}
+                                    title="Ir al botón Guardar"
+                                >
+                                    &#8594;
+                                </span>
+                            </span>
+                        )}
+                    </div>
+
+                    {needsObservation && (
+                      <div style={{ marginTop: 8 }}>
+                        <label className="permiso-trabajo-label" style={{ fontSize: '0.9em', fontWeight: 'bold' }}>
+                          Observación (Detalle requerido):
+                        </label>
+                        <textarea
+                          ref={el => itemRefs.current[`${field}_observacion`] = el}
+                          name={`${field}_observacion`}
+                          value={estadoItems[field]?.observacion || ""}
+                          onChange={(e) => handleItemObservationChange(field, e.target.value)}
+                          className={`permiso-trabajo-input ${isObservationError ? 'campo-error' : ''}`}
+                          rows="2"
+                          style={{ width: '93%' }}
+                        />
+                        {isObservationError && (
+                            <span style={{ color: "red", fontSize: 13 }}>
+                                Detalle de observación obligatorio.
+                                <span
+                                    style={{ marginLeft: 8, cursor: "pointer", fontSize: 18, verticalAlign: "middle" }}
+                                    onClick={scrollToBottom}
+                                    title="Ir al botón Guardar"
+                                >
+                                    &#8594;
+                                </span>
+                            </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+
+          {/* 3. Campo de Observaciones Generales */}
+          <div className="card-section" style={{ marginBottom: 24, padding: '20px' }}>
+              <label className="permiso-trabajo-label">Observaciones generales</label>
+              <textarea
+                name="observaciones"
+                value={datos.observaciones}
+                onChange={handle_change}
+                className="permiso-trabajo-input"
+                rows="4"
+              />
+          </div>
+
+          {/* ==================== 4. SECCIÓN DE FIRMA ELECTRÓNICA ==================== */}
+          <div className="card-section" style={{ marginBottom: 24, padding: '20px' }}>
+            <h4 className="card-title" style={{ marginBottom: 16 }}>
+              ✍️ FIRMA ELECTRÓNICA (Obligatoria)
+            </h4>
+                {/* Firmante Principal */}
+                <div style={{ 
+                  background: '#f5f5f5', 
+                  padding: 16, 
+                  borderRadius: 8, 
+                  marginBottom: 16,
+                  border: camposFaltantes.includes('firmante_principal') ? '2px solid red' : 'none'
+                }}>
+                  <h5 style={{ marginBottom: 12 }}>👷 Firmante Principal (Operador)</h5>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <label className="permiso-trabajo-label">Nombre completo *</label>
+                      <input
+                        type="text"
+                        value={firmantePrincipal.nombre}
+                        onChange={(e) => handleFirmantePrincipalChange('nombre', e.target.value)}
+                        className="permiso-trabajo-input"
+                        placeholder="Nombre del operador"
+                      />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 150 }}>
+                      <label className="permiso-trabajo-label">Cédula *</label>
+                      <input
+                        type="text"
+                        value={firmantePrincipal.cedula}
+                        onChange={(e) => handleFirmantePrincipalChange('cedula', e.target.value)}
+                        className="permiso-trabajo-input"
+                        placeholder="Número de cédula"
+                      />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <label className="permiso-trabajo-label">Email *</label>
+                      <input
+                        type="email"
+                        value={firmantePrincipal.email}
+                        onChange={(e) => handleFirmantePrincipalChange('email', e.target.value)}
+                        className="permiso-trabajo-input"
+                        placeholder="correo@ejemplo.com"
+                      />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 150 }}>
+                      <label className="permiso-trabajo-label">Celular</label>
+                      <input
+                        type="text"
+                        value={firmantePrincipal.celular}
+                        onChange={(e) => handleFirmantePrincipalChange('celular', e.target.value)}
+                        className="permiso-trabajo-input"
+                        placeholder="3001234567"
+                      />
+                    </div>
+                  </div>
+                  {camposFaltantes.includes('firmante_principal') && (
+                    <span style={{ color: "red", fontSize: 13 }}>
+                      Complete nombre, cédula y email del firmante principal.
+                    </span>
+                  )}
+                </div>
+
+                {/* Firmantes Externos */}
+                <div style={{ background: '#fff3e0', padding: 16, borderRadius: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <h5 style={{ margin: 0 }}>👔 Firmantes Externos (Jefe de Obra, Supervisor, etc.)</h5>
+                    <button
+                      type="button"
+                      onClick={agregarFirmanteExterno}
+                      style={{
+                        background: '#ff9800',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: 4,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      + Agregar Firmante
+                    </button>
+                  </div>
+
+                  {firmantesExternos.map((firmante, index) => {
+                    const hasError = camposFaltantes.includes(`firmante_externo_${index}`);
+                    const isLast = index === firmantesExternos.length - 1;
+                    
+                    return (
+                    <div 
+                      key={index} 
+                      style={{ 
+                        display: 'flex', 
+                        flexWrap: 'wrap', 
+                        gap: 12, 
+                        marginBottom: 12,
+                        paddingBottom: 12,
+                        paddingTop: hasError ? 8 : 0,
+                        paddingLeft: hasError ? 8 : 0,
+                        paddingRight: hasError ? 8 : 0,
+                        borderTop: hasError ? '2px solid red' : 'none',
+                        borderLeft: hasError ? '2px solid red' : 'none',
+                        borderRight: hasError ? '2px solid red' : 'none',
+                        borderBottom: hasError ? '2px solid red' : (!isLast ? '1px solid #ddd' : 'none'),
+                        borderRadius: 4
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 180 }}>
+                        <label className="permiso-trabajo-label">Nombre</label>
+                        <input
+                          type="text"
+                          value={firmante.nombre}
+                          onChange={(e) => handleFirmanteExternoChange(index, 'nombre', e.target.value)}
+                          className="permiso-trabajo-input"
+                          placeholder="Nombre completo"
+                        />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 130 }}>
+                        <label className="permiso-trabajo-label">Cédula</label>
+                        <input
+                          type="text"
+                          value={firmante.cedula}
+                          onChange={(e) => handleFirmanteExternoChange(index, 'cedula', e.target.value)}
+                          className="permiso-trabajo-input"
+                          placeholder="Cédula"
+                        />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 180 }}>
+                        <label className="permiso-trabajo-label">Email</label>
+                        <input
+                          type="email"
+                          value={firmante.email}
+                          onChange={(e) => handleFirmanteExternoChange(index, 'email', e.target.value)}
+                          className="permiso-trabajo-input"
+                          placeholder="correo@ejemplo.com"
+                        />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 130 }}>
+                        <label className="permiso-trabajo-label">Celular</label>
+                        <input
+                          type="text"
+                          value={firmante.celular}
+                          onChange={(e) => handleFirmanteExternoChange(index, 'celular', e.target.value)}
+                          className="permiso-trabajo-input"
+                          placeholder="Celular"
+                        />
+                      </div>
+                      {firmantesExternos.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => eliminarFirmanteExterno(index)}
+                          style={{
+                            background: '#f44336',
+                            color: 'white',
+                            border: 'none',
+                            padding: '6px 12px',
+                            borderRadius: 4,
+                            cursor: 'pointer',
+                            alignSelf: 'flex-end',
+                            marginBottom: 4
+                          }}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                    );
+                  })}
+                  
+                  <p style={{ fontSize: 13, color: '#666', marginTop: 8 }}>
+                    💡 Los firmantes externos recibirán un correo electrónico con el enlace para firmar.
+                  </p>
+                </div>
+          </div>
+          {/* ================================================================== */}
+
+          {/* 5. Botón de Guardar */}
+          <div style={{ textAlign: "right", marginTop: 24 }} ref={submitRef}>
+            <button
+              type="submit"
+              className="button"
+              style={{ background: "#ff9800", color: "#fff", padding: '12px 24px', fontSize: 16 }}
+              disabled={enviando}
+            >
+              {enviando ? "Guardando..." : "Guardar y Enviar a Firma"}
+            </button>
+          </div>
     </form>
   );
 }
