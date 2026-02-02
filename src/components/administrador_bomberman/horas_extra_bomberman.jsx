@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
-// Usa variable de entorno para la base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 function toYMD(date) {
@@ -27,7 +26,7 @@ function normalizaFlag(val) {
 }
 
 function horasExtraBomberman() {
-  const [activeBar, setActiveBar] = useState(""); // "ver", "excel", "pdf"
+  const [activeBar, setActiveBar] = useState("");
   const [filters, setFilters] = useState({
     nombre: "",
     cedula: "",
@@ -46,7 +45,8 @@ function horasExtraBomberman() {
   const [listaObras, setListaObras] = useState([]);
   const [listaConstructoras, setListaConstructoras] = useState([]);
   const [openId, setOpenId] = useState(null);
-  const [resumen, setResumen] = useState({});
+  const [resumenPorMes, setResumenPorMes] = useState([]);
+  const [periodo, setPeriodo] = useState({});
   const [errorMessage, setErrorMessage] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -54,7 +54,8 @@ function horasExtraBomberman() {
     setActiveBar(bar === activeBar ? "" : bar);
     setResultados([]);
     setTotal(0);
-    // No resetear offset ni hacer consultas al abrir el menú
+    setResumenPorMes([]);
+    setPeriodo({});
     setOpenId(null);
   };
 
@@ -63,12 +64,10 @@ function horasExtraBomberman() {
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Buscar resumen de horas extra (ahora usa endpoint admin /buscar) y luego obtiene resumen
   const handleBuscar = async (resetOffset = false) => {
     setLoading(true);
     setErrorMessage("");
     try {
-      // Construir body para POST /administrador/admin_horas_extra/buscar y /resumen
       const body = {
         nombre: filters.nombre || "",
         obra: filters.obra || "",
@@ -80,14 +79,12 @@ function horasExtraBomberman() {
         offset: resetOffset ? 0 : (filters.offset || 0)
       };
       let data = {};
-      let resumenData = {};
       let adminError = null;
       try {
         const res = await axios.post(`${API_BASE_URL}/administrador/admin_horas_extra/buscar`, body, {
           headers: { "Content-Type": "application/json" }
         });
         data = res.data || {};
-        // Filtrar en frontend por empresa_id === 2 por seguridad
         const filteredRows = Array.isArray(data.rows)
           ? data.rows.filter(r => (r.empresa_id === 2 || (r.raw && r.raw.empresa_id === 2)))
           : [];
@@ -95,23 +92,23 @@ function horasExtraBomberman() {
         setTotal(filteredRows.length);
         setHasSearched(true);
         try {
-          // Usar solo el endpoint POST /administrador/admin_horas_extra/resumen
           const resSum = await axios.post(`${API_BASE_URL}/administrador/admin_horas_extra/resumen`, body, {
             headers: { "Content-Type": "application/json" }
           });
-          resumenData = resSum.data?.resumen || {};
-          setResumen(resumenData);
+          setResumenPorMes(resSum.data?.resumen_por_mes || []);
+          setPeriodo(resSum.data?.periodo || {});
         } catch (e) {
-          setResumen({});
+          setResumenPorMes([]);
+          setPeriodo({});
         }
       } catch (err) {
         adminError = err;
       }
-      // Si el endpoint admin da error, mostrar mensaje, pero NO hacer fallback a /horas_jornada/resumen
       if (adminError) {
         setErrorMessage(adminError?.response?.data?.error || "Error al realizar la búsqueda.");
         setResultados([]);
-        setResumen({});
+        setResumenPorMes([]);
+        setPeriodo({});
         setTotal(0);
       }
     } finally {
@@ -119,7 +116,6 @@ function horasExtraBomberman() {
     }
   };
 
-  // Descargar resumen en Excel o ZIP (PDFs)
   const handleDescargar = async (tipo) => {
     setLoading(true);
     try {
@@ -134,7 +130,6 @@ function horasExtraBomberman() {
         limit: tipo === "excel" ? 10000 : (filters.limit || 10000)
       };
 
-      // usar fetch para arrayBuffer, compatible con zip/xlsx
       const url = `${API_BASE_URL}/administrador/admin_horas_extra/descargar`;
       const resp = await fetch(url, {
         method: "POST",
@@ -169,7 +164,6 @@ function horasExtraBomberman() {
   };
 
   useEffect(() => {
-    // Nombres operarios (solo empresa_id === 2)
     async function fetchNombres() {
       try {
         const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
@@ -185,12 +179,11 @@ function horasExtraBomberman() {
     }
     fetchNombres();
 
-    // Obras y constructoras (solo empresa_id === 2)
     axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
         const obrasAll = res.data.obras || [];
         const obras = obrasAll.filter(o => Number(o.empresa_id) === 2);
-        setListaObras(obras); // mantener objetos para usar obra.id/nombre_obra
+        setListaObras(obras);
         const constructoras = Array.from(new Set(obras.map(o => o.constructora).filter(Boolean)));
         setListaConstructoras(constructoras);
       })
@@ -201,7 +194,6 @@ function horasExtraBomberman() {
   }, []);
 
   useEffect(() => {
-    // Solo ejecutar búsqueda si hay resultados al menos una vez
     if (activeBar === "ver" && hasSearched) {
       handleBuscar(false);
     }
@@ -224,9 +216,9 @@ function horasExtraBomberman() {
             onChange={handleFilterChange}
             placeholder="Buscar o selecciona nombre"
             style={{ width: "93%", marginBottom: 6 }}
-            list="lista-nombres-operarios"
+            list="lista-nombres-operarios-bomberman"
           />
-          <datalist id="lista-nombres-operarios">
+          <datalist id="lista-nombres-operarios-bomberman">
             {nombresOperarios.map((nombre, i) => (
               <option key={i} value={nombre} />
             ))}
@@ -254,9 +246,9 @@ function horasExtraBomberman() {
             onChange={handleFilterChange}
             placeholder="Buscar o selecciona obra"
             style={{ width: "93%", marginBottom: 6 }}
-            list="lista-obras"
+            list="lista-obras-bomberman"
           />
-          <datalist id="lista-obras">
+          <datalist id="lista-obras-bomberman">
             {listaObras.map((obra) => (
               <option key={obra.id} value={obra.nombre_obra}></option>
             ))}
@@ -272,9 +264,9 @@ function horasExtraBomberman() {
             onChange={handleFilterChange}
             placeholder="Buscar o selecciona constructora"
             style={{ width: "93%", marginBottom: 6 }}
-            list="lista-constructoras"
+            list="lista-constructoras-bomberman"
           />
-          <datalist id="lista-constructoras">
+          <datalist id="lista-constructoras-bomberman">
             {listaConstructoras.map((c, i) => (
               <option key={i} value={c}></option>
             ))}
@@ -306,11 +298,9 @@ function horasExtraBomberman() {
             Buscar
           </button>
         ) : (
-          <>
-            <button className="permiso-trabajo-btn" onClick={() => handleDescargar(forAction)} style={{ width: "100%", marginTop: 8 }}>
-              Descargar
-            </button>
-          </>
+          <button className="permiso-trabajo-btn" onClick={() => handleDescargar(forAction)} style={{ width: "100%", marginTop: 8 }}>
+            Descargar
+          </button>
         )}
       </div>
     </div>
@@ -319,7 +309,7 @@ function horasExtraBomberman() {
   return (
     <div className="form-container">
       <div className="card-section" style={{ marginBottom: 24 }}>
-        <h3 className="card-title">Horas Extra </h3>
+        <h3 className="card-title">Horas Extra</h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 18, alignItems: "center", marginBottom: 18 }}>
           <button
             className="permiso-trabajo-btn"
@@ -353,14 +343,91 @@ function horasExtraBomberman() {
                 {errorMessage && (
                   <div style={{ marginBottom: 10, color: "crimson", fontSize: 13 }}>{errorMessage}</div>
                 )}
+                
                 <div style={{ marginBottom: 10, fontSize: 14, color: "#222" }}>
                   {total > 0 && (
                     <span>
-                      Mostrando { (filters.offset || 0) + 1 } - { Math.min((filters.offset || 0) + (filters.limit || 50), total) } de { total } resultados
+                      Mostrando {(filters.offset || 0) + 1} - {Math.min((filters.offset || 0) + (filters.limit || 50), total)} de {total} resultados
                     </span>
                   )}
                 </div>
 
+                {/* Período consultado */}
+                {periodo && (periodo.fecha_inicio || periodo.fecha_fin) && (
+                  <div style={{
+                    background: "#e3f2fd",
+                    borderRadius: 8,
+                    padding: "8px 12px",
+                    marginBottom: 12,
+                    fontSize: 13,
+                    color: "#1565c0",
+                    border: "1px solid #bbdefb"
+                  }}>
+                    📅 <strong>Período:</strong> {periodo.fecha_inicio || "—"} al {periodo.fecha_fin || "—"}
+                  </div>
+                )}
+
+                {/* Resumen por Mes */}
+                {resumenPorMes && resumenPorMes.length > 0 && resumenPorMes.map((mesData, mesIdx) => (
+                  <div key={mesIdx} style={{
+                    background: "#fff3e0",
+                    borderRadius: 8,
+                    padding: "12px 16px",
+                    marginBottom: 16,
+                    border: "1px solid #ffe0b2"
+                  }}>
+                    <h4 style={{ margin: "0 0 10px 0", color: "#e65100" }}>📆 {mesData.mes_nombre}</h4>
+                    
+                    {/* Totales del mes */}
+                    <div style={{
+                      background: "#e8f5e9",
+                      borderRadius: 6,
+                      padding: "8px 12px",
+                      marginBottom: 12,
+                      border: "1px solid #c8e6c9"
+                    }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 12 }}>
+                        <div><strong>Horas Trabajadas:</strong> {mesData.totales?.total_horas_trabajadas || 0}</div>
+                        <div><strong>Total Extras:</strong> {mesData.totales?.total_horas_extras || 0}</div>
+                        <div><strong>Extra Diurna:</strong> {mesData.totales?.total_extra_diurna || 0}</div>
+                        <div><strong>Extra Nocturna:</strong> {mesData.totales?.total_extra_nocturna || 0}</div>
+                        <div><strong>Extra Festiva:</strong> {mesData.totales?.total_extra_festiva || 0}</div>
+                      </div>
+                    </div>
+
+                    {/* Tabla de usuarios del mes */}
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
+                        <thead>
+                          <tr style={{ background: "#ffe0b2" }}>
+                            <th style={{ padding: "6px 8px", textAlign: "left" }}>Nombre</th>
+                            <th style={{ padding: "6px 8px", textAlign: "center" }}>Días</th>
+                            <th style={{ padding: "6px 8px", textAlign: "center" }}>Horas</th>
+                            <th style={{ padding: "6px 8px", textAlign: "center" }}>Extra D</th>
+                            <th style={{ padding: "6px 8px", textAlign: "center" }}>Extra N</th>
+                            <th style={{ padding: "6px 8px", textAlign: "center" }}>Extra F</th>
+                            <th style={{ padding: "6px 8px", textAlign: "center" }}>Total Extra</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {mesData.resumen_usuarios && mesData.resumen_usuarios.map((u, i) => (
+                            <tr key={i} style={{ borderBottom: "1px solid #ffe0b2" }}>
+                              <td style={{ padding: "6px 8px" }}>{u.nombre_operador}</td>
+                              <td style={{ padding: "6px 8px", textAlign: "center" }}>{u.total_dias_trabajados}</td>
+                              <td style={{ padding: "6px 8px", textAlign: "center" }}>{u.total_horas_trabajadas}</td>
+                              <td style={{ padding: "6px 8px", textAlign: "center" }}>{u.total_extra_diurna}</td>
+                              <td style={{ padding: "6px 8px", textAlign: "center" }}>{u.total_extra_nocturna}</td>
+                              <td style={{ padding: "6px 8px", textAlign: "center" }}>{u.total_extra_festiva}</td>
+                              <td style={{ padding: "6px 8px", textAlign: "center", fontWeight: 600 }}>{u.total_horas_extras}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Lista de registros individuales */}
                 <ul style={{ listStyle: "none", padding: 0 }}>
                   {resultados.length === 0 ? (
                     <p className="permiso-trabajo-label">No hay resultados disponibles.</p>
@@ -381,12 +448,12 @@ function horasExtraBomberman() {
                           marginRight: "auto"
                         }}
                       >
-                        <div><strong>Fecha:</strong> { (r.fecha_servicio || r.fecha) ? String(r.fecha_servicio || r.fecha).slice(0,10) : "—" }</div>
-                        <div><strong>Nombre:</strong> { r.nombre_operador || r.nombre || "—" }</div>
-                        <div><strong>Cédula:</strong> { r.numero_identificacion || r.cedula || "—" }</div>
-                        <div><strong>Empresa:</strong> { r.nombre_responsable || r.empresa || "—" }</div>
-                        <div><strong>Obra:</strong> { r.nombre_proyecto || r.obra || "—" }</div>
-                        <div><strong>Constructora:</strong> { r.nombre_cliente || r.constructora || "—" }</div>
+                        <div><strong>Fecha:</strong> {(r.fecha_servicio || r.fecha) ? String(r.fecha_servicio || r.fecha).slice(0, 10) : "—"}</div>
+                        <div><strong>Nombre:</strong> {r.nombre_operador || r.nombre || "—"}</div>
+                        <div><strong>Cédula:</strong> {r.numero_identificacion || r.cedula || "—"}</div>
+                        <div><strong>Empresa:</strong> {r.nombre_responsable || r.empresa || "—"}</div>
+                        <div><strong>Obra:</strong> {r.nombre_proyecto || r.obra || "—"}</div>
+                        <div><strong>Constructora:</strong> {r.nombre_cliente || r.constructora || "—"}</div>
 
                         <button
                           className="permiso-trabajo-btn"
