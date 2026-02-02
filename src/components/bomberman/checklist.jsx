@@ -30,19 +30,6 @@ function Checklist(props) {
   const [estadoItems, setEstadoItems] = useState({}); 
   const [enviando, setEnviando] = useState(false);
 
-  // ==================== NUEVOS ESTADOS PARA FIRMA ELECTRÓNICA ====================
-  const [requiereFirma, setRequiereFirma] = useState(true);
-  const [firmantePrincipal, setFirmantePrincipal] = useState({
-    nombre: "",
-    cedula: "",
-    email: "",
-    celular: ""
-  });
-  const [firmantesExternos, setFirmantesExternos] = useState([
-    { nombre: "", cedula: "", email: "", celular: "" }
-  ]);
-  // ================================================================================
-
   const nombre_operador_local = localStorage.getItem("nombre_trabajador") || "";
   const nombre_obra_local = localStorage.getItem("obra") || "";
 
@@ -215,14 +202,6 @@ function Checklist(props) {
           fecha_servicio: fecha_hoy,
           nombre_operador: nombre_operador_local,
         }));
-        
-        // ==================== AUTO-RELLENAR FIRMANTE PRINCIPAL ====================
-        // Usar el nombre del operador como firmante principal por defecto
-        setFirmantePrincipal(prev => ({
-          ...prev,
-          nombre: nombre_operador_local
-        }));
-        // =========================================================================
       })
       .catch(() => {
         setDatos((prev) => ({
@@ -325,28 +304,6 @@ function Checklist(props) {
       },
     }));
   };
-
-  // ==================== HANDLERS PARA FIRMANTES ====================
-  const handleFirmantePrincipalChange = (campo, valor) => {
-    setFirmantePrincipal(prev => ({ ...prev, [campo]: valor }));
-  };
-
-  const handleFirmanteExternoChange = (index, campo, valor) => {
-    const nuevos = [...firmantesExternos];
-    nuevos[index][campo] = valor;
-    setFirmantesExternos(nuevos);
-  };
-
-  const agregarFirmanteExterno = () => {
-    setFirmantesExternos(prev => [...prev, { nombre: "", cedula: "", email: "", celular: "" }]);
-  };
-
-  const eliminarFirmanteExterno = (index) => {
-    if (firmantesExternos.length > 1) {
-      setFirmantesExternos(prev => prev.filter((_, i) => i !== index));
-    }
-  };
-  // ==================================================================
   
   const scrollToFirstError = (errores) => {
     if (errores.length === 0) return;
@@ -403,22 +360,6 @@ function Checklist(props) {
         }
     });
 
-    // ==================== VALIDACIÓN DE FIRMANTES ====================
-    if (requiereFirma) {
-      if (!firmantePrincipal.nombre || !firmantePrincipal.cedula || !firmantePrincipal.email) {
-        headerErrores.push("firmante_principal");
-      }
-      // Validar firmantes externos que tengan algún dato
-      firmantesExternos.forEach((f, idx) => {
-        if (f.nombre || f.cedula || f.email) {
-          if (!f.nombre || !f.cedula || !f.email) {
-            headerErrores.push(`firmante_externo_${idx}`);
-          }
-        }
-      });
-    }
-    // ==================================================================
-
     const totalErrores = headerErrores.length + erroresDetectados.length;
     
     if (totalErrores > 0) {
@@ -437,41 +378,17 @@ function Checklist(props) {
         return acc;
     }, {});
 
-    // ==================== AGREGAR DATOS DE FIRMA AL PAYLOAD ====================
-    const firmantesExternosValidos = firmantesExternos.filter(
-      f => f.nombre && f.cedula && f.email
-    );
-
     const payload = {
       ...datos, 
-      ...checklistPayload,
-      // Datos de firma electrónica
-      requiere_firma: true,
-      firmante_principal: firmantePrincipal,
-      firmantes_externos: firmantesExternosValidos
+      ...checklistPayload
     };
-    // ===========================================================================
     
     // 5. Envío
     try {
-      const response = await axios.post(`${API_BASE_URL}/bomberman/checklist`, payload);
-      const resultado = response.data;
+      await axios.post(`${API_BASE_URL}/bomberman/checklist`, payload);
       
-      console.log("Checklist enviado correctamente:", resultado);
-
-      // ==================== MANEJAR RESPUESTA DE FIRMA ====================
-      if (resultado.firma && resultado.firma.success) {
-        // Redirigir directamente a la página de firma
-        window.location.href = resultado.firma.url_firma;
-      } else if (resultado.firma && !resultado.firma.success) {
-        alert(`⚠️ Checklist guardado, pero hubo un error con la firma: ${resultado.firma.error}`);
-        navigate(-1);
-      } else {
-        // Sin firma requerida
-        alert("✅ Checklist guardado correctamente."); 
-        navigate(-1); 
-      }
-      // ====================================================================
+      alert("✅ Checklist guardado correctamente."); 
+      navigate(-1);
       
     } catch (err) {
       console.error("Error al enviar el checklist:", err.response ? err.response.data : err.message);
@@ -644,182 +561,7 @@ function Checklist(props) {
               />
           </div>
 
-          {/* ==================== 4. SECCIÓN DE FIRMA ELECTRÓNICA ==================== */}
-          <div className="card-section" style={{ marginBottom: 24, padding: '20px' }}>
-            <h4 className="card-title" style={{ marginBottom: 16 }}>
-              ✍️ FIRMA ELECTRÓNICA (Obligatoria)
-            </h4>
-                {/* Firmante Principal */}
-                <div style={{ 
-                  background: '#f5f5f5', 
-                  padding: 16, 
-                  borderRadius: 8, 
-                  marginBottom: 16,
-                  border: camposFaltantes.includes('firmante_principal') ? '2px solid red' : 'none'
-                }}>
-                  <h5 style={{ marginBottom: 12 }}>👷 Firmante Principal (Operador)</h5>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                    <div style={{ flex: 1, minWidth: 200 }}>
-                      <label className="permiso-trabajo-label">Nombre completo *</label>
-                      <input
-                        type="text"
-                        value={firmantePrincipal.nombre}
-                        onChange={(e) => handleFirmantePrincipalChange('nombre', e.target.value)}
-                        className="permiso-trabajo-input"
-                        placeholder="Nombre del operador"
-                      />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 150 }}>
-                      <label className="permiso-trabajo-label">Cédula *</label>
-                      <input
-                        type="text"
-                        value={firmantePrincipal.cedula}
-                        onChange={(e) => handleFirmantePrincipalChange('cedula', e.target.value)}
-                        className="permiso-trabajo-input"
-                        placeholder="Número de cédula"
-                      />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 200 }}>
-                      <label className="permiso-trabajo-label">Email *</label>
-                      <input
-                        type="email"
-                        value={firmantePrincipal.email}
-                        onChange={(e) => handleFirmantePrincipalChange('email', e.target.value)}
-                        className="permiso-trabajo-input"
-                        placeholder="correo@ejemplo.com"
-                      />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 150 }}>
-                      <label className="permiso-trabajo-label">Celular</label>
-                      <input
-                        type="text"
-                        value={firmantePrincipal.celular}
-                        onChange={(e) => handleFirmantePrincipalChange('celular', e.target.value)}
-                        className="permiso-trabajo-input"
-                        placeholder="3001234567"
-                      />
-                    </div>
-                  </div>
-                  {camposFaltantes.includes('firmante_principal') && (
-                    <span style={{ color: "red", fontSize: 13 }}>
-                      Complete nombre, cédula y email del firmante principal.
-                    </span>
-                  )}
-                </div>
-
-                {/* Firmantes Externos */}
-                <div style={{ background: '#fff3e0', padding: 16, borderRadius: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <h5 style={{ margin: 0 }}>👔 Firmantes Externos (Jefe de Obra, Supervisor, etc.)</h5>
-                    <button
-                      type="button"
-                      onClick={agregarFirmanteExterno}
-                      style={{
-                        background: '#ff9800',
-                        color: 'white',
-                        border: 'none',
-                        padding: '6px 12px',
-                        borderRadius: 4,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      + Agregar Firmante
-                    </button>
-                  </div>
-
-                  {firmantesExternos.map((firmante, index) => {
-                    const hasError = camposFaltantes.includes(`firmante_externo_${index}`);
-                    const isLast = index === firmantesExternos.length - 1;
-                    
-                    return (
-                    <div 
-                      key={index} 
-                      style={{ 
-                        display: 'flex', 
-                        flexWrap: 'wrap', 
-                        gap: 12, 
-                        marginBottom: 12,
-                        paddingBottom: 12,
-                        paddingTop: hasError ? 8 : 0,
-                        paddingLeft: hasError ? 8 : 0,
-                        paddingRight: hasError ? 8 : 0,
-                        borderTop: hasError ? '2px solid red' : 'none',
-                        borderLeft: hasError ? '2px solid red' : 'none',
-                        borderRight: hasError ? '2px solid red' : 'none',
-                        borderBottom: hasError ? '2px solid red' : (!isLast ? '1px solid #ddd' : 'none'),
-                        borderRadius: 4
-                      }}
-                    >
-                      <div style={{ flex: 1, minWidth: 180 }}>
-                        <label className="permiso-trabajo-label">Nombre</label>
-                        <input
-                          type="text"
-                          value={firmante.nombre}
-                          onChange={(e) => handleFirmanteExternoChange(index, 'nombre', e.target.value)}
-                          className="permiso-trabajo-input"
-                          placeholder="Nombre completo"
-                        />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 130 }}>
-                        <label className="permiso-trabajo-label">Cédula</label>
-                        <input
-                          type="text"
-                          value={firmante.cedula}
-                          onChange={(e) => handleFirmanteExternoChange(index, 'cedula', e.target.value)}
-                          className="permiso-trabajo-input"
-                          placeholder="Cédula"
-                        />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 180 }}>
-                        <label className="permiso-trabajo-label">Email</label>
-                        <input
-                          type="email"
-                          value={firmante.email}
-                          onChange={(e) => handleFirmanteExternoChange(index, 'email', e.target.value)}
-                          className="permiso-trabajo-input"
-                          placeholder="correo@ejemplo.com"
-                        />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 130 }}>
-                        <label className="permiso-trabajo-label">Celular</label>
-                        <input
-                          type="text"
-                          value={firmante.celular}
-                          onChange={(e) => handleFirmanteExternoChange(index, 'celular', e.target.value)}
-                          className="permiso-trabajo-input"
-                          placeholder="Celular"
-                        />
-                      </div>
-                      {firmantesExternos.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => eliminarFirmanteExterno(index)}
-                          style={{
-                            background: '#f44336',
-                            color: 'white',
-                            border: 'none',
-                            padding: '6px 12px',
-                            borderRadius: 4,
-                            cursor: 'pointer',
-                            alignSelf: 'flex-end',
-                            marginBottom: 4
-                          }}
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                    );
-                  })}
-                  
-                  <p style={{ fontSize: 13, color: '#666', marginTop: 8 }}>
-                    💡 Los firmantes externos recibirán un correo electrónico con el enlace para firmar.
-                  </p>
-                </div>
-          </div>
-          {/* ================================================================== */}
-
-          {/* 5. Botón de Guardar */}
+          {/* 4. Botón de Guardar */}
           <div style={{ textAlign: "right", marginTop: 24 }} ref={submitRef}>
             <button
               type="submit"
@@ -827,7 +569,7 @@ function Checklist(props) {
               style={{ background: "#ff9800", color: "#fff", padding: '12px 24px', fontSize: 16 }}
               disabled={enviando}
             >
-              {enviando ? "Guardando..." : "Guardar y Enviar a Firma"}
+              {enviando ? "Guardando..." : "Guardar Checklist"}
             </button>
           </div>
     </form>
