@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "../../styles/permiso_trabajo.css"; 
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
@@ -30,6 +31,47 @@ export default function HoraSalida() {
   const [horaSalida, setHoraSalida] = useState("");
   const [guardado, setGuardado] = useState(false);
   const [error, setError] = useState("");
+  const [generales, setGenerales] = useState({
+    cliente: "",
+    proyecto: datos.obra,
+    fecha: new Date().toISOString().slice(0, 10),
+    operador: datos.nombre,
+    cargo: datos.cargo,
+  });
+
+  // Cargar datos del cliente/constructora
+  useEffect(() => {
+    const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
+    const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
+    const fechaHoy = new Date().toISOString().slice(0, 10);
+    const cargo = localStorage.getItem("cargo_trabajador") || "";
+
+    axios.get(`${API_BASE_URL}/obras`)
+      .then(res => {
+        let obras = [];
+        if (Array.isArray(res.data.obras)) {
+          obras = res.data.obras;
+        }
+        const obra_seleccionada = obras.find(o => o.nombre_obra === nombre_proyecto);
+        const constructora = obra_seleccionada ? obra_seleccionada.constructora : "";
+        setGenerales({
+          cliente: constructora,
+          proyecto: nombre_proyecto,
+          operador: nombre_operador,
+          fecha: fechaHoy,
+          cargo: cargo,
+        });
+      })
+      .catch(() => {
+        setGenerales({
+          cliente: "",
+          proyecto: nombre_proyecto,
+          operador: nombre_operador,
+          fecha: fechaHoy,
+          cargo: cargo,
+        });
+      });
+  }, []);
 
   const handleRegistrarHora = () => {
     setHoraSalida(getHoraColombia());
@@ -37,16 +79,29 @@ export default function HoraSalida() {
 
   const handleGuardar = async () => {
     setError("");
-    const nombre_operador = datos.nombre;
-    const fecha_servicio = new Date().toISOString().slice(0, 10);
-    const hora_salida = horaSalida.slice(0,5);
-    const observaciones = "";
+
+    if (
+      !generales.cliente ||
+      !generales.proyecto ||
+      !generales.fecha ||
+      !generales.operador ||
+      !horaSalida
+    ) {
+      setError("Faltan parámetros obligatorios. Verifica los datos generales y vuelve a intentarlo.");
+      return;
+    }
+
+    const empresa_id = Number(localStorage.getItem("empresa_id")) || 1;
 
     const payload = {
-      nombre_operador,
-      fecha_servicio,
-      hora_salida,
-      observaciones
+      nombre_cliente: generales.cliente,
+      nombre_proyecto: generales.proyecto,
+      fecha_servicio: generales.fecha,
+      nombre_operador: generales.operador,
+      cargo: generales.cargo || "",
+      empresa_id,
+      hora_salida: horaSalida.slice(0, 5),
+      observaciones: ""
     };
 
     try {
@@ -55,12 +110,19 @@ export default function HoraSalida() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      const data = await resp.json();
+      let data = {};
+      try {
+        data = await resp.json();
+      } catch {
+        data = {};
+      }
       if (resp.ok) {
         setGuardado(true);
         setTimeout(() => navigate(-1), 500);
       } else {
-        setError(data.error || "Error al guardar");
+        setError((data && data.error) || `Error al guardar. Código: ${resp.status}`);
+        console.error("Payload enviado:", payload);
+        console.error("Respuesta backend:", data);
       }
     } catch (e) {
       setError("Error de red al guardar");
@@ -72,9 +134,11 @@ export default function HoraSalida() {
       <div className="card-section" style={{ marginBottom: 24 }}>
         <h2 className="card-title">Datos generales</h2>
         <div className="datos-generales">
-          <div><b>Nombre:</b> {datos.nombre}</div>
-          <div><b>Cédula:</b> {datos.cedula}</div>
-          <div><b>Obra:</b> {datos.obra}</div>
+          <div><b>Cliente:</b> {generales.cliente}</div>
+          <div><b>Obra:</b> {generales.proyecto}</div>
+          <div><b>Fecha:</b> {generales.fecha}</div>
+          <div><b>Trabajador:</b> {generales.operador}</div>
+          <div><b>Cargo:</b> {generales.cargo}</div>
         </div>
       </div>
       {/* Registro de hora de salida */}
