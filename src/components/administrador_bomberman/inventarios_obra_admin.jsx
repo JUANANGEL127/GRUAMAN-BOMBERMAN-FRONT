@@ -96,6 +96,15 @@ function InventariosObraAdmin() {
         limit: 50000
       };
       const res = await axios.post(`${API_BASE_URL}/inventarios_obra_admin/descargar`, body, { responseType: 'blob' });
+      
+      // Verificar si la respuesta es un error (el servidor puede devolver JSON con error en un blob)
+      if (res.data.type === 'application/json') {
+        const text = await res.data.text();
+        const errorData = JSON.parse(text);
+        alert(`Error del servidor: ${errorData.message || errorData.error || 'Error desconocido'}`);
+        return;
+      }
+      
       const blob = new Blob([res.data], { type: tipo === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/zip' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -107,6 +116,18 @@ function InventariosObraAdmin() {
       window.URL.revokeObjectURL(url);
     } catch (e) {
       console.error(e);
+      // Intentar leer el mensaje de error del servidor
+      if (e.response && e.response.data) {
+        try {
+          const text = await e.response.data.text();
+          const errorData = JSON.parse(text);
+          alert(`Error al descargar: ${errorData.message || errorData.error || 'Error interno del servidor'}`);
+        } catch {
+          alert(`Error al descargar: ${e.message || 'Error interno del servidor (500)'}`);
+        }
+      } else {
+        alert(`Error al descargar: ${e.message || 'Error de conexión'}`);
+      }
     } finally {
       setLoading(false);
     }
