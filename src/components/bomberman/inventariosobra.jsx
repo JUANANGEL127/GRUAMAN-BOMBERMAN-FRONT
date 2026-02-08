@@ -58,115 +58,133 @@ const itemsTuberia = [
   { item: "TU552000", desc: "TUBO DE 2MT FLANCHE PLANO" },
   { item: "TU551000", desc: "TUBO DE 1MT FLANCHE PLANO" },
   { item: "GF3", desc: "ABRAZADERA 3\" FLANCHE PLANO" },
-  { item: "GU3", desc: "EMPAǪUE 3\" FLANCHE PLANO" },
+  { item: "GU3", desc: "EMPAQUE 3\" FLANCHE PLANO" },
   { item: "GF45", desc: "ABRAZADERA 4\" FLANCHE PLANO" },
-  { item: "GU45", desc: "EMPAǪUE 4\" FLANCHE PLANO" },
+  { item: "GU45", desc: "EMPAQUE 4\" FLANCHE PLANO" },
   { item: "GF55", desc: "ABRAZADERA 5\" FLANCHE PLANO" },
-  { item: "GU55", desc: "EMPAǪUE 5\" FLANCHE PLANO" },
-  { item: "K000907858", desc: "ABRAZADERA ARRANǪUE 5\" CIFA" },
-  { item: "266782", desc: "ABRAZADERA ARRANǪUE 6\" TURBOSOL" },
+  { item: "GU55", desc: "EMPAQUE 5\" FLANCHE PLANO" },
+  { item: "K000907858", desc: "ABRAZADERA ARRANQUE 5\" CIFA" },
+  { item: "266782", desc: "ABRAZADERA ARRANQUE 6\" TURBOSOL" },
   { item: "DIABLO 5\"", desc: "ATRAPA DIABLOS" },
   { item: "CA55R1000.45", desc: "CODO 45º R=1000 DE 5\" FLANCHE PLANO" },
   { item: "CUMN55R275.45", desc: "CODO 45º R=275 DE 5\" FLANCHE PLANO" },
   { item: "CA55.R500.45.S4", desc: "CODO 45º R=500 DE 5\" FLANCHE PLANO" },
   { item: "CA55R250.45", desc: "CODO 45º R=250 DE 5\" FLANCHE PLANO" },
-  { item: "CA55R1000.90", desc: "CODO G0º R=1000 DE 5\" FLANCHE PLANO" },
-  { item: "CUMN55R275.90D", desc: "CODO G0º R=275 DE 5\" FLANCHE PLANO" },
-  { item: "CA55.R500.90.S4", desc: "CODO G0º R=500 DE 5\" FLANCHE PLANO" },
-  { item: "CA55R250.90", desc: "CODO G0º R=250 DE 5\" FLANCHE PLANO" },
+  { item: "CA55R1000.90", desc: "CODO 90º R=1000 DE 5\" FLANCHE PLANO" },
+  { item: "CUMN55R275.90D", desc: "CODO 90º R=275 DE 5\" FLANCHE PLANO" },
+  { item: "CA55.R500.90.S4", desc: "CODO 90º R=500 DE 5\" FLANCHE PLANO" },
+  { item: "CA55R250.90", desc: "CODO 90º R=250 DE 5\" FLANCHE PLANO" },
   { item: "261905", desc: "CODO DE SALIDA DE 6\" TURBOSOL" },
   { item: "S000224965", desc: "CODO DE SALIDA DE 5\" CIFA" },
-  { item: "", desc: "EMPAǪUE PARA CODO DE SALIDA CIFA" },
-  { item: "TG80.075.100002X325", desc: "MANGUERA DE 3” X 10 MT" },
-  { item: "MANCON3”X8", desc: "MANGUERA DE 3” X 8 MT" },
-  { item: "MANCON3”", desc: "MANGUERA DE 3” X 6 MT" },
-  { item: "TG80.100.10000", desc: "MANGUERA DE 4” X 10 MT" },
-  { item: "TG80.100.6000.2X45", desc: "MANGUERA DE 4” X 6MT" },
-  { item: "TG801256000FP", desc: "MANGUERA DE 5” X 6MT" },
+  { item: "", desc: "EMPAQUE PARA CODO DE SALIDA CIFA" },
+  { item: "TG80.075.100002X325", desc: "MANGUERA DE 3\" X 10 MT" },
+  { item: "MANCON3X8", desc: "MANGUERA DE 3\" X 8 MT" },
+  { item: "MANCON3", desc: "MANGUERA DE 3\" X 6 MT" },
+  { item: "TG80.100.10000", desc: "MANGUERA DE 4\" X 10 MT" },
+  { item: "TG80.100.6000.2X45", desc: "MANGUERA DE 4\" X 6MT" },
+  { item: "TG801256000FP", desc: "MANGUERA DE 5\" X 6MT" },
   { item: "MIPLE", desc: "MIPLE" },
   { item: "NA0000043", desc: "REDUCCION DE 4\" A 3\"" },
   { item: "CF230664", desc: "REDUCCION DE 5\" A 4\"" },
   { item: "261906", desc: "REDUCCION DE 6 A 5\" TURBOSOL" },
-  { item: "VSM.BGU.55M", desc: "VALVULA GUILLOTINA MANUAL DN 5.5”" },
+  { item: "VSM.BGU.55M", desc: "VALVULA GUILLOTINA MANUAL DN 5.5\"" },
   { item: "", desc: "EXTINTOR" },
-  { item: "", desc: "BOTIǪUIN" }
+  { item: "", desc: "BOTIQUIN" }
 ];
 
-// Map for DB columns for accesorios
+// Map for DB columns for accesorios (buena/mala)
 const accesoriosDBMap = [
-  "bola_limpieza_tuberia_55_cifa",
-  "jostick",
-  "inyector_grasa",
-  "caja_herramientas", 
-  "tubo_entrega_50cm_flanche_plano",
-  "caneca_5_galones",
-  "caneca_55_galones",
-  "pimpinas_5_6_galones",
-  "manguera_bicolor",
-  "juego_llaves_x3_piezas",
-  "pinza_picolor",
-  "bristol_14mm",
-  "bristol_12mm",
-  "juego_llaves_bristol_x9",
-  "cortafrio",
-  "pinzas_punta",
-  "llave_expansiva_15",
-  "maseta",
-  "tubo_para_abrazadera"
+  { base: "bola_limpieza_tuberia_55_cifa", buena: "bola_limpieza_tuberia_55_cifa_buena", mala: "bola_limpieza_tuberia_55_cifa_mala" },
+  { base: "jostick", buena: "jostick_buena", mala: "jostick_mala" },
+  { base: "inyector_grasa", buena: "inyector_grasa_buena", mala: "inyector_grasa_mala" },
+  { base: "caja_herramientas", buena: "caja_herramientas_buena", mala: "caja_herramientas_mala" },
+  { base: "tubo_entrega_50cm_flanche_plano", buena: "tubo_entrega_50cm_flanche_plano_buena", mala: "tubo_entrega_50cm_flanche_plano_mala" },
+  { base: "caneca_5_galones", buena: "caneca_5_galones_buena", mala: "caneca_5_galones_mala" },
+  { base: "caneca_55_galones", buena: "caneca_55_galones_buena", mala: "caneca_55_galones_mala" },
+  { base: "pimpinas_5_6_galones", buena: "pimpinas_5_6_galones_buena", mala: "pimpinas_5_6_galones_mala" },
+  { base: "manguera_bicolor", buena: "manguera_bicolor_buena", mala: "manguera_bicolor_mala" },
+  { base: "juego_llaves_x3_piezas", buena: "juego_llaves_x3_piezas_buena", mala: "juego_llaves_x3_piezas_mala" },
+  { base: "pinza_picolor", buena: "pinza_picolor_buena", mala: "pinza_picolor_mala" },
+  { base: "bristol_14mm", buena: "bristol_14mm_buena", mala: "bristol_14mm_mala" },
+  { base: "bristol_12mm", buena: "bristol_12mm_buena", mala: "bristol_12mm_mala" },
+  { base: "juego_llaves_bristol_x9", buena: "juego_llaves_bristol_x9_buena", mala: "juego_llaves_bristol_x9_mala" },
+  { base: "cortafrio", buena: "cortafrio_buena", mala: "cortafrio_mala" },
+  { base: "pinzas_punta", buena: "pinzas_punta_buena", mala: "pinzas_punta_mala" },
+  { base: "llave_expansiva_15", buena: "llave_expansiva_15_buena", mala: "llave_expansiva_15_mala" },
+  { base: "maseta", buena: "maseta_buena", mala: "maseta_mala" },
+  { base: "tubo_para_abrazadera", buena: "tubo_para_abrazadera_buena", mala: "tubo_para_abrazadera_mala" }
 ];
 
-// Map for DB columns for accesorios tuberia
+// Map for DB columns for accesorios tuberia (buena/mala)
 const accesoriosTuberiaDBMap = [
-  "llave_11",
-  "llave_10",
-  "llave_13",
-  "llave_14",
-  "llave_17",
-  "llave_19",
-  "llave_22",
-  "llave_24",
-  "llave_27",
-  "llave_30",
-  "llave_32",
-  "destornillador_pala_65x125mm",
-  "destornillador_pala_8x150mm",
-  "destornillador_pala_55x125mm",
-  "destornillador_estrella_ph3x150mm",
-  "destornillador_estrella_ph2x100mm",
-  "destornillador_estrella_ph3x75mm",
-  "cunete_grasa_5_galones"
+  { base: "llave_11", buena: "llave_11_buena", mala: "llave_11_mala" },
+  { base: "llave_10", buena: "llave_10_buena", mala: "llave_10_mala" },
+  { base: "llave_13", buena: "llave_13_buena", mala: "llave_13_mala" },
+  { base: "llave_14", buena: "llave_14_buena", mala: "llave_14_mala" },
+  { base: "llave_17", buena: "llave_17_buena", mala: "llave_17_mala" },
+  { base: "llave_19", buena: "llave_19_buena", mala: "llave_19_mala" },
+  { base: "llave_22", buena: "llave_22_buena", mala: "llave_22_mala" },
+  { base: "llave_24", buena: "llave_24_buena", mala: "llave_24_mala" },
+  { base: "llave_27", buena: "llave_27_buena", mala: "llave_27_mala" },
+  { base: "llave_30", buena: "llave_30_buena", mala: "llave_30_mala" },
+  { base: "llave_32", buena: "llave_32_buena", mala: "llave_32_mala" },
+  { base: "destornillador_pala_65x125mm", buena: "destornillador_pala_65x125mm_buena", mala: "destornillador_pala_65x125mm_mala" },
+  { base: "destornillador_pala_8x150mm", buena: "destornillador_pala_8x150mm_buena", mala: "destornillador_pala_8x150mm_mala" },
+  { base: "destornillador_pala_55x125mm", buena: "destornillador_pala_55x125mm_buena", mala: "destornillador_pala_55x125mm_mala" },
+  { base: "destornillador_estrella_ph3x150mm", buena: "destornillador_estrella_ph3x150mm_buena", mala: "destornillador_estrella_ph3x150mm_mala" },
+  { base: "destornillador_estrella_ph2x100mm", buena: "destornillador_estrella_ph2x100mm_buena", mala: "destornillador_estrella_ph2x100mm_mala" },
+  { base: "destornillador_estrella_ph3x75mm", buena: "destornillador_estrella_ph3x75mm_buena", mala: "destornillador_estrella_ph3x75mm_mala" },
+  { base: "cunete_grasa_5_galones", buena: "cunete_grasa_5_galones_buena", mala: "cunete_grasa_5_galones_mala" }
 ];
 
-// Map for DB columns for items tuberia (estado/observacion)
+// Map for DB columns for items tuberia (buena/mala)
+// Las primeras 4 son bombas y solo tienen campo de seriales (sin buena/mala)
 const itemsTuberiaDBMap = [
-  { item: "P506", estado: "bomba_concreto_pc506_309_cifa_estado", obs: "bomba_concreto_pc506_309_cifa_observacion" },
-  { item: "PC607", estado: "bomba_concreto_pc607_411_cifa_estado", obs: "bomba_concreto_pc607_411_cifa_observacion" },
-  { item: "TB30", estado: "bomba_concreto_tb30_turbosol_estado", obs: "bomba_concreto_tb30_turbosol_observacion" },
-  { item: "TB50", estado: "bomba_concreto_tb50_turbosol_estado", obs: "bomba_concreto_tb50_turbosol_observacion" },
-  { item: "TU553000FE52", estado: "tubo_3mt_flanche_plano_estado", obs: "tubo_3mt_flanche_plano_observacion" },
-  { item: "TU552000", estado: "tubo_2mt_flanche_plano_estado", obs: "tubo_2mt_flanche_plano_observacion" },
-  { item: "TU551000", estado: "tubo_1mt_flanche_plano_estado", obs: "tubo_1mt_flanche_plano_observacion" },
-  { item: "GF3", estado: "abrazadera_3_pulg_flanche_plano_estado", obs: "abrazadera_3_pulg_flanche_plano_observacion" },
-  { item: "GU3", estado: "empaque_3_pulg_flanche_plano_estado", obs: "empaque_3_pulg_flanche_plano_observacion" },
-  { item: "GF45", estado: "abrazadera_4_pulg_flanche_plano_estado", obs: "abrazadera_4_pulg_flanche_plano_observacion" },
-  { item: "GU45", estado: "empaque_4_pulg_flanche_plano_estado", obs: "empaque_4_pulg_flanche_plano_observacion" },
-  { item: "GF55", estado: "abrazadera_5_pulg_flanche_plano_estado", obs: "abrazadera_5_pulg_flanche_plano_observacion" },
-  { item: "GU55", estado: "empaque_5_pulg_flanche_plano_estado", obs: "empaque_5_pulg_flanche_plano_observacion" },
-  { item: "CA55R1000.45", estado: "codo_45_r1000_5_pulg_flanche_estado", obs: "codo_45_r1000_5_pulg_flanche_observacion" },
-  { item: "CA55.R500.90.S4", estado: "codo_90_r500_5_pulg_flanche_estado", obs: "codo_90_r500_5_pulg_flanche_observacion" },
-  { item: "261905", estado: "codo_salida_6_pulg_turbosol_estado", obs: "codo_salida_6_pulg_turbosol_observacion" },
-  { item: "TG80.075.100002X325", estado: "manguera_3_pulg_x10mt_estado", obs: "manguera_3_pulg_x10mt_observacion" },
-  { item: "TG801256000FP", estado: "manguera_5_pulg_x6mt_estado", obs: "manguera_5_pulg_x6mt_observacion" },
-  { item: "CF230664", estado: "reduccion_5_a_4_pulg_estado", obs: "reduccion_5_a_4_pulg_observacion" },
-  { item: "VSM.BGU.55M", estado: "valvula_guillotina_55_estado", obs: "valvula_guillotina_55_observacion" },
-  { item: "", estado: "extintor_estado", obs: "extintor_observacion" },
-  { item: "", estado: "botiquin_estado", obs: "botiquin_observacion" }
+  { item: "P506", seriales: "bomba_pc506_seriales" },
+  { item: "PC607", seriales: "bomba_pc607_seriales" },
+  { item: "TB30", seriales: "bomba_tb30_seriales" },
+  { item: "TB50", seriales: "bomba_tb50_seriales" },
+  { item: "TU553000FE52", buena: "tubo_3mt_cantidad_buena", mala: "tubo_3mt_cantidad_mala" },
+  { item: "TU552000", buena: "tubo_2mt_cantidad_buena", mala: "tubo_2mt_cantidad_mala" },
+  { item: "TU551000", buena: "tubo_1mt_cantidad_buena", mala: "tubo_1mt_cantidad_mala" },
+  { item: "GF3", buena: "abrazadera_3_cantidad_buena", mala: "abrazadera_3_cantidad_mala" },
+  { item: "GU3", buena: "empaque_3_cantidad_buena", mala: "empaque_3_cantidad_mala" },
+  { item: "GF45", buena: "abrazadera_4_cantidad_buena", mala: "abrazadera_4_cantidad_mala" },
+  { item: "GU45", buena: "empaque_4_cantidad_buena", mala: "empaque_4_cantidad_mala" },
+  { item: "GF55", buena: "abrazadera_5_cantidad_buena", mala: "abrazadera_5_cantidad_mala" },
+  { item: "GU55", buena: "empaque_5_cantidad_buena", mala: "empaque_5_cantidad_mala" },
+  { item: "K000907858", buena: "abrazadera_arranque_5_cifa_buena", mala: "abrazadera_arranque_5_cifa_mala" },
+  { item: "266782", buena: "abrazadera_arranque_6_turbosol_buena", mala: "abrazadera_arranque_6_turbosol_mala" },
+  { item: "DIABLO 5\"", buena: "atrapa_diablos_cantidad_buena", mala: "atrapa_diablos_cantidad_mala" },
+  { item: "CA55R1000.45", buena: "codo_45_r1000_buena", mala: "codo_45_r1000_mala" },
+  { item: "CUMN55R275.45", buena: "codo_45_r275_buena", mala: "codo_45_r275_mala" },
+  { item: "CA55.R500.45.S4", buena: "codo_45_r500_buena", mala: "codo_45_r500_mala" },
+  { item: "CA55R250.45", buena: "codo_45_r250_buena", mala: "codo_45_r250_mala" },
+  { item: "CA55R1000.90", buena: "codo_90_r1000_buena", mala: "codo_90_r1000_mala" },
+  { item: "CUMN55R275.90D", buena: "codo_90_r275_buena", mala: "codo_90_r275_mala" },
+  { item: "CA55.R500.90.S4", buena: "codo_90_r500_buena", mala: "codo_90_r500_mala" },
+  { item: "CA55R250.90", buena: "codo_90_r250_buena", mala: "codo_90_r250_mala" },
+  { item: "261905", buena: "codo_salida_6_turbosol_buena", mala: "codo_salida_6_turbosol_mala" },
+  { item: "S000224965", buena: "codo_salida_5_cifa_buena", mala: "codo_salida_5_cifa_mala" },
+  { item: "", buena: "empaque_codo_salida_cifa_buena", mala: "empaque_codo_salida_cifa_mala" },
+  { item: "TG80.075.100002X325", buena: "manguera_3x10_buena", mala: "manguera_3x10_mala" },
+  { item: "MANCON3X8", buena: "manguera_3x8_buena", mala: "manguera_3x8_mala" },
+  { item: "MANCON3", buena: "manguera_3x6_buena", mala: "manguera_3x6_mala" },
+  { item: "TG80.100.10000", buena: "manguera_4x10_buena", mala: "manguera_4x10_mala" },
+  { item: "TG80.100.6000.2X45", buena: "manguera_4x6_buena", mala: "manguera_4x6_mala" },
+  { item: "TG801256000FP", buena: "manguera_5x6_buena", mala: "manguera_5x6_mala" },
+  { item: "MIPLE", buena: "miple_cantidad_buena", mala: "miple_cantidad_mala" },
+  { item: "NA0000043", buena: "reduccion_4_a_3_buena", mala: "reduccion_4_a_3_mala" },
+  { item: "CF230664", buena: "reduccion_5_a_4_buena", mala: "reduccion_5_a_4_mala" },
+  { item: "261906", buena: "reduccion_6_a_5_buena", mala: "reduccion_6_a_5_mala" },
+  { item: "VSM.BGU.55M", buena: "valvula_guillotina_55_buena", mala: "valvula_guillotina_55_mala" },
+  { item: "", buena: "extintor_buena", mala: "extintor_mala" },
+  { item: "", buena: "botiquin_buena", mala: "botiquin_mala" }
 ];
 
-const getAccesorioValue = (obj, idx) => obj[idx] || "";
+const getAccesorioValue = (obj, idx, tipo) => obj[idx]?.[tipo] || "";
 
-const getTuberiaValue = (obj, idx) => obj[idx]?.estado || "";
-const getTuberiaObs = (obj, idx) => obj[idx]?.observaciones || "";
+const getTuberiaValue = (obj, idx, tipo) => obj[idx]?.[tipo] || "";
 
 function getCurrentMonthKey() {
   const now = new Date();
@@ -187,6 +205,7 @@ function inventariosobra() {
   const [accesoriosCant, setAccesoriosCant] = useState({});
   const [accesoriosTuberiaCant, setAccesoriosTuberiaCant] = useState({});
   const [tuberiaEstado, setTuberiaEstado] = useState({});
+  const [bombasSeriales, setBombasSeriales] = useState({ 0: [""], 1: [""], 2: [""], 3: [""] }); // Arrays de seriales para las 4 bombas
   const [observaciones, setObservaciones] = useState("");
   const [errores, setErrores] = useState({});
   const [mostrarFlechaGuardar, setMostrarFlechaGuardar] = useState(false);
@@ -245,6 +264,7 @@ function inventariosobra() {
           setAccesoriosCant(parsed.accesoriosCant || {});
           setAccesoriosTuberiaCant(parsed.accesoriosTuberiaCant || {});
           setTuberiaEstado(parsed.tuberiaEstado || {});
+          setBombasSeriales(parsed.bombasSeriales || { 0: [""], 1: [""], 2: [""], 3: [""] });
           setObservaciones(parsed.observaciones || "");
         }
       } catch {
@@ -263,6 +283,7 @@ function inventariosobra() {
       setAccesoriosCant({});
       setAccesoriosTuberiaCant({});
       setTuberiaEstado({});
+      setBombasSeriales({ 0: [""], 1: [""], 2: [""], 3: [""] });
       setObservaciones("");
     }
     // eslint-disable-next-line
@@ -284,22 +305,55 @@ function inventariosobra() {
     }
   };
 
-  const handleAccesorioChange = (id, val) => {
-    setAccesoriosCant(prev => ({ ...prev, [id]: val }));
-    setErrores(prev => ({ ...prev, [`acc_${id}`]: false }));
+  const handleAccesorioChange = (id, tipo, val) => {
+    setAccesoriosCant(prev => ({
+      ...prev,
+      [id]: { ...prev[id], [tipo]: val }
+    }));
+    setErrores(prev => ({ ...prev, [`acc_${id}_${tipo}`]: false }));
   };
 
-  const handleAccesorioTuberiaChange = (id, val) => {
-    setAccesoriosTuberiaCant(prev => ({ ...prev, [id]: val }));
-    setErrores(prev => ({ ...prev, [`acct_${id}`]: false }));
+  const handleAccesorioTuberiaChange = (id, tipo, val) => {
+    setAccesoriosTuberiaCant(prev => ({
+      ...prev,
+      [id]: { ...prev[id], [tipo]: val }
+    }));
+    setErrores(prev => ({ ...prev, [`acct_${id}_${tipo}`]: false }));
   };
 
-  const handleTuberiaEstadoChange = (id, field, val) => {
+  const handleTuberiaChange = (id, tipo, val) => {
     setTuberiaEstado(prev => ({
       ...prev,
-      [id]: { ...prev[id], [field]: val }
+      [id]: { ...prev[id], [tipo]: val }
     }));
-    setErrores(prev => ({ ...prev, [`tub_${id}`]: false }));
+    setErrores(prev => ({ ...prev, [`tub_${id}_${tipo}`]: false }));
+  };
+
+  // Handler para seriales de bombas (índices 0-3)
+  const handleBombaSerialChange = (bombaIdx, serialIdx, val) => {
+    setBombasSeriales(prev => {
+      const newSeriales = [...(prev[bombaIdx] || [""])];
+      newSeriales[serialIdx] = val;
+      return { ...prev, [bombaIdx]: newSeriales };
+    });
+  };
+
+  // Agregar nuevo campo de serial para una bomba
+  const agregarSerial = (bombaIdx) => {
+    setBombasSeriales(prev => {
+      const newSeriales = [...(prev[bombaIdx] || []), ""];
+      return { ...prev, [bombaIdx]: newSeriales };
+    });
+  };
+
+  // Eliminar un serial de una bomba
+  const eliminarSerial = (bombaIdx, serialIdx) => {
+    setBombasSeriales(prev => {
+      const newSeriales = [...(prev[bombaIdx] || [])];
+      newSeriales.splice(serialIdx, 1);
+      if (newSeriales.length === 0) newSeriales.push("");
+      return { ...prev, [bombaIdx]: newSeriales };
+    });
   };
 
   // Agrega esta función para la validación y navegación a campos incompletos
@@ -307,31 +361,41 @@ function inventariosobra() {
     const erroresTemp = {};
     let primerError = null;
 
-    // Accesorios
+    // Accesorios (buena y mala)
     accesorios.forEach((a, idx) => {
-      if (!accesoriosCant[idx] || accesoriosCant[idx].toString().trim() === "") {
-        erroresTemp[`acc_${idx}`] = true;
-        if (!primerError) primerError = `acc_${idx}`;
+      if (!accesoriosCant[idx]?.buena && accesoriosCant[idx]?.buena !== 0) {
+        erroresTemp[`acc_${idx}_buena`] = true;
+        if (!primerError) primerError = `acc_${idx}_buena`;
+      }
+      if (!accesoriosCant[idx]?.mala && accesoriosCant[idx]?.mala !== 0) {
+        erroresTemp[`acc_${idx}_mala`] = true;
+        if (!primerError) primerError = `acc_${idx}_mala`;
       }
     });
 
-    // Accesorios Tubería
+    // Accesorios Tubería (buena y mala)
     accesoriosTuberia.forEach((a, idx) => {
-      if (!accesoriosTuberiaCant[idx] || accesoriosTuberiaCant[idx].toString().trim() === "") {
-        erroresTemp[`acct_${idx}`] = true;
-        if (!primerError) primerError = `acct_${idx}`;
+      if (!accesoriosTuberiaCant[idx]?.buena && accesoriosTuberiaCant[idx]?.buena !== 0) {
+        erroresTemp[`acct_${idx}_buena`] = true;
+        if (!primerError) primerError = `acct_${idx}_buena`;
+      }
+      if (!accesoriosTuberiaCant[idx]?.mala && accesoriosTuberiaCant[idx]?.mala !== 0) {
+        erroresTemp[`acct_${idx}_mala`] = true;
+        if (!primerError) primerError = `acct_${idx}_mala`;
       }
     });
 
-    // Tubería
+    // Tubería (buena y mala) - excepto las 4 primeras que son bombas (solo seriales)
     itemsTuberia.forEach((i, idx) => {
-      if (!tuberiaEstado[idx] || !tuberiaEstado[idx].estado) {
-        erroresTemp[`tub_${idx}`] = true;
-        if (!primerError) primerError = `tub_${idx}`;
-      }
-      if (tuberiaEstado[idx]?.estado === "mala" && (!tuberiaEstado[idx]?.observaciones || tuberiaEstado[idx]?.observaciones.trim() === "")) {
-        erroresTemp[`tub_obs_${idx}`] = true;
-        if (!primerError) primerError = `tub_obs_${idx}`;
+      if (idx >= 4) { // Solo validar buena/mala para items que no son bombas
+        if (!tuberiaEstado[idx]?.buena && tuberiaEstado[idx]?.buena !== 0) {
+          erroresTemp[`tub_${idx}_buena`] = true;
+          if (!primerError) primerError = `tub_${idx}_buena`;
+        }
+        if (!tuberiaEstado[idx]?.mala && tuberiaEstado[idx]?.mala !== 0) {
+          erroresTemp[`tub_${idx}_mala`] = true;
+          if (!primerError) primerError = `tub_${idx}_mala`;
+        }
       }
     });
 
@@ -356,17 +420,29 @@ function inventariosobra() {
       fecha_servicio: generales.fecha,
       nombre_operador: generales.nombre_operador,
       cargo: generales.cargo,
-      ...accesoriosDBMap.reduce((acc, col, idx) => {
-        acc[col] = getAccesorioValue(accesoriosCant, idx) || 0;
+      ...accesoriosDBMap.reduce((acc, map, idx) => {
+        acc[map.buena] = parseInt(getAccesorioValue(accesoriosCant, idx, "buena")) || 0;
+        acc[map.mala] = parseInt(getAccesorioValue(accesoriosCant, idx, "mala")) || 0;
         return acc;
       }, {}),
-      ...accesoriosTuberiaDBMap.reduce((acc, col, idx) => {
-        acc[col] = getAccesorioValue(accesoriosTuberiaCant, idx) || 0;
+      ...accesoriosTuberiaDBMap.reduce((acc, map, idx) => {
+        acc[map.buena] = parseInt(getAccesorioValue(accesoriosTuberiaCant, idx, "buena")) || 0;
+        acc[map.mala] = parseInt(getAccesorioValue(accesoriosTuberiaCant, idx, "mala")) || 0;
         return acc;
       }, {}),
       ...itemsTuberiaDBMap.reduce((acc, map, idx) => {
-        acc[map.estado] = getTuberiaValue(tuberiaEstado, idx) ? getTuberiaValue(tuberiaEstado, idx).toUpperCase() : "BUENA";
-        acc[map.obs] = getTuberiaObs(tuberiaEstado, idx) || "";
+        // Las primeras 4 son bombas: solo envían seriales
+        if (idx < 4 && map.seriales) {
+          const serialesArray = bombasSeriales[idx] || [""];
+          acc[map.seriales] = serialesArray
+            .map(s => s.trim())
+            .filter(s => s.length > 0)
+            .join(", ");
+        } else {
+          // El resto envía buena/mala
+          acc[map.buena] = parseInt(getTuberiaValue(tuberiaEstado, idx, "buena")) || 0;
+          acc[map.mala] = parseInt(getTuberiaValue(tuberiaEstado, idx, "mala")) || 0;
+        }
         return acc;
       }, {}),
       observaciones_generales: observaciones
@@ -383,6 +459,7 @@ function inventariosobra() {
           accesoriosCant,
           accesoriosTuberiaCant,
           tuberiaEstado,
+          bombasSeriales,
           observaciones,
         })
       );
@@ -459,8 +536,12 @@ function inventariosobra() {
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
             <div style={{ flex: 1 }}></div>
-            <div style={{ width: 120, textAlign: "center" }}>
-              <span style={{ fontWeight: 700, color: "#222", fontSize: 15 }}>Cantidad</span>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <span style={{ fontWeight: 700, color: "#222", fontSize: 15, marginBottom: 4 }}>Cantidad</span>
+              <div style={{ display: "flex", gap: 12 }}>
+                <span style={{ fontWeight: 600, color: "#222", fontSize: 13, width: 55, textAlign: "center" }}>Buena</span>
+                <span style={{ fontWeight: 600, color: "#222", fontSize: 13, width: 120, textAlign: "center" }}>Mala</span>
+              </div>
             </div>
           </div>
           {accesorios.map((a, idx) => (
@@ -482,43 +563,44 @@ function inventariosobra() {
               <div style={{ flex: 1 }}>
                 <span className="permiso-trabajo-label">{a.desc}</span>
               </div>
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={accesoriosCant[idx] || ""}
-                onChange={e => {
-                  const val = e.target.value.replace(/[^0-9]/g, "");
-                  handleAccesorioChange(idx, val);
-                }}
-                className={`permiso-trabajo-input${errores[`acc_${idx}`] ? " campo-error" : ""}`}
-                style={errores[`acc_${idx}`] ? { width: 70, borderColor: "red", background: "#ffeaea" } : { width: 70 }}
-                readOnly={isReadOnly}
-              />
-              {mostrarFlechaGuardar && errores[`acc_${idx}`] && (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <span
-                    style={{
-                      marginLeft: 8,
-                      cursor: "pointer",
-                      fontSize: 18,
-                      verticalAlign: "middle"
-                    }}
-                    onClick={scrollToGuardar}
-                    title="Ir al botón Guardar"
-                  >
-                    &#8594;
-                  </span>
-                  <span style={{ color: "red", fontSize: 13 }}>
-                    Obligatorio
-                  </span>
-                </div>
-              )}
-              {!mostrarFlechaGuardar && errores[`acc_${idx}`] && (
-                <span style={{ color: "red", fontSize: 13 }}>
-                  Obligatorio
-                </span>
-              )}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={accesoriosCant[idx]?.buena || ""}
+                  onChange={e => {
+                    const val = e.target.value.replace(/[^0-9]/g, "");
+                    handleAccesorioChange(idx, "buena", val);
+                  }}
+                  className={`permiso-trabajo-input${errores[`acc_${idx}_buena`] ? " campo-error" : ""}`}
+                  style={errores[`acc_${idx}_buena`] ? { width: 60, borderColor: "red", background: "#ffeaea" } : { width: 60 }}
+                  readOnly={isReadOnly}
+                  id={`acc_${idx}_buena`}
+                />
+                {errores[`acc_${idx}_buena`] && (
+                  <span style={{ color: "red", fontSize: 11 }}>Obligatorio</span>
+                )}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={accesoriosCant[idx]?.mala || ""}
+                  onChange={e => {
+                    const val = e.target.value.replace(/[^0-9]/g, "");
+                    handleAccesorioChange(idx, "mala", val);
+                  }}
+                  className={`permiso-trabajo-input${errores[`acc_${idx}_mala`] ? " campo-error" : ""}`}
+                  style={errores[`acc_${idx}_mala`] ? { width: 60, borderColor: "red", background: "#ffeaea" } : { width: 60 }}
+                  readOnly={isReadOnly}
+                  id={`acc_${idx}_mala`}
+                />
+                {errores[`acc_${idx}_mala`] && (
+                  <span style={{ color: "red", fontSize: 11 }}>Obligatorio</span>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -529,8 +611,12 @@ function inventariosobra() {
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
             <div style={{ flex: 1 }}></div>
-            <div style={{ width: 120, textAlign: "center" }}>
-              <span style={{ fontWeight: 700, color: "#222", fontSize: 15 }}>Cantidad</span>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <span style={{ fontWeight: 700, color: "#222", fontSize: 15, marginBottom: 4 }}>Cantidad</span>
+              <div style={{ display: "flex", gap: 12 }}>
+                <span style={{ fontWeight: 600, color: "#222", fontSize: 13, width: 55, textAlign: "center" }}>Buena</span>
+                <span style={{ fontWeight: 600, color: "#222", fontSize: 13, width: 120, textAlign: "center" }}>Mala</span>
+              </div>
             </div>
           </div>
           {accesoriosTuberia.map((a, idx) => (
@@ -552,43 +638,44 @@ function inventariosobra() {
               <div style={{ flex: 1 }}>
                 <span className="permiso-trabajo-label">{a.desc}</span>
               </div>
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={accesoriosTuberiaCant[idx] || ""}
-                onChange={e => {
-                  const val = e.target.value.replace(/[^0-9]/g, "");
-                  handleAccesorioTuberiaChange(idx, val);
-                }}
-                className={`permiso-trabajo-input${errores[`acct_${idx}`] ? " campo-error" : ""}`}
-                style={errores[`acct_${idx}`] ? { width: 70, borderColor: "red", background: "#ffeaea" } : { width: 70 }}
-                readOnly={isReadOnly}
-              />
-              {mostrarFlechaGuardar && errores[`acct_${idx}`] && (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <span
-                    style={{
-                      marginLeft: 8,
-                      cursor: "pointer",
-                      fontSize: 18,
-                      verticalAlign: "middle"
-                    }}
-                    onClick={scrollToGuardar}
-                    title="Ir al botón Guardar"
-                  >
-                    &#8594;
-                  </span>
-                  <span style={{ color: "red", fontSize: 13 }}>
-                    Obligatorio
-                  </span>
-                </div>
-              )}
-              {!mostrarFlechaGuardar && errores[`acct_${idx}`] && (
-                <span style={{ color: "red", fontSize: 13 }}>
-                  Obligatorio
-                </span>
-              )}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={accesoriosTuberiaCant[idx]?.buena || ""}
+                  onChange={e => {
+                    const val = e.target.value.replace(/[^0-9]/g, "");
+                    handleAccesorioTuberiaChange(idx, "buena", val);
+                  }}
+                  className={`permiso-trabajo-input${errores[`acct_${idx}_buena`] ? " campo-error" : ""}`}
+                  style={errores[`acct_${idx}_buena`] ? { width: 60, borderColor: "red", background: "#ffeaea" } : { width: 60 }}
+                  readOnly={isReadOnly}
+                  id={`acct_${idx}_buena`}
+                />
+                {errores[`acct_${idx}_buena`] && (
+                  <span style={{ color: "red", fontSize: 11 }}>Obligatorio</span>
+                )}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={accesoriosTuberiaCant[idx]?.mala || ""}
+                  onChange={e => {
+                    const val = e.target.value.replace(/[^0-9]/g, "");
+                    handleAccesorioTuberiaChange(idx, "mala", val);
+                  }}
+                  className={`permiso-trabajo-input${errores[`acct_${idx}_mala`] ? " campo-error" : ""}`}
+                  style={errores[`acct_${idx}_mala`] ? { width: 60, borderColor: "red", background: "#ffeaea" } : { width: 60 }}
+                  readOnly={isReadOnly}
+                  id={`acct_${idx}_mala`}
+                />
+                {errores[`acct_${idx}_mala`] && (
+                  <span style={{ color: "red", fontSize: 11 }}>Obligatorio</span>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -617,83 +704,110 @@ function inventariosobra() {
               <div className="permiso-trabajo-label" style={{ marginBottom: 12, fontSize: 15, color: "#444" }}>
                 {i.desc}
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-                <div style={{ minWidth: 120 }}>
-                  <label className="label" style={{ fontSize: 13 }}>Estado</label>
-                  <select
-                    value={tuberiaEstado[idx]?.estado || ""}
-                    onChange={e => handleTuberiaEstadoChange(idx, "estado", e.target.value)}
-                    className={`permiso-trabajo-select${errores[`tub_${idx}`] ? " campo-error" : ""}`}
-                    style={errores[`tub_${idx}`] ? { width: 100, borderColor: "red", background: "#ffeaea" } : { width: 100, marginBottom: 6 }}
-                    id={`tub_${idx}`}
-                    disabled={isReadOnly}
-                  >
-                    <option value="">--</option>
-                    <option value="buena">Buena</option>
-                    <option value="mala">Mala</option>
-                  </select>
-                  {mostrarFlechaGuardar && errores[`tub_${idx}`] && (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                      <span
-                        style={{
-                          marginLeft: 8,
-                          cursor: "pointer",
-                          fontSize: 18,
-                          verticalAlign: "middle"
-                        }}
-                        onClick={scrollToGuardar}
-                        title="Ir al botón Guardar"
-                      >
-                        &#8594;
-                      </span>
-                      <span style={{ color: "red", fontSize: 13 }}>
-                        Obligatorio
-                      </span>
+              {/* Para las 4 bombas (idx 0-3): solo mostrar seriales */}
+              {idx < 4 ? (
+                <div style={{ marginTop: 4 }}>
+                  <label className="label" style={{ fontSize: 13, color: "#222", fontWeight: 600, marginBottom: 6, display: "block" }}>
+                    Seriales
+                  </label>
+                  {(bombasSeriales[idx] || [""]).map((serial, sIdx) => (
+                    <div key={sIdx} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      <input
+                        type="text"
+                        className="permiso-trabajo-input"
+                        style={{ flex: 1, height: 32, fontSize: 14 }}
+                        placeholder={`Serial ${sIdx + 1}`}
+                        value={serial}
+                        onChange={e => handleBombaSerialChange(idx, sIdx, e.target.value)}
+                        readOnly={isReadOnly}
+                      />
+                      {!isReadOnly && (bombasSeriales[idx] || []).length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => eliminarSerial(idx, sIdx)}
+                          style={{
+                            background: "#e74c3c",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: 6,
+                            width: 28,
+                            height: 28,
+                            cursor: "pointer",
+                            fontSize: 16,
+                            fontWeight: 700,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
+                          }}
+                        >
+                          −
+                        </button>
+                      )}
                     </div>
-                  )}
-                  {!mostrarFlechaGuardar && errores[`tub_${idx}`] && (
-                    <span style={{ color: "red", fontSize: 13 }}>
-                      Obligatorio
-                    </span>
+                  ))}
+                  {!isReadOnly && (
+                    <button
+                      type="button"
+                      onClick={() => agregarSerial(idx)}
+                      style={{
+                        background: "#27ae60",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 6,
+                        padding: "6px 12px",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        marginTop: 4
+                      }}
+                    >
+                      + Agregar serial
+                    </button>
                   )}
                 </div>
-              </div>
-              {tuberiaEstado[idx]?.estado === "mala" && (
-                <div style={{ marginTop: 10 }}>
-                  <label className="label" style={{ fontSize: 13 }}>Observaciones</label>
-                  <input
-                    type="text"
-                    value={tuberiaEstado[idx]?.observaciones || ""}
-                    onChange={e => handleTuberiaEstadoChange(idx, "observaciones", e.target.value)}
-                    className={`permiso-trabajo-input${errores[`tub_obs_${idx}`] ? " campo-error" : ""}`}
-                    style={errores[`tub_obs_${idx}`] ? { width: "93%", borderColor: "red", background: "#ffeaea", marginBottom: 6 } : { width: "93%", marginBottom: 6 }}
-                    id={`tub_obs_${idx}`}
-                    readOnly={isReadOnly}
-                  />
-                  {mostrarFlechaGuardar && errores[`tub_obs_${idx}`] && (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                      <span
-                        style={{
-                          marginLeft: 8,
-                          cursor: "pointer",
-                          fontSize: 18,
-                          verticalAlign: "middle"
-                        }}
-                        onClick={scrollToGuardar}
-                        title="Ir al botón Guardar"
-                      >
-                        &#8594;
-                      </span>
-                      <span style={{ color: "red", fontSize: 13 }}>
-                        Obligatorio
-                      </span>
-                    </div>
-                  )}
-                  {!mostrarFlechaGuardar && errores[`tub_obs_${idx}`] && (
-                    <span style={{ color: "red", fontSize: 13 }}>
-                      Obligatorio
-                    </span>
-                  )}
+              ) : (
+                /* Para el resto de items: mostrar buena/mala */
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 80 }}>
+                    <label className="label" style={{ fontSize: 13, color: "#222", fontWeight: 600 }}>Buena</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={tuberiaEstado[idx]?.buena || ""}
+                      onChange={e => {
+                        const val = e.target.value.replace(/[^0-9]/g, "");
+                        handleTuberiaChange(idx, "buena", val);
+                      }}
+                      className={`permiso-trabajo-input${errores[`tub_${idx}_buena`] ? " campo-error" : ""}`}
+                      style={errores[`tub_${idx}_buena`] ? { width: 60, borderColor: "red", background: "#ffeaea" } : { width: 60 }}
+                      readOnly={isReadOnly}
+                      id={`tub_${idx}_buena`}
+                    />
+                    {errores[`tub_${idx}_buena`] && (
+                      <span style={{ color: "red", fontSize: 11 }}>Obligatorio</span>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 80 }}>
+                    <label className="label" style={{ fontSize: 13, color: "#222", fontWeight: 600 }}>Mala</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={tuberiaEstado[idx]?.mala || ""}
+                      onChange={e => {
+                        const val = e.target.value.replace(/[^0-9]/g, "");
+                        handleTuberiaChange(idx, "mala", val);
+                      }}
+                      className={`permiso-trabajo-input${errores[`tub_${idx}_mala`] ? " campo-error" : ""}`}
+                      style={errores[`tub_${idx}_mala`] ? { width: 60, borderColor: "red", background: "#ffeaea" } : { width: 60 }}
+                      readOnly={isReadOnly}
+                      id={`tub_${idx}_mala`}
+                    />
+                    {errores[`tub_${idx}_mala`] && (
+                      <span style={{ color: "red", fontSize: 11 }}>Obligatorio</span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
