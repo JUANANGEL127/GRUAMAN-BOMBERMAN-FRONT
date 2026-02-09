@@ -186,14 +186,6 @@ const getAccesorioValue = (obj, idx, tipo) => obj[idx]?.[tipo] || "";
 
 const getTuberiaValue = (obj, idx, tipo) => obj[idx]?.[tipo] || "";
 
-function getCurrentMonthKey() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
-function isFirstDayOfMonth() {
-  return new Date().getDate() === 1;
-}
-
 function inventariosobra() {
   const [generales, setGenerales] = useState({
     cliente: "",
@@ -242,52 +234,7 @@ function inventariosobra() {
       });
   }, []);
 
-  // Precarga mensual de respuestas (no editable)
-  useEffect(() => {
-    const monthKey = getCurrentMonthKey();
-    const saved = localStorage.getItem("bomberman_inventariosobra_respuestas");
-    let shouldClear = false;
-
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (isFirstDayOfMonth() || parsed.monthKey !== monthKey) {
-          shouldClear = true;
-        } else {
-          setGenerales(parsed.generales || {
-            cliente: "",
-            proyecto: "",
-            fecha: "",
-            nombre_operador: "",
-            cargo: ""
-          });
-          setAccesoriosCant(parsed.accesoriosCant || {});
-          setAccesoriosTuberiaCant(parsed.accesoriosTuberiaCant || {});
-          setTuberiaEstado(parsed.tuberiaEstado || {});
-          setBombasSeriales(parsed.bombasSeriales || { 0: [""], 1: [""], 2: [""], 3: [""] });
-          setObservaciones(parsed.observaciones || "");
-        }
-      } catch {
-        shouldClear = true;
-      }
-    }
-    if (shouldClear) {
-      localStorage.removeItem("bomberman_inventariosobra_respuestas");
-      setGenerales({
-        cliente: "",
-        proyecto: "",
-        fecha: "",
-        nombre_operador: "",
-        cargo: ""
-      });
-      setAccesoriosCant({});
-      setAccesoriosTuberiaCant({});
-      setTuberiaEstado({});
-      setBombasSeriales({ 0: [""], 1: [""], 2: [""], 3: [""] });
-      setObservaciones("");
-    }
-    // eslint-disable-next-line
-  }, []);
+  
 
   const scrollToItem = (id) => {
     const el = document.getElementById(id);
@@ -448,23 +395,6 @@ function inventariosobra() {
       observaciones_generales: observaciones
     };
 
-    // Guardar solo si no existe para este mes
-    const monthKey = getCurrentMonthKey();
-    if (!localStorage.getItem("bomberman_inventariosobra_respuestas")) {
-      localStorage.setItem(
-        "bomberman_inventariosobra_respuestas",
-        JSON.stringify({
-          monthKey,
-          generales,
-          accesoriosCant,
-          accesoriosTuberiaCant,
-          tuberiaEstado,
-          bombasSeriales,
-          observaciones,
-        })
-      );
-    }
-
     // Depuración: muestra el payload en consola antes de enviar
     console.log("Payload enviado a backend:", payload);
 
@@ -479,19 +409,6 @@ function inventariosobra() {
       window.alert("Error al guardar inventario. Revisa la consola para detalles.");
     }
   };
-
-  // En los inputs y selects, hacer que sean readonly/disabled si hay datos precargados de este mes
-  const monthKey = getCurrentMonthKey();
-  const saved = localStorage.getItem("bomberman_inventariosobra_respuestas");
-  let isReadOnly = false;
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      if (parsed.monthKey === monthKey) {
-        isReadOnly = true;
-      }
-    } catch {}
-  }
 
   return (
     <form className="form-container" onSubmit={handleSubmit}>
@@ -525,7 +442,6 @@ function inventariosobra() {
               onChange={e => setGenerales(prev => ({ ...prev, cargo: e.target.value }))}
               className="permiso-trabajo-input"
               style={{ width: "100%" }}
-              readOnly={isReadOnly}
             />
           </div>
         </div>
@@ -575,7 +491,6 @@ function inventariosobra() {
                   }}
                   className={`permiso-trabajo-input${errores[`acc_${idx}_buena`] ? " campo-error" : ""}`}
                   style={errores[`acc_${idx}_buena`] ? { width: 60, borderColor: "red", background: "#ffeaea" } : { width: 60 }}
-                  readOnly={isReadOnly}
                   id={`acc_${idx}_buena`}
                 />
                 {errores[`acc_${idx}_buena`] && (
@@ -594,7 +509,6 @@ function inventariosobra() {
                   }}
                   className={`permiso-trabajo-input${errores[`acc_${idx}_mala`] ? " campo-error" : ""}`}
                   style={errores[`acc_${idx}_mala`] ? { width: 60, borderColor: "red", background: "#ffeaea" } : { width: 60 }}
-                  readOnly={isReadOnly}
                   id={`acc_${idx}_mala`}
                 />
                 {errores[`acc_${idx}_mala`] && (
@@ -650,7 +564,6 @@ function inventariosobra() {
                   }}
                   className={`permiso-trabajo-input${errores[`acct_${idx}_buena`] ? " campo-error" : ""}`}
                   style={errores[`acct_${idx}_buena`] ? { width: 60, borderColor: "red", background: "#ffeaea" } : { width: 60 }}
-                  readOnly={isReadOnly}
                   id={`acct_${idx}_buena`}
                 />
                 {errores[`acct_${idx}_buena`] && (
@@ -669,7 +582,6 @@ function inventariosobra() {
                   }}
                   className={`permiso-trabajo-input${errores[`acct_${idx}_mala`] ? " campo-error" : ""}`}
                   style={errores[`acct_${idx}_mala`] ? { width: 60, borderColor: "red", background: "#ffeaea" } : { width: 60 }}
-                  readOnly={isReadOnly}
                   id={`acct_${idx}_mala`}
                 />
                 {errores[`acct_${idx}_mala`] && (
@@ -719,9 +631,8 @@ function inventariosobra() {
                         placeholder={`Serial ${sIdx + 1}`}
                         value={serial}
                         onChange={e => handleBombaSerialChange(idx, sIdx, e.target.value)}
-                        readOnly={isReadOnly}
                       />
-                      {!isReadOnly && (bombasSeriales[idx] || []).length > 1 && (
+                      {(bombasSeriales[idx] || []).length > 1 && (
                         <button
                           type="button"
                           onClick={() => eliminarSerial(idx, sIdx)}
@@ -745,25 +656,23 @@ function inventariosobra() {
                       )}
                     </div>
                   ))}
-                  {!isReadOnly && (
-                    <button
-                      type="button"
-                      onClick={() => agregarSerial(idx)}
+                  <button
+                    type="button"
+                    onClick={() => agregarSerial(idx)}
                       style={{
-                        background: "#27ae60",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 6,
-                        padding: "6px 12px",
-                        cursor: "pointer",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        marginTop: 4
-                      }}
-                    >
-                      + Agregar serial
-                    </button>
-                  )}
+                      background: "#27ae60",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 6,
+                      padding: "6px 12px",
+                      cursor: "pointer",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      marginTop: 4
+                    }}
+                  >
+                    + Agregar serial
+                  </button>
                 </div>
               ) : (
                 /* Para el resto de items: mostrar buena/mala */
@@ -781,7 +690,6 @@ function inventariosobra() {
                       }}
                       className={`permiso-trabajo-input${errores[`tub_${idx}_buena`] ? " campo-error" : ""}`}
                       style={errores[`tub_${idx}_buena`] ? { width: 60, borderColor: "red", background: "#ffeaea" } : { width: 60 }}
-                      readOnly={isReadOnly}
                       id={`tub_${idx}_buena`}
                     />
                     {errores[`tub_${idx}_buena`] && (
@@ -801,7 +709,6 @@ function inventariosobra() {
                       }}
                       className={`permiso-trabajo-input${errores[`tub_${idx}_mala`] ? " campo-error" : ""}`}
                       style={errores[`tub_${idx}_mala`] ? { width: 60, borderColor: "red", background: "#ffeaea" } : { width: 60 }}
-                      readOnly={isReadOnly}
                       id={`tub_${idx}_mala`}
                     />
                     {errores[`tub_${idx}_mala`] && (
@@ -822,7 +729,6 @@ function inventariosobra() {
           style={{ width: "93%", minHeight: 80 }}
           value={observaciones}
           onChange={e => setObservaciones(e.target.value)}
-          readOnly={isReadOnly}
         />
       </div>
 
@@ -832,7 +738,6 @@ function inventariosobra() {
           className="button"
           style={{ background: "#ff9800", color: "#fff" }}
           ref={guardarBtnRef}
-          disabled={isReadOnly}
         >
           Guardar
         </button>
