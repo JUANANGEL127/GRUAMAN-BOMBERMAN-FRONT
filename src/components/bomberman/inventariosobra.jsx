@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, memo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
@@ -182,143 +182,6 @@ const itemsTuberiaDBMap = [
   { item: "", buena: "botiquin_buena", mala: "botiquin_mala" }
 ];
 
-const getAccesorioValue = (obj, idx, tipo) => obj[idx]?.[tipo] || "";
-
-const getTuberiaValue = (obj, idx, tipo) => obj[idx]?.[tipo] || "";
-
-// Componente memoizado para un item de accesorio
-const AccesorioItem = memo(({ desc, idx, cant, errores, onChange, prefix = "acc" }) => {
-  const handleBuenaChange = useCallback((e) => {
-    const val = e.target.value.replace(/[^0-9]/g, "");
-    onChange(idx, "buena", val);
-  }, [idx, onChange]);
-
-  const handleMalaChange = useCallback((e) => {
-    const val = e.target.value.replace(/[^0-9]/g, "");
-    onChange(idx, "mala", val);
-  }, [idx, onChange]);
-
-  return (
-    <div className="inventario-item" id={`${prefix}_${idx}`}>
-      <div className="inventario-flex-1">
-        <span className="permiso-trabajo-label">{desc}</span>
-      </div>
-      <div className="inventario-input-col">
-        <input
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          value={cant?.buena || ""}
-          onChange={handleBuenaChange}
-          className={`permiso-trabajo-input inventario-input-small${errores[`${prefix}_${idx}_buena`] ? " inventario-input-error" : ""}`}
-          id={`${prefix}_${idx}_buena`}
-        />
-        {errores[`${prefix}_${idx}_buena`] && <span className="inventario-error-text">Obligatorio</span>}
-      </div>
-      <div className="inventario-input-col">
-        <input
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          value={cant?.mala || ""}
-          onChange={handleMalaChange}
-          className={`permiso-trabajo-input inventario-input-small${errores[`${prefix}_${idx}_mala`] ? " inventario-input-error" : ""}`}
-          id={`${prefix}_${idx}_mala`}
-        />
-        {errores[`${prefix}_${idx}_mala`] && <span className="inventario-error-text">Obligatorio</span>}
-      </div>
-    </div>
-  );
-});
-
-// Componente memoizado para item de tubería con buena/mala
-const TuberiaItem = memo(({ item, desc, idx, estado, errores, onChange }) => {
-  const handleBuenaChange = useCallback((e) => {
-    const val = e.target.value.replace(/[^0-9]/g, "");
-    onChange(idx, "buena", val);
-  }, [idx, onChange]);
-
-  const handleMalaChange = useCallback((e) => {
-    const val = e.target.value.replace(/[^0-9]/g, "");
-    onChange(idx, "mala", val);
-  }, [idx, onChange]);
-
-  return (
-    <div className="inventario-item-tuberia" id={`tub_${idx}`}>
-      <div className="permiso-trabajo-label inventario-tuberia-title">{item}</div>
-      <div className="permiso-trabajo-label inventario-tuberia-desc">{desc}</div>
-      <div className="inventario-buena-mala-row">
-        <div className="inventario-buena-mala-col">
-          <label className="inventario-col-label">Buena</label>
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={estado?.buena || ""}
-            onChange={handleBuenaChange}
-            className={`permiso-trabajo-input inventario-input-small${errores[`tub_${idx}_buena`] ? " inventario-input-error" : ""}`}
-            id={`tub_${idx}_buena`}
-          />
-          {errores[`tub_${idx}_buena`] && <span className="inventario-error-text">Obligatorio</span>}
-        </div>
-        <div className="inventario-buena-mala-col">
-          <label className="inventario-col-label">Mala</label>
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={estado?.mala || ""}
-            onChange={handleMalaChange}
-            className={`permiso-trabajo-input inventario-input-small${errores[`tub_${idx}_mala`] ? " inventario-input-error" : ""}`}
-            id={`tub_${idx}_mala`}
-          />
-          {errores[`tub_${idx}_mala`] && <span className="inventario-error-text">Obligatorio</span>}
-        </div>
-      </div>
-    </div>
-  );
-});
-
-// Componente memoizado para bombas con seriales
-const BombaItem = memo(({ item, desc, idx, seriales, onSerialChange, onAgregar, onEliminar }) => {
-  return (
-    <div className="inventario-item-tuberia" id={`tub_${idx}`}>
-      <div className="permiso-trabajo-label inventario-tuberia-title">{item}</div>
-      <div className="permiso-trabajo-label inventario-tuberia-desc">{desc}</div>
-      <div className="inventario-seriales-container">
-        <label className="inventario-seriales-label">Seriales</label>
-        {(seriales || [""]).map((serial, sIdx) => (
-          <div key={sIdx} className="inventario-serial-row">
-            <input
-              type="text"
-              className="permiso-trabajo-input inventario-serial-input"
-              placeholder={`Serial ${sIdx + 1}`}
-              value={serial}
-              onChange={e => onSerialChange(idx, sIdx, e.target.value)}
-            />
-            {(seriales || []).length > 1 && (
-              <button
-                type="button"
-                onClick={() => onEliminar(idx, sIdx)}
-                className="inventario-btn-eliminar"
-              >
-                −
-              </button>
-            )}
-          </div>
-        ))}
-        <button
-          type="button"
-          onClick={() => onAgregar(idx)}
-          className="inventario-btn-agregar"
-        >
-          + Agregar serial
-        </button>
-      </div>
-    </div>
-  );
-});
-
 function inventariosobra() {
   const [generales, setGenerales] = useState({
     cliente: "",
@@ -330,10 +193,8 @@ function inventariosobra() {
   const [accesoriosCant, setAccesoriosCant] = useState({});
   const [accesoriosTuberiaCant, setAccesoriosTuberiaCant] = useState({});
   const [tuberiaEstado, setTuberiaEstado] = useState({});
-  const [bombasSeriales, setBombasSeriales] = useState({ 0: [""], 1: [""], 2: [""], 3: [""] }); // Arrays de seriales para las 4 bombas
+  const [bombasSeriales, setBombasSeriales] = useState({ 0: [""], 1: [""], 2: [""], 3: [""] });
   const [observaciones, setObservaciones] = useState("");
-  const [errores, setErrores] = useState({});
-  const [mostrarFlechaGuardar, setMostrarFlechaGuardar] = useState(false);
   const guardarBtnRef = useRef(null);
   const navigate = useNavigate();
 
@@ -367,129 +228,6 @@ function inventariosobra() {
       });
   }, []);
 
-  
-
-  const scrollToItem = (id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      el.focus?.();
-    }
-  };
-
-  const scrollToGuardar = () => {
-    if (guardarBtnRef.current) {
-      guardarBtnRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-      guardarBtnRef.current.focus?.();
-      setMostrarFlechaGuardar(false);
-    }
-  };
-
-  const handleAccesorioChange = useCallback((id, tipo, val) => {
-    setAccesoriosCant(prev => ({
-      ...prev,
-      [id]: { ...prev[id], [tipo]: val }
-    }));
-    setErrores(prev => ({ ...prev, [`acc_${id}_${tipo}`]: false }));
-  }, []);
-
-  const handleAccesorioTuberiaChange = useCallback((id, tipo, val) => {
-    setAccesoriosTuberiaCant(prev => ({
-      ...prev,
-      [id]: { ...prev[id], [tipo]: val }
-    }));
-    setErrores(prev => ({ ...prev, [`acct_${id}_${tipo}`]: false }));
-  }, []);
-
-  const handleTuberiaChange = useCallback((id, tipo, val) => {
-    setTuberiaEstado(prev => ({
-      ...prev,
-      [id]: { ...prev[id], [tipo]: val }
-    }));
-    setErrores(prev => ({ ...prev, [`tub_${id}_${tipo}`]: false }));
-  }, []);
-
-  // Handler para seriales de bombas (índices 0-3)
-  const handleBombaSerialChange = useCallback((bombaIdx, serialIdx, val) => {
-    setBombasSeriales(prev => {
-      const newSeriales = [...(prev[bombaIdx] || [""])];
-      newSeriales[serialIdx] = val;
-      return { ...prev, [bombaIdx]: newSeriales };
-    });
-  }, []);
-
-  // Agregar nuevo campo de serial para una bomba
-  const agregarSerial = useCallback((bombaIdx) => {
-    setBombasSeriales(prev => {
-      const newSeriales = [...(prev[bombaIdx] || []), ""];
-      return { ...prev, [bombaIdx]: newSeriales };
-    });
-  }, []);
-
-  // Eliminar un serial de una bomba
-  const eliminarSerial = useCallback((bombaIdx, serialIdx) => {
-    setBombasSeriales(prev => {
-      const newSeriales = [...(prev[bombaIdx] || [])];
-      newSeriales.splice(serialIdx, 1);
-      if (newSeriales.length === 0) newSeriales.push("");
-      return { ...prev, [bombaIdx]: newSeriales };
-    });
-  }, []);
-
-  // Agrega esta función para la validación y navegación a campos incompletos
-  const validarCamposObligatorios = () => {
-    const erroresTemp = {};
-    let primerError = null;
-
-    // Accesorios (buena y mala)
-    accesorios.forEach((a, idx) => {
-      if (!accesoriosCant[idx]?.buena && accesoriosCant[idx]?.buena !== 0) {
-        erroresTemp[`acc_${idx}_buena`] = true;
-        if (!primerError) primerError = `acc_${idx}_buena`;
-      }
-      if (!accesoriosCant[idx]?.mala && accesoriosCant[idx]?.mala !== 0) {
-        erroresTemp[`acc_${idx}_mala`] = true;
-        if (!primerError) primerError = `acc_${idx}_mala`;
-      }
-    });
-
-    // Accesorios Tubería (buena y mala)
-    accesoriosTuberia.forEach((a, idx) => {
-      if (!accesoriosTuberiaCant[idx]?.buena && accesoriosTuberiaCant[idx]?.buena !== 0) {
-        erroresTemp[`acct_${idx}_buena`] = true;
-        if (!primerError) primerError = `acct_${idx}_buena`;
-      }
-      if (!accesoriosTuberiaCant[idx]?.mala && accesoriosTuberiaCant[idx]?.mala !== 0) {
-        erroresTemp[`acct_${idx}_mala`] = true;
-        if (!primerError) primerError = `acct_${idx}_mala`;
-      }
-    });
-
-    // Tubería (buena y mala) - excepto las 4 primeras que son bombas (solo seriales)
-    itemsTuberia.forEach((i, idx) => {
-      if (idx >= 4) { // Solo validar buena/mala para items que no son bombas
-        if (!tuberiaEstado[idx]?.buena && tuberiaEstado[idx]?.buena !== 0) {
-          erroresTemp[`tub_${idx}_buena`] = true;
-          if (!primerError) primerError = `tub_${idx}_buena`;
-        }
-        if (!tuberiaEstado[idx]?.mala && tuberiaEstado[idx]?.mala !== 0) {
-          erroresTemp[`tub_${idx}_mala`] = true;
-          if (!primerError) primerError = `tub_${idx}_mala`;
-        }
-      }
-    });
-
-    setErrores(erroresTemp);
-
-    if (primerError) {
-      setMostrarFlechaGuardar(true);
-      scrollToItem(primerError);
-      return false;
-    }
-    return true;
-  };
-
-  // Modifica handleSubmit para depurar el payload en caso de error 400
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -500,17 +238,16 @@ function inventariosobra() {
       nombre_operador: generales.nombre_operador,
       cargo: generales.cargo,
       ...accesoriosDBMap.reduce((acc, map, idx) => {
-        acc[map.buena] = parseInt(getAccesorioValue(accesoriosCant, idx, "buena")) || 0;
-        acc[map.mala] = parseInt(getAccesorioValue(accesoriosCant, idx, "mala")) || 0;
+        acc[map.buena] = parseInt(accesoriosCant[idx]?.buena) || 0;
+        acc[map.mala] = parseInt(accesoriosCant[idx]?.mala) || 0;
         return acc;
       }, {}),
       ...accesoriosTuberiaDBMap.reduce((acc, map, idx) => {
-        acc[map.buena] = parseInt(getAccesorioValue(accesoriosTuberiaCant, idx, "buena")) || 0;
-        acc[map.mala] = parseInt(getAccesorioValue(accesoriosTuberiaCant, idx, "mala")) || 0;
+        acc[map.buena] = parseInt(accesoriosTuberiaCant[idx]?.buena) || 0;
+        acc[map.mala] = parseInt(accesoriosTuberiaCant[idx]?.mala) || 0;
         return acc;
       }, {}),
       ...itemsTuberiaDBMap.reduce((acc, map, idx) => {
-        // Las primeras 4 son bombas: solo envían seriales
         if (idx < 4 && map.seriales) {
           const serialesArray = bombasSeriales[idx] || [""];
           acc[map.seriales] = serialesArray
@@ -518,155 +255,200 @@ function inventariosobra() {
             .filter(s => s.length > 0)
             .join(", ");
         } else {
-          // El resto envía buena/mala
-          acc[map.buena] = parseInt(getTuberiaValue(tuberiaEstado, idx, "buena")) || 0;
-          acc[map.mala] = parseInt(getTuberiaValue(tuberiaEstado, idx, "mala")) || 0;
+          acc[map.buena] = parseInt(tuberiaEstado[idx]?.buena) || 0;
+          acc[map.mala] = parseInt(tuberiaEstado[idx]?.mala) || 0;
         }
         return acc;
       }, {}),
       observaciones_generales: observaciones
     };
 
-    // Depuración: muestra el payload en consola antes de enviar
     console.log("Payload enviado a backend:", payload);
 
     try {
       await axios.post(`${API_BASE_URL}/bomberman/inventariosobra`, payload);
       window.alert("Inventario guardado correctamente en backend.");
-      setMostrarFlechaGuardar(false);
       navigate(-1);
     } catch (err) {
-      // Muestra el error y el payload para depuración
       console.error("Error al guardar inventario:", err?.response?.data || err, payload);
       window.alert("Error al guardar inventario. Revisa la consola para detalles.");
     }
   };
 
   return (
-    <form className="form-container inventario-form" onSubmit={handleSubmit}>
-      <div className="card-section" style={{ marginBottom: 16 }}>
+    <form className="form-container" onSubmit={handleSubmit}>
+      <div className="card-section">
         <h3 className="card-title">Datos Generales</h3>
-        <div className="inventario-generales-container">
-          {[
-            { name: "cliente", label: "Cliente / Constructora" },
-            { name: "proyecto", label: "Proyecto / Constructora" },
-            { name: "fecha", label: "Fecha", type: "date" },
-            { name: "nombre_operador", label: "Trabajador autorizado" }
-          ].map(item => (
-            <div key={item.name} className="inventario-generales-col">
-              <label className="label">{item.label}</label>
-              <input
-                type={item.type || "text"}
-                name={item.name}
-                value={generales[item.name]}
-                readOnly
-                className="permiso-trabajo-input"
-              />
-            </div>
-          ))}
-          <div className="inventario-generales-col">
-            <label className="label">Cargo</label>
-            <input
-              type="text"
-              name="cargo"
-              value={generales.cargo}
-              onChange={e => setGenerales(prev => ({ ...prev, cargo: e.target.value }))}
-              className="permiso-trabajo-input"
-            />
-          </div>
+        <div>
+          <label className="label">Cliente / Constructora</label>
+          <input type="text" value={generales.cliente} readOnly />
         </div>
-      </div>
-
-      <div className="card-section" style={{ marginBottom: 16 }}>
-        <h3 className="card-title">Accesorios</h3>
-        <div className="inventario-section-list">
-          <div className="inventario-header">
-            <div className="inventario-flex-1"></div>
-            <div className="inventario-header-cantidad">
-              <span className="inventario-header-title">Cantidad</span>
-              <div className="inventario-header-labels">
-                <span className="inventario-header-label">Buena</span>
-                <span className="inventario-header-label-mala">Mala</span>
-              </div>
-            </div>
-          </div>
-          {accesorios.map((a, idx) => (
-            <AccesorioItem
-              key={a.desc}
-              desc={a.desc}
-              idx={idx}
-              cant={accesoriosCant[idx]}
-              errores={errores}
-              onChange={handleAccesorioChange}
-            />
-          ))}
+        <div>
+          <label className="label">Proyecto / Constructora</label>
+          <input type="text" value={generales.proyecto} readOnly />
         </div>
-      </div>
-
-      <div className="card-section" style={{ marginBottom: 16 }}>
-        <h3 className="card-title">Accesorios Tubería</h3>
-        <div className="inventario-section-list">
-          <div className="inventario-header">
-            <div className="inventario-flex-1"></div>
-            <div className="inventario-header-cantidad">
-              <span className="inventario-header-title">Cantidad</span>
-              <div className="inventario-header-labels">
-                <span className="inventario-header-label">Buena</span>
-                <span className="inventario-header-label-mala">Mala</span>
-              </div>
-            </div>
-          </div>
-          {accesoriosTuberia.map((a, idx) => (
-            <AccesorioItem
-              key={a.desc}
-              desc={a.desc}
-              idx={idx}
-              cant={accesoriosTuberiaCant[idx]}
-              errores={errores}
-              onChange={handleAccesorioTuberiaChange}
-              prefix="acct"
-            />
-          ))}
+        <div>
+          <label className="label">Fecha</label>
+          <input type="date" value={generales.fecha} readOnly />
         </div>
-      </div>
-
-      <div className="card-section" style={{ marginBottom: 16 }}>
-        <h3 className="card-title">Inventario de Tubería y Accesorios</h3>
-        <div className="inventario-section-list">
-          {itemsTuberia.map((i, idx) => (
-            idx < 4 ? (
-              <BombaItem
-                key={i.item + i.desc}
-                item={i.item}
-                desc={i.desc}
-                idx={idx}
-                seriales={bombasSeriales[idx]}
-                onSerialChange={handleBombaSerialChange}
-                onAgregar={agregarSerial}
-                onEliminar={eliminarSerial}
-              />
-            ) : (
-              <TuberiaItem
-                key={i.item + i.desc}
-                item={i.item}
-                desc={i.desc}
-                idx={idx}
-                estado={tuberiaEstado[idx]}
-                errores={errores}
-                onChange={handleTuberiaChange}
-              />
-            )
-          ))}
+        <div>
+          <label className="label">Trabajador autorizado</label>
+          <input type="text" value={generales.nombre_operador} readOnly />
+        </div>
+        <div>
+          <label className="label">Cargo</label>
+          <input
+            type="text"
+            value={generales.cargo}
+            onChange={e => setGenerales(prev => ({ ...prev, cargo: e.target.value }))}
+          />
         </div>
       </div>
 
       <div className="card-section">
-        <label className="permiso-trabajo-label">OBSERVACIONES GENERALES</label>
+        <h3 className="card-title">Accesorios</h3>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8, gap: 20 }}>
+          <span style={{ fontWeight: 600, width: 60, textAlign: "center" }}>Buena</span>
+          <span style={{ fontWeight: 600, width: 60, textAlign: "center" }}>Mala</span>
+        </div>
+        {accesorios.map((a, idx) => (
+          <div key={idx} style={{ display: "flex", alignItems: "center", marginBottom: 8, gap: 8 }}>
+            <span style={{ flex: 1, fontSize: 14 }}>{a.desc}</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={accesoriosCant[idx]?.buena || ""}
+              onChange={e => setAccesoriosCant(prev => ({ ...prev, [idx]: { ...prev[idx], buena: e.target.value.replace(/[^0-9]/g, "") } }))}
+              style={{ width: 60, textAlign: "center" }}
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={accesoriosCant[idx]?.mala || ""}
+              onChange={e => setAccesoriosCant(prev => ({ ...prev, [idx]: { ...prev[idx], mala: e.target.value.replace(/[^0-9]/g, "") } }))}
+              style={{ width: 60, textAlign: "center" }}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="card-section">
+        <h3 className="card-title">Accesorios Tubería</h3>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8, gap: 20 }}>
+          <span style={{ fontWeight: 600, width: 60, textAlign: "center" }}>Buena</span>
+          <span style={{ fontWeight: 600, width: 60, textAlign: "center" }}>Mala</span>
+        </div>
+        {accesoriosTuberia.map((a, idx) => (
+          <div key={idx} style={{ display: "flex", alignItems: "center", marginBottom: 8, gap: 8 }}>
+            <span style={{ flex: 1, fontSize: 14 }}>{a.desc}</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={accesoriosTuberiaCant[idx]?.buena || ""}
+              onChange={e => setAccesoriosTuberiaCant(prev => ({ ...prev, [idx]: { ...prev[idx], buena: e.target.value.replace(/[^0-9]/g, "") } }))}
+              style={{ width: 60, textAlign: "center" }}
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={accesoriosTuberiaCant[idx]?.mala || ""}
+              onChange={e => setAccesoriosTuberiaCant(prev => ({ ...prev, [idx]: { ...prev[idx], mala: e.target.value.replace(/[^0-9]/g, "") } }))}
+              style={{ width: 60, textAlign: "center" }}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="card-section">
+        <h3 className="card-title">Inventario de Tubería y Accesorios</h3>
+        {itemsTuberia.map((i, idx) => (
+          <div key={idx} style={{ marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid #eee" }}>
+            <div style={{ fontWeight: 600, fontSize: 15 }}>{i.item}</div>
+            <div style={{ fontSize: 14, color: "#444", marginBottom: 8 }}>{i.desc}</div>
+            {idx < 4 ? (
+              <div>
+                <label className="label">Seriales</label>
+                {(bombasSeriales[idx] || [""]).map((serial, sIdx) => (
+                  <div key={sIdx} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <input
+                      type="text"
+                      placeholder={`Serial ${sIdx + 1}`}
+                      value={serial}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setBombasSeriales(prev => {
+                          const n = [...(prev[idx] || [""])];
+                          n[sIdx] = val;
+                          return { ...prev, [idx]: n };
+                        });
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                    {(bombasSeriales[idx] || []).length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBombasSeriales(prev => {
+                            const n = [...(prev[idx] || [])];
+                            n.splice(sIdx, 1);
+                            return { ...prev, [idx]: n.length ? n : [""] };
+                          });
+                        }}
+                        style={{ background: "#e74c3c", color: "#fff", border: "none", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}
+                      >
+                        −
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setBombasSeriales(prev => ({ ...prev, [idx]: [...(prev[idx] || []), ""] }))}
+                  style={{ background: "#27ae60", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px", cursor: "pointer", fontSize: 13 }}
+                >
+                  + Agregar serial
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: 16 }}>
+                <div>
+                  <label className="label">Buena</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={tuberiaEstado[idx]?.buena || ""}
+                    onChange={e => setTuberiaEstado(prev => ({ ...prev, [idx]: { ...prev[idx], buena: e.target.value.replace(/[^0-9]/g, "") } }))}
+                    style={{ width: 60, textAlign: "center" }}
+                  />
+                </div>
+                <div>
+                  <label className="label">Mala</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={tuberiaEstado[idx]?.mala || ""}
+                    onChange={e => setTuberiaEstado(prev => ({ ...prev, [idx]: { ...prev[idx], mala: e.target.value.replace(/[^0-9]/g, "") } }))}
+                    style={{ width: 60, textAlign: "center" }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="card-section">
+        <label className="label">OBSERVACIONES GENERALES</label>
         <textarea
-          className="permiso-trabajo-textarea"
-          style={{ width: "93%", minHeight: 80 }}
           value={observaciones}
           onChange={e => setObservaciones(e.target.value)}
+          style={{ width: "100%", minHeight: 80 }}
         />
       </div>
 
@@ -684,4 +466,4 @@ function inventariosobra() {
   );
 }
 
-export default inventariosobra;
+export default inventariosobra; 
