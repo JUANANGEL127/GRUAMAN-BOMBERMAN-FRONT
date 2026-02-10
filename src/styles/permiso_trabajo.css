@@ -496,3 +496,203 @@ button:active {
     width: 100%;
   }
 }
+
+/* === INVENTARIO OBRA - OPTIMIZACIONES MÓVILES === */
+.inventario-form {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  transform: translateZ(0);
+  will-change: scroll-position;
+}
+
+.inventario-item {
+  background: rgba(255,255,255,0.15);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid #ececec;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  contain: layout style paint;
+}
+
+.inventario-item-tuberia {
+  background: rgba(255,255,255,0.15);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  border-radius: 14px;
+  margin-bottom: 14px;
+  padding: 16px 14px;
+  border: 1px solid #ececec;
+  contain: layout style paint;
+}
+
+.inventario-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.inventario-header-cantidad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.inventario-header-title {
+  font-weight: 700;
+  color: #222;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.inventario-header-labels {
+  display: flex;
+  gap: 12px;
+}
+
+.inventario-header-label {
+  font-weight: 600;
+  color: #222;
+  font-size: 13px;
+  width: 55px;
+  text-align: center;
+}
+
+.inventario-header-label-mala {
+  font-weight: 600;
+  color: #222;
+  font-size: 13px;
+  width: 120px;
+  text-align: center;
+}
+
+.inventario-input-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.inventario-input-small {
+  width: 60px !important;
+  min-width: 60px !important;
+}
+
+.inventario-input-error {
+  border-color: red !important;
+  background: #ffeaea !important;
+}
+
+.inventario-error-text {
+  color: red;
+  font-size: 11px;
+}
+
+.inventario-flex-1 {
+  flex: 1;
+}
+
+.inventario-tuberia-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 17px;
+}
+
+.inventario-tuberia-desc {
+  margin-bottom: 12px;
+  font-size: 15px;
+  color: #444;
+}
+
+.inventario-seriales-container {
+  margin-top: 4px;
+}
+
+.inventario-seriales-label {
+  font-size: 13px;
+  color: #222;
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.inventario-serial-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.inventario-serial-input {
+  flex: 1;
+  height: 32px !important;
+  font-size: 14px !important;
+}
+
+.inventario-btn-eliminar {
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+}
+
+.inventario-btn-agregar {
+  background: #27ae60;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px !important;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 4px;
+  width: auto !important;
+  min-width: auto !important;
+  height: auto !important;
+}
+
+.inventario-buena-mala-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.inventario-buena-mala-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+}
+
+.inventario-col-label {
+  font-size: 13px;
+  color: #222;
+  font-weight: 600;
+}
+
+.inventario-generales-col {
+  width: 93%;
+}
+
+.inventario-generales-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inventario-section-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
