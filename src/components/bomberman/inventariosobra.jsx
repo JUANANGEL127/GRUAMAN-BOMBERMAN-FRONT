@@ -448,7 +448,7 @@ function inventariosobra() {
         <textarea
           value={observaciones}
           onChange={e => setObservaciones(e.target.value)}
-          style={{ width: "100%", minHeight: 80 }}
+          style={{ width: "94%", minHeight: 80 }}
         />
       </div>
 
