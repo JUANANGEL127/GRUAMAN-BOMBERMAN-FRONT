@@ -228,8 +228,6 @@ function PlanillaBombeo(props) {
       "nombre_proyecto",
       "fecha_servicio",
       "bomba_numero",
-      "hora_llegada_obra",
-      "hora_salida_obra",
       "galones_inicio_acpm",
       "galones_final_acpm",
       "galones_pinpina",
@@ -285,8 +283,8 @@ function PlanillaBombeo(props) {
       nombre_proyecto: datos.nombre_proyecto,
       fecha_servicio: datos.fecha_servicio,
       bomba_numero: datos.bomba_numero,
-      hora_llegada_obra: datos.hora_llegada_obra,
-      hora_salida_obra: datos.hora_salida_obra,
+      hora_llegada_obra: "",
+      hora_salida_obra: "",
       galones_inicio_acpm: datos.galones_inicio_acpm,
       galones_final_acpm: datos.galones_final_acpm,
       galones_pinpina: datos.galones_pinpina,
@@ -315,7 +313,15 @@ function PlanillaBombeo(props) {
         body: JSON.stringify(payload)
       });
       const res_text = await res.text();
-      if (!res.ok) throw new Error(res_text || "Error al guardar");
+      if (!res.ok) {
+        let msg = res_text || "Error al guardar";
+        try {
+          const json = JSON.parse(res_text);
+          if (json.message) msg = json.message;
+          else if (json.error) msg = json.error;
+        } catch (_) {}
+        throw new Error(`(${res.status}) ${msg}`);
+      }
       alert("Guardado exitosamente");
       localStorage.removeItem("hora_llegada_obra");
       localStorage.removeItem("hora_salida_obra");
@@ -447,70 +453,6 @@ function PlanillaBombeo(props) {
           ))}
         </select>
         {errores.bomba_numero && (
-          <span style={{ color: "red", fontSize: 13 }}>
-            Este campo es obligatorio.
-            <span
-              style={{
-                marginLeft: 8,
-                cursor: "pointer",
-                fontSize: 18,
-                verticalAlign: "middle"
-              }}
-              onClick={scrollToGuardar}
-              title="Ir al botón Guardar"
-            >
-              &#8594;
-            </span>
-          </span>
-        )}
-      </div>
-
-      <div className="card-section">
-        <h3 className="card-title">Horas de llegada y salida</h3>
-        <label className="label">Hora Llegada Obra</label>
-        <div style={{ display: "flex", gap: 8 }}>
-          <input
-            id="campo_hora_llegada_obra"
-            type="time"
-            name="hora_llegada_obra"
-            value={datos.hora_llegada_obra}
-            readOnly
-            className={`input${errores.hora_llegada_obra ? " campo-error" : ""}`}
-            style={errores.hora_llegada_obra ? { borderColor: "red", background: "#ffeaea" } : {}}
-          />
-          <button type="button" className="button" onClick={registrar_hora_llegada_obra}>Registrar hora</button>
-        </div>
-        {errores.hora_llegada_obra && (
-          <span style={{ color: "red", fontSize: 13 }}>
-            Este campo es obligatorio.
-            <span
-              style={{
-                marginLeft: 8,
-                cursor: "pointer",
-                fontSize: 18,
-                verticalAlign: "middle"
-              }}
-              onClick={scrollToGuardar}
-              title="Ir al botón Guardar"
-            >
-              &#8594;
-            </span>
-          </span>
-        )}
-        <label className="label">Hora Salida Obra</label>
-        <div style={{ display: "flex", gap: 8 }}>
-          <input
-            id="campo_hora_salida_obra"
-            type="time"
-            name="hora_salida_obra"
-            value={datos.hora_salida_obra}
-            readOnly
-            className={`input${errores.hora_salida_obra ? " campo-error" : ""}`}
-            style={errores.hora_salida_obra ? { borderColor: "red", background: "#ffeaea" } : {}}
-          />
-          <button type="button" className="button" onClick={registrar_hora_salida_obra}>Registrar hora</button>
-        </div>
-        {errores.hora_salida_obra && (
           <span style={{ color: "red", fontSize: 13 }}>
             Este campo es obligatorio.
             <span
