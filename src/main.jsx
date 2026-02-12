@@ -39,6 +39,7 @@ import HoraIngreso from "./components/compartido/horada_ingreso";
 import HoraSalida from "./components/compartido/hora_salida";
 import HorasExtraBombermanAdmin from "./components/administrador_bomberman/horas_extra_bomberman";
 import HorasExtraGruamanAdmin from "./components/administrador_gruaman/horas_extra_gruaman";
+import EleccionLideres from "./components/Lideres_bombas/eleccion_lideres";
 
 // Función para obtener usuario y obra de localStorage
 function getUsuarioObra() {
@@ -672,6 +673,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/hora_salida" element={<HoraSalida />} />
             <Route path="/horas_extra_bomberman" element={<HorasExtraBombermanAdmin />} />
             <Route path="/horas_extra_gruaman" element={<HorasExtraGruamanAdmin />} />
+            <Route path="/eleccion_lideres/*" element={<EleccionLideres />} />
           </Routes>
           {/* <Footer /> */}
         </div>

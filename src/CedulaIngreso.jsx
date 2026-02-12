@@ -73,7 +73,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           const nombre = usuario.nombre || usuario.nombres || usuario.nombre_trabajador || "";
           const numeroId = usuario.numero_identificacion || usuario.cedula || usuario.id || cedula;
           const cargo = usuario.cargo || usuario.cargo_trabajador || usuario.puesto || "";
-          const empresaName = usuario.empresa || (usuario.empresa_id === 1 ? "GyE" : (usuario.empresa_id === 2 ? "AIC" : "")) || "";
+          const empresaName = usuario.empresa || (usuario.empresa_id === 1 ? "GyE" : usuario.empresa_id === 2 ? "AIC" : usuario.empresa_id === 5 ? "Lideres" : "") || "";
           const obra = usuario.obra || usuario.nombre_proyecto || usuario.nombre_obra || "";
 
           localStorage.setItem("nombre_trabajador", nombre);
@@ -150,7 +150,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         // Mantener callback existente
         onUsuarioEncontrado && onUsuarioEncontrado({
           nombre: usuario.nombre,
-          empresa: usuario.empresa_id === 1 ? "GyE" : "AIC",
+          empresa: usuario.empresa_id === 1 ? "GyE" : usuario.empresa_id === 2 ? "AIC" : usuario.empresa_id === 5 ? "Lideres" : "",
           numero_identificacion: usuario.numero_identificacion
         });
       } else {
@@ -213,7 +213,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
       // Continuar con el callback original
       onUsuarioEncontrado && onUsuarioEncontrado({
         nombre: pendingUsuario.nombre,
-        empresa: pendingUsuario.empresa_id === 1 ? "GyE" : "AIC",
+        empresa: pendingUsuario.empresa_id === 1 ? "GyE" : pendingUsuario.empresa_id === 2 ? "AIC" : pendingUsuario.empresa_id === 5 ? "Lideres" : "",
         numero_identificacion: pendingUsuario.numero_identificacion
       });
       
