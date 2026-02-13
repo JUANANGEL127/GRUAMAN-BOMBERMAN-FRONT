@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
-// Usa variable de entorno para la base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
 function toYMD(date) {
@@ -27,7 +26,7 @@ function normalizaFlag(val) {
 }
 
 function InventariosObraAdmin() {
-  const [activeBar, setActiveBar] = useState(""); // "ver", "excel", "pdf"
+  const [activeBar, setActiveBar] = useState("");
   const [filters, setFilters] = useState({
     nombre: "",
     cedula: "",
@@ -95,39 +94,81 @@ function InventariosObraAdmin() {
         formato: tipo,
         limit: 50000
       };
-      const res = await axios.post(`${API_BASE_URL}/inventarios_obra_admin/descargar`, body, { responseType: 'blob' });
       
-      // Verificar si la respuesta es un error (el servidor puede devolver JSON con error en un blob)
-      if (res.data.type === 'application/json') {
-        const text = await res.data.text();
+      console.log('Enviando solicitud de descarga...');
+      
+      const res = await axios.post(
+        `${API_BASE_URL}/inventarios_obra_admin/descargar`,
+        body,
+        { 
+          responseType: 'arraybuffer'
+        }
+      );
+
+      console.log('Respuesta recibida:', {
+        status: res.status,
+        contentType: res.headers['content-type'],
+        contentLength: res.headers['content-length'],
+        dataSize: res.data?.byteLength
+      });
+
+      const contentType = res.headers['content-type'] || '';
+      
+      // Detectar si es error JSON
+      if (contentType.includes('application/json')) {
+        const text = new TextDecoder().decode(res.data);
         const errorData = JSON.parse(text);
         alert(`Error del servidor: ${errorData.message || errorData.error || 'Error desconocido'}`);
         return;
       }
+
+      // Determinar la extensión correcta basada en el Content-Type
+      let filename;
+      if (contentType.includes('application/zip')) {
+        filename = tipo === 'excel' ? 'inventarios_obra_excels.zip' : 'inventarios_obra_pdfs.zip';
+      } else if (contentType.includes('application/pdf')) {
+        filename = 'inventario_obra.pdf';
+      } else if (contentType.includes('spreadsheet') || contentType.includes('excel')) {
+        filename = 'inventario_obra.xlsx';
+      } else {
+        // Fallback basado en el tipo solicitado
+        filename = tipo === 'excel' ? 'inventarios_obra.xlsx' : 'inventarios_obra.zip';
+      }
       
-      const blob = new Blob([res.data], { type: tipo === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/zip' });
+      // Intentar obtener nombre del header Content-Disposition (tiene prioridad)
+      const disposition = res.headers['content-disposition'];
+      if (disposition && disposition.includes('filename=')) {
+        const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (match && match[1]) {
+          filename = match[1].replace(/['"]/g, '');
+        }
+      }
+
+      console.log('Creando descarga con filename:', filename);
+
+      const blob = new Blob([res.data], { 
+        type: contentType || 'application/octet-stream' 
+      });
+      
+      console.log('Blob creado:', {
+        size: blob.size,
+        type: blob.type
+      });
+      
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', tipo === 'excel' ? 'inventarios_obra.xlsx' : 'inventarios_obra.zip');
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      
+      console.log('Descarga iniciada exitosamente');
     } catch (e) {
-      console.error(e);
-      // Intentar leer el mensaje de error del servidor
-      if (e.response && e.response.data) {
-        try {
-          const text = await e.response.data.text();
-          const errorData = JSON.parse(text);
-          alert(`Error al descargar: ${errorData.message || errorData.error || 'Error interno del servidor'}`);
-        } catch {
-          alert(`Error al descargar: ${e.message || 'Error interno del servidor (500)'}`);
-        }
-      } else {
-        alert(`Error al descargar: ${e.message || 'Error de conexión'}`);
-      }
+      console.error('Error completo:', e);
+      console.error('Response data:', e.response?.data);
+      alert(`Error al descargar: ${e.response?.data?.message || e.message || 'Error interno del servidor'}`);
     } finally {
       setLoading(false);
     }
@@ -138,7 +179,6 @@ function InventariosObraAdmin() {
       try {
         const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
         if (Array.isArray(res.data.datos)) {
-          // Filtrar solo empresa_id=2
           setNombresOperarios(res.data.datos.filter(d => d.empresa_id === 2).map(d => d.nombre));
         } else {
           setNombresOperarios([]);
@@ -354,7 +394,6 @@ function InventariosObraAdmin() {
                         <div><strong>Empresa:</strong> {r.empresa || "—"}</div>
                         <div><strong>Obra:</strong> {r.obra || "—"}</div>
                         <div><strong>Constructora:</strong> {r.constructora || "—"}</div>
-                        {/* campos adicionales: cargo, observaciones */}
                         <button
                           className="permiso-trabajo-btn"
                           style={{ marginTop: 8, fontSize: 13, padding: "4px 10px" }}
