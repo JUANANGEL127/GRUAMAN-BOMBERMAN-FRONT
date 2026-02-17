@@ -40,6 +40,7 @@ import HoraSalida from "./components/compartido/hora_salida";
 import HorasExtraBombermanAdmin from "./components/administrador_bomberman/horas_extra_bomberman";
 import HorasExtraGruamanAdmin from "./components/administrador_gruaman/horas_extra_gruaman";
 import EleccionLideres from "./components/Lideres_bombas/eleccion_lideres";
+import RegistrosDiariosAdmin from './components/administrador/RegistrosDiariosAdmin';
 
 // Función para obtener usuario y obra de localStorage
 function getUsuarioObra() {
@@ -122,6 +123,8 @@ function SOSButton() {
   const [enviando, setEnviando] = React.useState(false);
   const [mensaje, setMensaje] = React.useState("");
   const [showModal, setShowModal] = React.useState(false);
+  const [showRegionModal, setShowRegionModal] = React.useState(false);
+  const [showRoleModal, setShowRoleModal] = React.useState(false);
 
   // Utilidad para obtener usuario y obra de localStorage
   function getUsuarioObra() {
@@ -182,23 +185,41 @@ function SOSButton() {
     window.location.href = "tel:573183485318";
   };
 
-  // Handler para WhatsApp
+  // Handler para WhatsApp: abrir selector de rol (bomberman / gruaman)
   const handleWhatsApp = () => {
     setShowModal(false);
+    setShowRoleModal(true);
+    setMensaje("");
+  };
+
+  // Manejar selección de rol: si es bomberman abrir regiones, si es gruaman redirigir
+  const handleRole = (role) => {
+    setShowRoleModal(false);
+    if (role === "bomberman") {
+      setShowRegionModal(true);
+      return;
+    }
+    if (role === "gruaman") {
+      // Grupo Gruaman (anteriormente usado) con mode param
+      handleRegion('https://chat.whatsapp.com/F9SaM1zAVuw5EoS7SKQ6rK?mode=gi_c');
+    }
+  };
+
+  // Redirigir según región, copiando el mensaje
+  const handleRegion = (regionUrl) => {
+    setShowRegionModal(false);
     const { usuario, obra } = getUsuarioObra();
-    const baseUrl = "https://chat.whatsapp.com/F9SaM1zAVuw5EoS7SKQ6rK";
-    const mensaje = `Soy ${usuario || "un usuario"} en la obra ${obra || "desconocida"}, tuve un accidente o incidente`;
+    const mensajeRegion = `Soy ${usuario || "un usuario"} en la obra ${obra || "desconocida"}, tuve un accidente o incidente`;
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(mensaje);
+      navigator.clipboard.writeText(mensajeRegion);
       setTimeout(() => {
-        window.location.href = baseUrl;
+        window.location.href = regionUrl;
       }, 300);
       setMensaje("Mensaje copiado. Pega el mensaje en el grupo de WhatsApp.");
     } else {
-      window.location.href = baseUrl;
-      setMensaje("Copia y pega este mensaje en el grupo: " + mensaje);
+      window.location.href = regionUrl;
+      setMensaje("Copia y pega este mensaje en el grupo: " + mensajeRegion);
     }
-    // Ocultar mensaje después de 3 segundos
     setTimeout(() => setMensaje(""), 3000);
   };
 
@@ -286,6 +307,123 @@ function SOSButton() {
          </div>
        </div>
      )}
+    {showRegionModal && (
+      <div
+        style={{
+          position: "fixed",
+          left: 0,
+          top: 0,
+          width: "100vw",
+          height: "100vh",
+          background: "rgba(0,0,0,0.25)",
+          zIndex: 2050,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+        onClick={() => setShowRegionModal(false)}
+      >
+        <div
+          style={{
+            background: "#fff",
+            borderRadius: 14,
+            boxShadow: "0 2px 12px #c00",
+            padding: "18px",
+            minWidth: 260,
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+            alignItems: "center"
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div style={{ fontWeight: 600, fontSize: 16 }}>Elige la región</div>
+          <button
+            className="permiso-trabajo-btn"
+            style={{ background: "#1976d2", color: "#fff", minWidth: 160, fontWeight: 600 }}
+            onClick={() => handleRegion('https://chat.whatsapp.com/J3GqgX5SvOUAnPp30mB1ab?mode=gi_c')}
+          >
+            Cundinamarca
+          </button>
+          <button
+            className="permiso-trabajo-btn"
+            style={{ background: "#1976d2", color: "#fff", minWidth: 160, fontWeight: 600 }}
+            onClick={() => handleRegion('https://chat.whatsapp.com/EDHaafxQQtcIDsxrm0plMR?mode=gi_c')}
+          >
+            Antioquia
+          </button>
+          <button
+            className="permiso-trabajo-btn"
+            style={{ background: "#1976d2", color: "#fff", minWidth: 160, fontWeight: 600 }}
+            onClick={() => handleRegion('https://chat.whatsapp.com/DkkCKXpMxPj751BoltbLBq?mode=gi_c')}
+          >
+            Atlantico
+          </button>
+          <button
+            className="permiso-trabajo-btn"
+            style={{ background: "#eee", color: "#222", minWidth: 120, fontWeight: 600 }}
+            onClick={() => setShowRegionModal(false)}
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    )}
+    {showRoleModal && (
+      <div
+        style={{
+          position: "fixed",
+          left: 0,
+          top: 0,
+          width: "100vw",
+          height: "100vh",
+          background: "rgba(0,0,0,0.25)",
+          zIndex: 2040,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+        onClick={() => setShowRoleModal(false)}
+      >
+        <div
+          style={{
+            background: "#fff",
+            borderRadius: 14,
+            boxShadow: "0 2px 12px #c00",
+            padding: "18px",
+            minWidth: 260,
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+            alignItems: "center"
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div style={{ fontWeight: 600, fontSize: 16 }}>¿Eres bomberman o gruaman?</div>
+          <button
+            className="permiso-trabajo-btn"
+            style={{ background: "#1976d2", color: "#fff", minWidth: 160, fontWeight: 600 }}
+            onClick={() => handleRole('bomberman')}
+          >
+            Bomberman
+          </button>
+          <button
+            className="permiso-trabajo-btn"
+            style={{ background: "#c00", color: "#fff", minWidth: 160, fontWeight: 600 }}
+            onClick={() => handleRole('gruaman')}
+          >
+            Gruaman
+          </button>
+          <button
+            className="permiso-trabajo-btn"
+            style={{ background: "#eee", color: "#222", minWidth: 120, fontWeight: 600 }}
+            onClick={() => setShowRoleModal(false)}
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    )}
       {mensaje && (
         <div
           style={{
@@ -319,6 +457,8 @@ function STPButton() {
   const [showModal, setShowModal] = React.useState(false);
   const [showCallModal, setShowCallModal] = React.useState(false);
   const [mensaje, setMensaje] = React.useState("");
+  const [showRegionModalSTP, setShowRegionModalSTP] = React.useState(false);
+  const [showRoleModalSTP, setShowRoleModalSTP] = React.useState(false);
 
   // Utilidad para obtener usuario y obra de localStorage
   function getUsuarioObra() {
@@ -373,23 +513,41 @@ function STPButton() {
     setMensaje("");
   };
 
-  // Handler para WhatsApp grupo STP
+  // Handler para WhatsApp grupo STP: abrir selector de rol
   const handleWhatsApp = () => {
     setShowModal(false);
+    setShowRoleModalSTP(true);
+    setMensaje("");
+  };
+
+  // Manejar selección de rol en STP
+  const handleRoleSTP = (role) => {
+    setShowRoleModalSTP(false);
+    if (role === "bomberman") {
+      setShowRegionModalSTP(true);
+      return;
+    }
+    if (role === "gruaman") {
+      // Redirigir a grupo Gruaman con mensaje STP
+      handleRegionSTP('https://chat.whatsapp.com/F9SaM1zAVuw5EoS7SKQ6rK?mode=gi_c');
+    }
+  };
+
+  // Redirigir según región para STP, copiando el mensaje correspondiente
+  const handleRegionSTP = (regionUrl) => {
+    setShowRegionModalSTP(false);
     const { usuario, obra } = getUsuarioObra();
-    const baseUrl = "https://chat.whatsapp.com/FUZyTMGqpXu36uXHhUIAWh";
-    const mensajeTexto = `Soy ${usuario || "un usuario"} en la obra ${obra || "desconocida"}, tuve un paro en obra, necesito asistencia`;
+    const mensajeRegion = `Soy ${usuario || "un usuario"} en la obra ${obra || "desconocida"}, tuve un paro en obra, necesito asistencia`;
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(mensajeTexto);
+      navigator.clipboard.writeText(mensajeRegion);
       setTimeout(() => {
-        window.location.href = baseUrl;
+        window.location.href = regionUrl;
       }, 300);
       setMensaje("Mensaje copiado. Pega el mensaje en el grupo de WhatsApp.");
     } else {
-      window.location.href = baseUrl;
-      setMensaje("Copia y pega este mensaje en el grupo: " + mensajeTexto);
+      window.location.href = regionUrl;
+      setMensaje("Copia y pega este mensaje en el grupo: " + mensajeRegion);
     }
-    // Ocultar mensaje después de 3 segundos
     setTimeout(() => setMensaje(""), 3000);
   };
 
@@ -492,6 +650,123 @@ function STPButton() {
               className="permiso-trabajo-btn"
               style={{ background: "#eee", color: "#222", minWidth: 120, fontWeight: 600 }}
               onClick={() => setShowModal(false)}
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+      {showRegionModalSTP && (
+        <div
+          style={{
+            position: "fixed",
+            left: 0,
+            top: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.25)",
+            zIndex: 2050,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+          onClick={() => setShowRegionModalSTP(false)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 14,
+              boxShadow: "0 2px 12px #FFD600",
+              padding: "18px",
+              minWidth: 260,
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+              alignItems: "center"
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ fontWeight: 600, fontSize: 16 }}>Elige la región</div>
+            <button
+              className="permiso-trabajo-btn"
+              style={{ background: "#1976d2", color: "#fff", minWidth: 160, fontWeight: 600 }}
+              onClick={() => handleRegionSTP('https://chat.whatsapp.com/J3GqgX5SvOUAnPp30mB1ab?mode=gi_c')}
+            >
+              Cundinamarca
+            </button>
+            <button
+              className="permiso-trabajo-btn"
+              style={{ background: "#1976d2", color: "#fff", minWidth: 160, fontWeight: 600 }}
+              onClick={() => handleRegionSTP('https://chat.whatsapp.com/EDHaafxQQtcIDsxrm0plMR?mode=gi_c')}
+            >
+              Antioquia
+            </button>
+            <button
+              className="permiso-trabajo-btn"
+              style={{ background: "#1976d2", color: "#fff", minWidth: 160, fontWeight: 600 }}
+              onClick={() => handleRegionSTP('https://chat.whatsapp.com/DkkCKXpMxPj751BoltbLBq?mode=gi_c')}
+            >
+              Atlantico
+            </button>
+            <button
+              className="permiso-trabajo-btn"
+              style={{ background: "#eee", color: "#222", minWidth: 120, fontWeight: 600 }}
+              onClick={() => setShowRegionModalSTP(false)}
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+      {showRoleModalSTP && (
+        <div
+          style={{
+            position: "fixed",
+            left: 0,
+            top: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.25)",
+            zIndex: 2040,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+          onClick={() => setShowRoleModalSTP(false)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 14,
+              boxShadow: "0 2px 12px #FFD600",
+              padding: "18px",
+              minWidth: 260,
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+              alignItems: "center"
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ fontWeight: 600, fontSize: 16 }}>¿Eres bomberman o gruaman?</div>
+            <button
+              className="permiso-trabajo-btn"
+              style={{ background: "#1976d2", color: "#fff", minWidth: 160, fontWeight: 600 }}
+              onClick={() => handleRoleSTP('bomberman')}
+            >
+              Bomberman
+            </button>
+            <button
+              className="permiso-trabajo-btn"
+              style={{ background: "#c00", color: "#fff", minWidth: 160, fontWeight: 600 }}
+              onClick={() => handleRoleSTP('gruaman')}
+            >
+              Gruaman
+            </button>
+            <button
+              className="permiso-trabajo-btn"
+              style={{ background: "#eee", color: "#222", minWidth: 120, fontWeight: 600 }}
+              onClick={() => setShowRoleModalSTP(false)}
             >
               Cancelar
             </button>
@@ -674,6 +949,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/horas_extra_bomberman" element={<HorasExtraBombermanAdmin />} />
             <Route path="/horas_extra_gruaman" element={<HorasExtraGruamanAdmin />} />
             <Route path="/eleccion_lideres/*" element={<EleccionLideres />} />
+            <Route path="/registros_diarios_admin" element={<RegistrosDiariosAdmin />} />
           </Routes>
           {/* <Footer /> */}
         </div>

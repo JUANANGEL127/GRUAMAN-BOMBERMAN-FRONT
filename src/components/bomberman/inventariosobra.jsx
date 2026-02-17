@@ -65,7 +65,7 @@ const itemsTuberia = [
   { item: "GU55", desc: "EMPAQUE 5\" FLANCHE PLANO" },
   { item: "K000907858", desc: "ABRAZADERA ARRANQUE 5\" CIFA" },
   { item: "266782", desc: "ABRAZADERA ARRANQUE 6\" TURBOSOL" },
-  { item: "DIABLO 5\"", desc: "ATRAPA DIABLOS" },
+  { item: "ATRAPA DIABLOS", desc: "ATRAPA DIABLOS" },
   { item: "CA55R1000.45", desc: "CODO 45º R=1000 DE 5\" FLANCHE PLANO" },
   { item: "CUMN55R275.45", desc: "CODO 45º R=275 DE 5\" FLANCHE PLANO" },
   { item: "CA55.R500.45.S4", desc: "CODO 45º R=500 DE 5\" FLANCHE PLANO" },
@@ -188,7 +188,9 @@ function inventariosobra() {
     proyecto: "",
     fecha: "",
     nombre_operador: "",
-    cargo: ""
+    cargo: "",
+    extintor_fecha_vencimiento: "",
+    botiquin_fecha_vencimiento: ""
   });
   const [accesoriosCant, setAccesoriosCant] = useState({});
   const [accesoriosTuberiaCant, setAccesoriosTuberiaCant] = useState({});
@@ -214,7 +216,9 @@ function inventariosobra() {
           proyecto: nombre_proyecto,
           fecha: fechaHoy,
           nombre_operador,
-          cargo: localStorage.getItem("cargo_trabajador") || ""
+          cargo: localStorage.getItem("cargo_trabajador") || "",
+          extintor_fecha_vencimiento: "",
+          botiquin_fecha_vencimiento: ""
         });
       })
       .catch(() => {
@@ -223,7 +227,9 @@ function inventariosobra() {
           proyecto: nombre_proyecto,
           fecha: fechaHoy,
           nombre_operador,
-          cargo: localStorage.getItem("cargo_trabajador") || ""
+          cargo: localStorage.getItem("cargo_trabajador") || "",
+          extintor_fecha_vencimiento: "",
+          botiquin_fecha_vencimiento: ""
         });
       });
   }, []);
@@ -237,6 +243,8 @@ function inventariosobra() {
       fecha_servicio: generales.fecha,
       nombre_operador: generales.nombre_operador,
       cargo: generales.cargo,
+        extintor_fecha_vencimiento: generales.extintor_fecha_vencimiento || null,
+        botiquin_fecha_vencimiento: generales.botiquin_fecha_vencimiento || null,
       ...accesoriosDBMap.reduce((acc, map, idx) => {
         acc[map.buena] = parseInt(accesoriosCant[idx]?.buena) || 0;
         acc[map.mala] = parseInt(accesoriosCant[idx]?.mala) || 0;
@@ -437,6 +445,27 @@ function inventariosobra() {
                     style={{ width: 60, textAlign: "center" }}
                   />
                 </div>
+              </div>
+            )}
+            {/* Si el item es EXTINTOR o BOTIQUIN, mostrar input de fecha debajo */}
+            {i.desc === "EXTINTOR" && (
+              <div style={{ marginTop: 8 }}>
+                <label className="label">Fecha vencimiento extintor</label>
+                <input
+                  type="date"
+                  value={generales.extintor_fecha_vencimiento || ""}
+                  onChange={e => setGenerales(prev => ({ ...prev, extintor_fecha_vencimiento: e.target.value }))}
+                />
+              </div>
+            )}
+            {i.desc === "BOTIQUIN" && (
+              <div style={{ marginTop: 8 }}>
+                <label className="label">Fecha vencimiento botiquín</label>
+                <input
+                  type="date"
+                  value={generales.botiquin_fecha_vencimiento || ""}
+                  onChange={e => setGenerales(prev => ({ ...prev, botiquin_fecha_vencimiento: e.target.value }))}
+                />
               </div>
             )}
           </div>

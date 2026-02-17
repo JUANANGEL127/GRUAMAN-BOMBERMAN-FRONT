@@ -23,7 +23,8 @@ function Checklist(props) {
     bomba_numero: "",
     horometro_motor: "",
     nombre_operador: "",
-    observaciones: "" 
+    observaciones: "",
+    chasis_funcionamiento_combustible_galones: ""
   });
 
   const [lista_bombas, set_lista_bombas] = useState([]);
@@ -201,6 +202,7 @@ function Checklist(props) {
           nombre_proyecto: nombre_obra_local,
           fecha_servicio: fecha_hoy,
           nombre_operador: nombre_operador_local,
+          chasis_funcionamiento_combustible_galones: prev.chasis_funcionamiento_combustible_galones || ""
         }));
       })
       .catch(() => {
@@ -210,6 +212,7 @@ function Checklist(props) {
           nombre_proyecto: nombre_obra_local,
           fecha_servicio: fecha_hoy,
           nombre_operador: nombre_operador_local,
+          chasis_funcionamiento_combustible_galones: prev.chasis_funcionamiento_combustible_galones || ""
         }));
       });
   }, [nombre_operador_local, nombre_obra_local]);
@@ -242,7 +245,8 @@ function Checklist(props) {
             bomba_numero: "",
             horometro_motor: "",
             nombre_operador: "",
-            observaciones: ""
+            observaciones: "",
+            chasis_funcionamiento_combustible_galones: ""
           });
           setEstadoItems(parsed.estadoItems || {});
         }
@@ -259,7 +263,8 @@ function Checklist(props) {
         bomba_numero: "",
         horometro_motor: "",
         nombre_operador: "",
-        observaciones: ""
+        observaciones: "",
+        chasis_funcionamiento_combustible_galones: ""
       });
       setEstadoItems(itemToField.reduce((acc, field) => {
         acc[field] = { estado: "", observacion: "" };
@@ -500,6 +505,22 @@ function Checklist(props) {
                         <option value="REGULAR">Regular</option>
                         <option value="MALO">Malo</option>
                         </select>
+
+                        {field === 'chasis_funcionamiento_combustible' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <label className="permiso-trabajo-label" style={{ fontSize: 13 }}>Galones</label>
+                            <input
+                              type="number"
+                              name="chasis_funcionamiento_combustible_galones"
+                              value={datos.chasis_funcionamiento_combustible_galones || ""}
+                              onChange={handle_change}
+                              className="permiso-trabajo-input"
+                              style={{ width: 120 }}
+                              min="0"
+                              step="0.1"
+                            />
+                          </div>
+                        )}
 
                         {isStateError && (
                             <span style={{ color: "red", fontSize: 13 }}>
