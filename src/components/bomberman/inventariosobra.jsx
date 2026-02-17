@@ -26,6 +26,8 @@ const accesorios = [
   { desc: "LLAVE EXPANSIVA 15\"" },
   { desc: "MASETA" },
   { desc: "TUBO PARA ABRAZADERA" }
+  ,{ desc: "BANCO METÁLICO" }
+  ,{ desc: "SOPORTES METÁLICOS" }
 ];
 
 const accesoriosTuberia = [
@@ -113,6 +115,8 @@ const accesoriosDBMap = [
   { base: "llave_expansiva_15", buena: "llave_expansiva_15_buena", mala: "llave_expansiva_15_mala" },
   { base: "maseta", buena: "maseta_buena", mala: "maseta_mala" },
   { base: "tubo_para_abrazadera", buena: "tubo_para_abrazadera_buena", mala: "tubo_para_abrazadera_mala" }
+  ,{ base: "banco_metalico", buena: "banco_metalico_buena", mala: "banco_metalico_mala" }
+  ,{ base: "soportes_metalicos", buena: "soportes_metalicos_buena", mala: "soportes_metalicos_mala" }
 ];
 
 // Map for DB columns for accesorios tuberia (buena/mala)
