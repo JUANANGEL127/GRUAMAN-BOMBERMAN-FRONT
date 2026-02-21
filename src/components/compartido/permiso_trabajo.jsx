@@ -3,12 +3,10 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
-// Usa variable de entorno para la base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
 function getCurrentWeekKey() {
   const now = new Date();
-  // Get ISO week number
   const firstJan = new Date(now.getFullYear(), 0, 1);
   const days = Math.floor((now - firstJan) / (24 * 60 * 60 * 1000));
   const week = Math.ceil((days + firstJan.getDay() + 1) / 7);
@@ -16,7 +14,7 @@ function getCurrentWeekKey() {
 }
 
 function isSunday() {
-  return new Date().getDay() === 0; // 0 = Sunday
+  return new Date().getDay() === 0;
 }
 
 function PermisoTrabajo(props) {
@@ -25,6 +23,7 @@ function PermisoTrabajo(props) {
     proyecto: "",
     fecha: "",
     operador: "",
+    observaciones: "",
   });
 
   const tareasInicial = {
@@ -49,7 +48,7 @@ function PermisoTrabajo(props) {
     "VERIFICACION Y/O MANTENIMIENTO ELECTRICO MECANICO",
     "MONTAJE DE TORRE GRUA / ELEVADOR DE CARGA",
     "DESMONTAJE DE TORRE GRUA / ELEVADOR DE CARGA",
-    "TELESCOPAJE DE TORRE GRUA / ELEVADOR DE CARGA"
+    "TELESCOPAJE DE TORRE GRUA / ELEVADOR DE CARGA",
   ];
 
   const [descripcion, setDescripcion] = useState("");
@@ -75,7 +74,7 @@ function PermisoTrabajo(props) {
   });
 
   const toggleHerramienta = (key) => {
-    setHerramientasLista(prev => ({ ...prev, [key]: !prev[key] }));
+    setHerramientasLista((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const [trabajadores, setTrabajadores] = useState([
@@ -176,293 +175,145 @@ function PermisoTrabajo(props) {
   });
 
   const [modalCierreOpen, setModalCierreOpen] = useState(false);
-  const [cierrePermiso, setCierrePermiso] = useState({
-    cierre: "",
-    motivo: "",
-    nombre: "",
-  });
+  const [cierrePermiso, setCierrePermiso] = useState({ cierre: "", motivo: "", nombre: "" });
   const [cierrePermisoGuardado, setCierrePermisoGuardado] = useState(false);
 
   const [modalCierreLaborOpen, setModalCierreLaborOpen] = useState(false);
-  const [cierreLabor, setCierreLabor] = useState({
-    trabajador_nombre: "",
-    coordinador_nombre: "",
-  });
+  const [cierreLabor, setCierreLabor] = useState({ trabajador_nombre: "", coordinador_nombre: "" });
   const [cierreLaborGuardado, setCierreLaborGuardado] = useState(false);
 
   const navigate = useNavigate();
 
+  // ─── ÚNICO useEffect: evita race condition entre los dos anteriores ──────────
   useEffect(() => {
-    const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
-    const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
+    const nombre_proyecto =
+      localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
+
+    // Leer operador directamente de localStorage — fuente de verdad única
+    const nombre_operador =
+      localStorage.getItem("nombre_trabajador") ||
+      localStorage.getItem("operador") ||
+      "";
+
     const fechaHoy = new Date().toISOString().slice(0, 10);
 
-    axios.get(`${API_BASE_URL}/obras`)
-      .then(res => {
-        let obras = [];
-        if (Array.isArray(res.data.obras)) {
-          obras = res.data.obras;
+    // ── Manejo de datos guardados por semana ────────────────────────────────
+    const weekKey = getCurrentWeekKey();
+    const saved = localStorage.getItem("permiso_trabajo_respuestas");
+    let datosGuardados = null;
+
+    if (saved && !isSunday()) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.weekKey === weekKey) {
+          datosGuardados = parsed;
+        } else {
+          localStorage.removeItem("permiso_trabajo_respuestas");
         }
-        const obra_seleccionada = obras.find(o => o.nombre_obra === nombre_proyecto);
+      } catch (e) {
+        localStorage.removeItem("permiso_trabajo_respuestas");
+      }
+    } else if (isSunday()) {
+      localStorage.removeItem("permiso_trabajo_respuestas");
+    }
+
+    if (datosGuardados) {
+      // Precargar todo desde localStorage, pero SIEMPRE pisar operador con el actual
+      setTareas(datosGuardados.tareas || tareasInicial);
+      setDescripcion(datosGuardados.descripcion || "");
+      setHerramientas(datosGuardados.herramientas || "");
+      setHerramientasLista(
+        datosGuardados.herramientasLista || {
+          MARTILLO: false, LLAVES: false, "PALANCA DE FUERZA": false,
+          ALMADANA: false, NIVEL: false, ESPÁTULA: false, ALICATE: false,
+          PINZAS: false, "PALUSTRE PALA BARRA": false, DECAMETRO: false,
+          PICA: false, "PALA DRAGA": false, MACHETE: false, "CORTA FRIO": false,
+          MULTIMETRO: false, FLEXOMETRO: false, CINCEL: false,
+        }
+      );
+      setTrabajadores(
+        datosGuardados.trabajadores || [
+          { id: 1, numero_id: "", nombres: "", cargo: "", apto: false, ppe: false, observacion: "" },
+        ]
+      );
+      setMedidasPrevencion(datosGuardados.medidasPrevencion || {
+        procedimiento: false, info_y_demarcacion: false, epp_correcto: false,
+        inspeccion_previas: false, plan_rescate: false,
+      });
+      setEquiposAcceso(datosGuardados.equiposAcceso || {
+        escaleras: false, vertical_fija: false, portal: false, andamios: false,
+        colgante: false, elevador_carga: false, canastilla: false, ascensores_personas: false,
+      });
+      setTrabajoRutinario(datosGuardados.trabajoRutinario || "");
+      setAlturaTiene(datosGuardados.alturaTiene || "");
+      setAlturaInicial(datosGuardados.alturaInicial || "");
+      setAlturaFinal(datosGuardados.alturaFinal || "");
+      setRequisitosAptitud(datosGuardados.requisitosAptitud || {
+        explicacion_procedimiento: false, buenas_condiciones_salud: false,
+        entiende_ats: false, consumio_alimentos: false, dormio_suficiente: false,
+        no_bebidas_embriagantes: false, sin_accesorios: false,
+        sin_medicamentos: false, capacitado_certificado: false,
+      });
+      setEpp(datosGuardados.epp || {
+        cuenta_certificado_alturas: "", seguridad_social_arl: "", casco_tipo1: "",
+        gafas: "", proteccion_auditiva: "", proteccion_respiratoria: "",
+        guantes_seguridad: "", botas_dielectricas: "", overol_dotacion: "",
+      });
+      setSrpdc(datosGuardados.srpdc || {
+        arnes_cuerpo_entero: "", arnes_dielectrico: "", mosqueton: "",
+        arrestador_caidas: "", eslinga_y_absorbedor: "", eslinga_posicionamiento: "",
+        linea_vida: "", verificacion_anclaje: "",
+      });
+      setPrecaucionesGenerales(datosGuardados.precaucionesGenerales || {
+        procedimiento_charla: "", medidas_colectivas_prevencion: "",
+        epp_epcc_inspeccion: "", equipos_herramientas_inspeccion: "",
+        inspeccion_sistema_ta: "", plan_emergencias_rescate: "",
+        medidas_caida_objetos: "", kit_rescate: "", permiso_trabajo_ats: "",
+        verificacion_atmosfericas: "", distancia_vertical_caida: "", otro: "",
+      });
+      setEquiposAccesoP8(datosGuardados.equiposAccesoP8 || {
+        vertical_fija: "", vertical_portatil: "", andamio_multidireccional: "",
+        andamio_colgante: "", elevador_carga: "", canastilla: "",
+        ascensor_personas: "", acceso_cuerdas: "", otro: "",
+      });
+
+      // Firmas: precargar cargo/coordinador, pero SIEMPRE usar operador actual
+      setFirmas({
+        ...(datosGuardados.firmas || {}),
+        trabajador_autorizado: nombre_operador,
+      });
+    } else {
+      // Sin datos guardados: solo setear el operador
+      setFirmas((prev) => ({ ...prev, trabajador_autorizado: nombre_operador }));
+    }
+
+    // ── Llamada API: siempre pisa cliente/proyecto/fecha/operador ──────────
+    axios
+      .get(`${API_BASE_URL}/obras`)
+      .then((res) => {
+        const obras = Array.isArray(res.data.obras) ? res.data.obras : [];
+        const obra_seleccionada = obras.find((o) => o.nombre_obra === nombre_proyecto);
         const constructora = obra_seleccionada ? obra_seleccionada.constructora : "";
-        setGenerales(prev => ({
+        setGenerales((prev) => ({
           ...prev,
           cliente: constructora,
           proyecto: nombre_proyecto,
           operador: nombre_operador,
-          fecha: fechaHoy
+          fecha: fechaHoy,
         }));
       })
       .catch(() => {
-        setGenerales(prev => ({
+        setGenerales((prev) => ({
           ...prev,
           cliente: "",
           proyecto: nombre_proyecto,
           operador: nombre_operador,
-          fecha: fechaHoy
+          fecha: fechaHoy,
         }));
       });
-
-    setFirmas(prev => ({
-      ...prev,
-      trabajador_autorizado: nombre_operador,
-    }));
+    // eslint-disable-next-line
   }, []);
-
-  // --- NUEVO: Manejo de respuestas precargadas por semana ---
-  useEffect(() => {
-    const weekKey = getCurrentWeekKey();
-    const saved = localStorage.getItem("permiso_trabajo_respuestas");
-    let shouldClear = false;
-
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Si es domingo, limpiar respuestas
-        if (isSunday() || parsed.weekKey !== weekKey) {
-          shouldClear = true;
-        } else {
-          // Precargar respuestas si la semana coincide
-          setGenerales(parsed.generales || generales);
-          setTareas(parsed.tareas || tareasInicial);
-          setDescripcion(parsed.descripcion || "");
-          setHerramientas(parsed.herramientas || "");
-          setHerramientasLista(parsed.herramientasLista || herramientasLista);
-          setTrabajadores(parsed.trabajadores || [
-            { id: 1, numero_id: "", nombres: "", cargo: "", apto: false, ppe: false, observacion: "" },
-          ]);
-          setMedidasPrevencion(parsed.medidasPrevencion || {
-            procedimiento: false,
-            info_y_demarcacion: false,
-            epp_correcto: false,
-            inspeccion_previas: false,
-            plan_rescate: false,
-          });
-          setEquiposAcceso(parsed.equiposAcceso || {
-            escaleras: false,
-            vertical_fija: false,
-            portal: false,
-            andamios: false,
-            colgante: false,
-            elevador_carga: false,
-            canastilla: false,
-            ascensores_personas: false,
-          });
-          setFirmas(parsed.firmas || {
-            trabajador_autorizado: "",
-            cargo_autorizado: "",
-            firma_coordinador: "",
-            fecha_validacion: "",
-          });
-          setTrabajoRutinario(parsed.trabajoRutinario || "");
-          setAlturaTiene(parsed.alturaTiene || "");
-          setAlturaInicial(parsed.alturaInicial || "");
-          setAlturaFinal(parsed.alturaFinal || "");
-          setRequisitosAptitud(parsed.requisitosAptitud || {
-            explicacion_procedimiento: false,
-            buenas_condiciones_salud: false,
-            entiende_ats: false,
-            consumio_alimentos: false,
-            dormio_suficiente: false,
-            no_bebidas_embriagantes: false,
-            sin_accesorios: false,
-            sin_medicamentos: false,
-            capacitado_certificado: false,
-          });
-          setEpp(parsed.epp || {
-            cuenta_certificado_alturas: "",
-            seguridad_social_arl: "",
-            casco_tipo1: "",
-            gafas: "",
-            proteccion_auditiva: "",
-            proteccion_respiratoria: "",
-            guantes_seguridad: "",
-            botas_dielectricas: "",
-            overol_dotacion: "",
-          });
-          setSrpdc(parsed.srpdc || {
-            arnes_cuerpo_entero: "",
-            arnes_dielectrico: "",
-            mosqueton: "",
-            arrestador_caidas: "",
-            eslinga_y_absorbedor: "",
-            eslinga_posicionamiento: "",
-            linea_vida: "",
-            verificacion_anclaje: "",
-          });
-          setPrecaucionesGenerales(parsed.precaucionesGenerales || {
-            procedimiento_charla: "",
-            medidas_colectivas_prevencion: "",
-            epp_epcc_inspeccion: "",
-            equipos_herramientas_inspeccion: "",
-            inspeccion_sistema_ta: "",
-            plan_emergencias_rescate: "",
-            medidas_caida_objetos: "",
-            kit_rescate: "",
-            permiso_trabajo_ats: "",
-            verificacion_atmosfericas: "",
-            distancia_vertical_caida: "",
-            otro: "",
-          });
-          setEquiposAccesoP8(parsed.equiposAccesoP8 || {
-            vertical_fija: "",
-            vertical_portatil: "",
-            andamio_multidireccional: "",
-            andamio_colgante: "",
-            elevador_carga: "",
-            canastilla: "",
-            ascensor_personas: "",
-            acceso_cuerdas: "",
-            otro: "",
-          });
-        }
-      } catch (e) {
-        shouldClear = true;
-      }
-    }
-    if (shouldClear) {
-      localStorage.removeItem("permiso_trabajo_respuestas");
-      // Limpiar todos los estados a sus valores iniciales
-      setGenerales({
-        cliente: "",
-        proyecto: "",
-        fecha: "",
-        operador: "",
-      });
-      setTareas(tareasInicial);
-      setDescripcion("");
-      setHerramientas("");
-      setHerramientasLista({
-        MARTILLO: false,
-        LLAVES: false,
-        "PALANCA DE FUERZA": false,
-        ALMADANA: false,
-        NIVEL: false,
-        ESPÁTULA: false,
-        ALICATE: false,
-        PINZAS: false,
-        "PALUSTRE PALA BARRA": false,
-        DECAMETRO: false,
-        PICA: false,
-        "PALA DRAGA": false,
-        MACHETE: false,
-        "CORTA FRIO": false,
-        MULTIMETRO: false,
-        FLEXOMETRO: false,
-        CINCEL: false,
-      });
-      setTrabajadores([
-        { id: 1, numero_id: "", nombres: "", cargo: "", apto: false, ppe: false, observacion: "" },
-      ]);
-      setMedidasPrevencion({
-        procedimiento: false,
-        info_y_demarcacion: false,
-        epp_correcto: false,
-        inspeccion_previas: false,
-        plan_rescate: false,
-      });
-      setEquiposAcceso({
-        escaleras: false,
-        vertical_fija: false,
-        portal: false,
-        andamios: false,
-        colgante: false,
-        elevador_carga: false,
-        canastilla: false,
-        ascensores_personas: false,
-      });
-      setFirmas({
-        trabajador_autorizado: "",
-        cargo_autorizado: "",
-        firma_coordinador: "",
-        fecha_validacion: "",
-      });
-      setTrabajoRutinario("");
-      setAlturaTiene("");
-      setAlturaInicial("");
-      setAlturaFinal("");
-      setRequisitosAptitud({
-        explicacion_procedimiento: false,
-        buenas_condiciones_salud: false,
-        entiende_ats: false,
-        consumio_alimentos: false,
-        dormio_suficiente: false,
-        no_bebidas_embriagantes: false,
-        sin_accesorios: false,
-        sin_medicamentos: false,
-        capacitado_certificado: false,
-      });
-      setEpp({
-        cuenta_certificado_alturas: "",
-        seguridad_social_arl: "",
-        casco_tipo1: "",
-        gafas: "",
-        proteccion_auditiva: "",
-        proteccion_respiratoria: "",
-        guantes_seguridad: "",
-        botas_dielectricas: "",
-        overol_dotacion: "",
-      });
-      setSrpdc({
-        arnes_cuerpo_entero: "",
-        arnes_dielectrico: "",
-        mosqueton: "",
-        arrestador_caidas: "",
-        eslinga_y_absorbedor: "",
-        eslinga_posicionamiento: "",
-        linea_vida: "",
-        verificacion_anclaje: "",
-      });
-      setPrecaucionesGenerales({
-        procedimiento_charla: "",
-        medidas_colectivas_prevencion: "",
-        epp_epcc_inspeccion: "",
-        equipos_herramientas_inspeccion: "",
-        inspeccion_sistema_ta: "",
-        plan_emergencias_rescate: "",
-        medidas_caida_objetos: "",
-        kit_rescate: "",
-        permiso_trabajo_ats: "",
-        verificacion_atmosfericas: "",
-        distancia_vertical_caida: "",
-        otro: "",
-      });
-      setEquiposAccesoP8({
-        vertical_fija: "",
-        vertical_portatil: "",
-        andamio_multidireccional: "",
-        andamio_colgante: "",
-        elevador_carga: "",
-        canastilla: "",
-        ascensor_personas: "",
-        acceso_cuerdas: "",
-        otro: "",
-      });
-    }
-    // ...existing code...
-  // eslint-disable-next-line
-  }, []);
-  // --- FIN NUEVO ---
+  // ─── FIN useEffect ────────────────────────────────────────────────────────
 
   const handleGeneralChange = (e) => {
     setGenerales({ ...generales, [e.target.name]: e.target.value });
@@ -525,12 +376,21 @@ function PermisoTrabajo(props) {
     setCierreLabor({ ...cierreLabor, [e.target.name]: e.target.value });
   };
 
-  /**
-   * Envía el formulario de permiso de trabajo al backend.
-   */
   const handleGuardar = async () => {
+    // Leer operador directamente de localStorage como fuente de verdad segura
+    const nombre_operador_actual =
+      localStorage.getItem("nombre_trabajador") ||
+      localStorage.getItem("operador") ||
+      firmas.trabajador_autorizado ||
+      "";
+
     if (!generales.proyecto || !generales.cliente) {
       alert("Completa los datos generales: cliente y proyecto.");
+      return;
+    }
+
+    if (!nombre_operador_actual) {
+      alert("No se encontró el nombre del operador. Por favor vuelve a iniciar sesión.");
       return;
     }
 
@@ -538,13 +398,15 @@ function PermisoTrabajo(props) {
       nombre_cliente: generales.cliente,
       nombre_proyecto: generales.proyecto,
       fecha_servicio: generales.fecha,
-      nombre_operador: firmas.trabajador_autorizado,
+      nombre_operador: nombre_operador_actual,
       cargo: firmas.cargo_autorizado,
       trabajo_rutinario: trabajoRutinario,
       tarea_en_alturas: alturaTiene,
       altura_inicial: alturaTiene === "SI" ? alturaInicial : "0",
       altura_final: alturaTiene === "SI" ? alturaFinal : "0",
-      herramientas_seleccionadas: Object.keys(herramientasLista).filter(k => herramientasLista[k]).join(","),
+      herramientas_seleccionadas: Object.keys(herramientasLista)
+        .filter((k) => herramientasLista[k])
+        .join(","),
       herramientas_otros: herramientas,
       certificado_alturas: epp.cuenta_certificado_alturas,
       seguridad_social_arl: epp.seguridad_social_arl,
@@ -589,49 +451,53 @@ function PermisoTrabajo(props) {
       motivo_suspension: cierrePermiso.motivo,
       nombre_suspende: cierrePermiso.nombre || "",
       nombre_responsable: cierreLabor.trabajador_nombre || "",
-      nombre_coordinador: cierreLabor.coordinador_nombre
+      nombre_coordinador: cierreLabor.coordinador_nombre,
     };
 
     console.log("Payload enviado a backend:", payload);
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/compartido/permiso_trabajo`, payload);
+      await axios.post(`${API_BASE_URL}/compartido/permiso_trabajo`, payload);
+
+      // Guardar en localStorage DESPUÉS del await, con el operador seguro
+      const weekKey = getCurrentWeekKey();
+      localStorage.setItem(
+        "permiso_trabajo_respuestas",
+        JSON.stringify({
+          weekKey,
+          generales: { ...generales, operador: nombre_operador_actual },
+          firmas: { ...firmas, trabajador_autorizado: nombre_operador_actual },
+          tareas,
+          descripcion,
+          herramientas,
+          herramientasLista,
+          trabajadores,
+          medidasPrevencion,
+          equiposAcceso,
+          trabajoRutinario,
+          alturaTiene,
+          alturaInicial,
+          alturaFinal,
+          requisitosAptitud,
+          epp,
+          srpdc,
+          precaucionesGenerales,
+          equiposAccesoP8,
+        })
+      );
+
       alert("Permiso de trabajo guardado correctamente.");
       if (props.onFinish) props.onFinish();
       navigate(-1);
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.response?.data?.error || err.message || "Error al guardar el permiso de trabajo.";
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err.message ||
+        "Error al guardar el permiso de trabajo.";
       alert("Error al guardar el permiso de trabajo: " + msg);
       console.error(err);
     }
-
-    // --- NUEVO: Guardar respuestas en localStorage por semana ---
-    const weekKey = getCurrentWeekKey();
-    localStorage.setItem(
-      "permiso_trabajo_respuestas",
-      JSON.stringify({
-        weekKey,
-        generales,
-        tareas,
-        descripcion,
-        herramientas,
-        herramientasLista,
-        trabajadores,
-        medidasPrevencion,
-        equiposAcceso,
-        firmas,
-        trabajoRutinario,
-        alturaTiene,
-        alturaInicial,
-        alturaFinal,
-        requisitosAptitud,
-        epp,
-        srpdc,
-        precaucionesGenerales,
-        equiposAccesoP8,
-      })
-    );
-    // --- FIN NUEVO ---
   };
 
   return (
@@ -663,15 +529,22 @@ function PermisoTrabajo(props) {
           readOnly
         />
         <div style={{ marginTop: 16 }}>
-          <h4 className="card-title" style={{ fontSize: "1.05rem", marginBottom: 8 }}></h4>
           <input
             placeholder="Trabajador autorizado - nombre"
             value={firmas.trabajador_autorizado}
-            onChange={e => setFirmas({ ...firmas, trabajador_autorizado: e.target.value })}
+            onChange={(e) => setFirmas({ ...firmas, trabajador_autorizado: e.target.value })}
             readOnly
           />
-          <input placeholder="Cargo trabajador" value={firmas.cargo_autorizado} onChange={(e) => setFirmas({ ...firmas, cargo_autorizado: e.target.value })} />
-          <input placeholder="Firma coordinador" value={firmas.firma_coordinador} onChange={(e) => setFirmas({ ...firmas, firma_coordinador: e.target.value })} />
+          <input
+            placeholder="Cargo trabajador"
+            value={firmas.cargo_autorizado}
+            onChange={(e) => setFirmas({ ...firmas, cargo_autorizado: e.target.value })}
+          />
+          <input
+            placeholder="Firma coordinador"
+            value={firmas.firma_coordinador}
+            onChange={(e) => setFirmas({ ...firmas, firma_coordinador: e.target.value })}
+          />
         </div>
       </div>
 
@@ -682,7 +555,7 @@ function PermisoTrabajo(props) {
           <select
             name="trabajo_rutinario"
             value={trabajoRutinario}
-            onChange={e => setTrabajoRutinario(e.target.value)}
+            onChange={(e) => setTrabajoRutinario(e.target.value)}
           >
             <option value="">--</option>
             <option value="SI">SI</option>
@@ -695,7 +568,7 @@ function PermisoTrabajo(props) {
           <select
             name="altura_tiene"
             value={alturaTiene}
-            onChange={e => {
+            onChange={(e) => {
               setAlturaTiene(e.target.value);
               if (e.target.value !== "SI") {
                 setAlturaInicial("");
@@ -755,7 +628,9 @@ function PermisoTrabajo(props) {
               className={`herramienta-item herramienta-recuadro${herramientasLista[k] ? " herramienta-seleccionada" : ""}`}
               onClick={() => toggleHerramienta(k)}
               tabIndex={0}
-              onKeyDown={e => { if (e.key === " " || e.key === "Enter") toggleHerramienta(k); }}
+              onKeyDown={(e) => {
+                if (e.key === " " || e.key === "Enter") toggleHerramienta(k);
+              }}
               role="button"
               aria-pressed={herramientasLista[k]}
               style={{ userSelect: "none", cursor: "pointer" }}
@@ -765,32 +640,33 @@ function PermisoTrabajo(props) {
           ))}
         </div>
         <label className="label">Otros (describa)</label>
-        <input value={herramientas} onChange={(e) => setHerramientas(e.target.value)} placeholder="Otros instrumentos" />
+        <input
+          value={herramientas}
+          onChange={(e) => setHerramientas(e.target.value)}
+          placeholder="Otros instrumentos"
+        />
       </div>
 
       <div className="card-section">
         <h3 className="card-title">Trabajadores autorizados para realizar TA</h3>
         <label className="label">Requisitos de Aptitud</label>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ width: "100%" }}> - Me explicaron el procedimiento y me siento capaz de ejecutarlo</div>
-          <div style={{ width: "100%" }}> - Me encuentro en buenas condiciones de salud para realizar el Trabajo en alturas</div>
-          <div style={{ width: "100%" }}> - Entiendo la actividad a realizar y el Análisis de Trabajo Seguro (ATS)</div>
-          <div style={{ width: "100%" }}> - He consumido alimentos en las últimas 4hrs</div>
-          <div style={{ width: "100%" }}> - He dormido 6hrs o más antes de iniciar la actividad</div>
-          <div style={{ width: "100%" }}> - En las últimas 48hrs NO he consumido bebidas embriagantes y/u otras sustancias que puedan poner en peligro mi vida durante la actividad.</div>
-          <div style={{ width: "100%" }}> - Me he retirado cadenas, relojes, anillos, pulseras y/o cualquier otro elemento que pueda afectar mi seguridad durante la ejecución de la actividad</div>
-          <div style={{ width: "100%" }}> - No estoy tomando ningún medicamento que afecte mis condiciones para el TA</div>
-          <div style={{ width: "100%" }}> - He sido capacitado y certificado en competencia laboral como TRABAJADOR AUTORIZADO N para la prevención para caídas en TA.</div>
+          <div> - Me explicaron el procedimiento y me siento capaz de ejecutarlo</div>
+          <div> - Me encuentro en buenas condiciones de salud para realizar el Trabajo en alturas</div>
+          <div> - Entiendo la actividad a realizar y el Análisis de Trabajo Seguro (ATS)</div>
+          <div> - He consumido alimentos en las últimas 4hrs</div>
+          <div> - He dormido 6hrs o más antes de iniciar la actividad</div>
+          <div> - En las últimas 48hrs NO he consumido bebidas embriagantes y/u otras sustancias que puedan poner en peligro mi vida durante la actividad.</div>
+          <div> - Me he retirado cadenas, relojes, anillos, pulseras y/o cualquier otro elemento que pueda afectar mi seguridad durante la ejecución de la actividad</div>
+          <div> - No estoy tomando ningún medicamento que afecte mis condiciones para el TA</div>
+          <div> - He sido capacitado y certificado en competencia laboral como TRABAJADOR AUTORIZADO N para la prevención para caídas en TA.</div>
         </div>
       </div>
 
       <div className="card-section">
         <h3 className="card-title">EPP y SRPDC</h3>
-        {/* Sección EPP */}
         <div>
-          <div>
-            6.2 EPP
-          </div>
+          <div>6.2 EPP</div>
           <div>
             {[
               { key: "cuenta_certificado_alturas", label: "Cuenta con certificado alturas" },
@@ -802,8 +678,8 @@ function PermisoTrabajo(props) {
               { key: "guantes_seguridad", label: "Guantes de seguridad" },
               { key: "botas_dielectricas", label: "Botas dieléctricas con puntera" },
               { key: "overol_dotacion", label: "Overol y/o prendas de dotación" },
-            ].map((item, index) => (
-              <div key={item.key || index}>
+            ].map((item) => (
+              <div key={item.key}>
                 <span>{item.label}</span>
                 <select name={item.key} value={epp[item.key]} onChange={handleEppChange}>
                   <option value="">--</option>
@@ -815,11 +691,8 @@ function PermisoTrabajo(props) {
             ))}
           </div>
         </div>
-        {/* Sección SRPDC */}
         <div>
-          <div>
-            6.3 SRPDC y EPCC
-          </div>
+          <div>6.3 SRPDC y EPCC</div>
           <div>
             {[
               { key: "arnes_cuerpo_entero", label: "Arnés cuerpo entero" },
@@ -859,10 +732,14 @@ function PermisoTrabajo(props) {
             { key: "kit_rescate", label: "¿Se cuenta en sitio con Kit de Rescate?" },
             { key: "permiso_trabajo_ats", label: "Permiso de trabajo en alturas, listas de chequeo, Análisis de Trabajo Seguro (ATS)" },
             { key: "verificacion_atmosfericas", label: "Verificación continua de las condiciones atmosféricas (viento, lluvia, etc.)" },
-          ].map((item, index) => (
-            <div key={item.key || index}>
+          ].map((item) => (
+            <div key={item.key}>
               <span>{item.label}</span>
-              <select name={item.key} value={precaucionesGenerales[item.key]} onChange={handlePrecaucionesChange}>
+              <select
+                name={item.key}
+                value={precaucionesGenerales[item.key]}
+                onChange={handlePrecaucionesChange}
+              >
                 <option value="">--</option>
                 <option value="SI">SI</option>
                 <option value="NO">NO</option>
@@ -873,9 +750,15 @@ function PermisoTrabajo(props) {
         </div>
         <div>
           <div>
-            Se calculó la distancia vertical requerida por un trabajador en caso de una caída, para evitar que este impacte contra el suelo o contra un obstáculo, teniendo en cuenta principalmente la configuración del sistema de protección contra caídas utilizado (requerimiento de claridad).
+            Se calculó la distancia vertical requerida por un trabajador en caso de una caída, para evitar
+            que este impacte contra el suelo o contra un obstáculo, teniendo en cuenta principalmente la
+            configuración del sistema de protección contra caídas utilizado (requerimiento de claridad).
           </div>
-          <select name="distancia_vertical_caida" value={precaucionesGenerales.distancia_vertical_caida} onChange={handlePrecaucionesChange}>
+          <select
+            name="distancia_vertical_caida"
+            value={precaucionesGenerales.distancia_vertical_caida}
+            onChange={handlePrecaucionesChange}
+          >
             <option value="">--</option>
             <option value="SI">SI</option>
             <option value="NO">NO</option>
@@ -884,17 +767,20 @@ function PermisoTrabajo(props) {
         </div>
         <div>
           <label>Otro (cual):</label>
-          <input type="text" name="otro" value={precaucionesGenerales.otro} onChange={handlePrecaucionesChange} />
+          <input
+            type="text"
+            name="otro"
+            value={precaucionesGenerales.otro}
+            onChange={handlePrecaucionesChange}
+          />
         </div>
       </div>
 
       <div className="card-section">
         <h3 className="card-title">Equipos / Sistema de acceso para trabajo en alturas</h3>
-        {/* Sub-card Escaleras */}
         <div className="sub-card-section" style={{ border: "1px solid #e0e0e0", borderRadius: 8, padding: 16, marginBottom: 16 }}>
           <h4 style={{ margin: 0, marginBottom: 10 }}>Escaleras</h4>
           <table style={{ width: "100%" }}>
-           
             <tbody>
               <tr>
                 <td>Vertical fija</td>
@@ -931,13 +817,9 @@ function PermisoTrabajo(props) {
             </tbody>
           </table>
         </div>
-        {/* Sub-card Andamios */}
         <div className="sub-card-section" style={{ border: "1px solid #e0e0e0", borderRadius: 8, padding: 16, marginBottom: 16 }}>
           <h4 style={{ margin: 0, marginBottom: 10 }}>Andamios</h4>
           <table style={{ width: "100%" }}>
-            <thead>
-              
-            </thead>
             <tbody>
               <tr>
                 <td>Multidireccional</td>
@@ -974,13 +856,9 @@ function PermisoTrabajo(props) {
             </tbody>
           </table>
         </div>
-        {/* Sub-card Equipos elevadores */}
         <div className="sub-card-section" style={{ border: "1px solid #e0e0e0", borderRadius: 8, padding: 16, marginBottom: 16 }}>
           <h4 style={{ margin: 0, marginBottom: 10 }}>Equipos elevadores</h4>
           <table style={{ width: "100%" }}>
-            <thead>
-             
-            </thead>
             <tbody>
               <tr>
                 <td>Elevadores de carga</td>
@@ -1033,7 +911,6 @@ function PermisoTrabajo(props) {
             </tbody>
           </table>
         </div>
-        {/* Acceso por cuerdas y otro quedan fuera de las sub-cards pero dentro de la card principal */}
         <div style={{ marginBottom: 12 }}>
           <label>Acceso por cuerdas:</label>
           <select
@@ -1060,29 +937,38 @@ function PermisoTrabajo(props) {
         </div>
       </div>
 
-      {/* Punto 9. VALIDACION DEL PERMISO DE TRABAJO */}
       <div className="card-section">
         <h3 className="card-title">VALIDACION DEL PERMISO DE TRABAJO</h3>
         <div>
-          -Resolución 4272 de 2021, Artículo 15: Permiso de trabajo en alturas. Mecanismo administrativo que, mediante la verificación y control previo de todos los aspectos relacionados en la presente resolución, tiene como objeto fomentar la prevención durante la realización de trabajos en alturas.<br />
-          <br />
-          -Este permiso de trabajo en alturas debe ser diligenciado, por el(los) trabajador(es) o por el empleador y debe ser revisado y suscrito por el coordinador de trabajo en alturas en cada evento. Siempre que un trabajador ingrese a una zona de peligro, debe contar con la debida autorización y si requiere exponerse al riesgo de caídas, debe contar con un aval a través de un permiso de trabajo en alturas acompañado de una lista de chequeo, más aún en caso de que no haya barandas, sistemas de control de acceso, demarcación o sistemas de barreras físicas que cumplan con las especificaciones descritas en la presente resolución.<br />
-          <br />
-          - Las listas de chequeo contenidas en este permiso así como sus anexos aplicables deben ser verificadas a diario y antes de iniciar la actividad objeto de este permiso<br />
-          <br />
-          - Este permiso pierde su validez en el momento en que alguna de las condiciones iniciales sufra algún cambio
+          -Resolución 4272 de 2021, Artículo 15: Permiso de trabajo en alturas. Mecanismo administrativo
+          que, mediante la verificación y control previo de todos los aspectos relacionados en la presente
+          resolución, tiene como objeto fomentar la prevención durante la realización de trabajos en alturas.
+          <br /><br />
+          -Este permiso de trabajo en alturas debe ser diligenciado, por el(los) trabajador(es) o por el
+          empleador y debe ser revisado y suscrito por el coordinador de trabajo en alturas en cada evento.
+          Siempre que un trabajador ingrese a una zona de peligro, debe contar con la debida autorización y
+          si requiere exponerse al riesgo de caídas, debe contar con un aval a través de un permiso de
+          trabajo en alturas acompañado de una lista de chequeo, más aún en caso de que no haya barandas,
+          sistemas de control de acceso, demarcación o sistemas de barreras físicas que cumplan con las
+          especificaciones descritas en la presente resolución.
+          <br /><br />
+          - Las listas de chequeo contenidas en este permiso así como sus anexos aplicables deben ser
+          verificadas a diario y antes de iniciar la actividad objeto de este permiso
+          <br /><br />
+          - Este permiso pierde su validez en el momento en que alguna de las condiciones iniciales sufra
+          algún cambio
         </div>
       </div>
+
       <div>
         <label>Observaciones</label>
         <textarea
           placeholder="Ingrese observaciones adicionales aquí"
           value={generales.observaciones || ""}
-          onChange={e => setGenerales({ ...generales, observaciones: e.target.value })}
+          onChange={(e) => setGenerales({ ...generales, observaciones: e.target.value })}
         />
       </div>
 
-      {/* Modal para cierre de permiso */}
       <div>
         <button type="button" onClick={() => setModalCierreOpen(true)}>
           11. CIERRE PERMISO DE TA POR SUSPENSIÓN DEL TRABAJO
@@ -1091,27 +977,16 @@ function PermisoTrabajo(props) {
           12. CIERRE PERMISO DE TA POR LABOR TERMINADA
         </button>
       </div>
+
       {modalCierreOpen && (
         <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          background: "rgba(0,0,0,0.35)",
-          zIndex: 9999,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
+          position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
+          background: "rgba(0,0,0,0.35)", zIndex: 9999,
+          display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <div style={{
-            background: "#fff",
-            borderRadius: 12,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
-            padding: 28,
-            minWidth: 320,
-            maxWidth: 420,
-            width: "90%"
+            background: "#fff", borderRadius: 12, boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+            padding: 28, minWidth: 320, maxWidth: 420, width: "90%",
           }}>
             <div style={{ fontWeight: 700, fontSize: "1.08rem", marginBottom: 16 }}>
               11. CIERRE PERMISO DE TA POR SUSPENSIÓN DEL TRABAJO
@@ -1128,7 +1003,9 @@ function PermisoTrabajo(props) {
               />
             </div>
             <div style={{ marginBottom: 18 }}>
-              <label style={{ fontWeight: 600, display: "block", marginBottom: 4 }}>Nombre y apellidos de quien suspende el trabajo</label>
+              <label style={{ fontWeight: 600, display: "block", marginBottom: 4 }}>
+                Nombre y apellidos de quien suspende el trabajo
+              </label>
               <input
                 type="text"
                 name="nombre"
@@ -1139,9 +1016,7 @@ function PermisoTrabajo(props) {
               />
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-              <button type="button" onClick={() => setModalCierreOpen(false)}>
-                Cerrar
-              </button>
+              <button type="button" onClick={() => setModalCierreOpen(false)}>Cerrar</button>
               <button
                 type="button"
                 disabled={cierrePermisoGuardado}
@@ -1154,35 +1029,24 @@ function PermisoTrabajo(props) {
         </div>
       )}
 
-      {/* Modal para cierre de permiso por labor terminada */}
       {modalCierreLaborOpen && (
         <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          background: "rgba(0,0,0,0.35)",
-          zIndex: 9999,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
+          position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
+          background: "rgba(0,0,0,0.35)", zIndex: 9999,
+          display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <div style={{
-            background: "#fff",
-            borderRadius: 12,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
-            padding: 28,
-            minWidth: 340,
-            maxWidth: 700,
-            width: "95%"
+            background: "#fff", borderRadius: 12, boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+            padding: 28, minWidth: 340, maxWidth: 700, width: "95%",
           }}>
             <div style={{ fontWeight: 700, fontSize: "1.08rem", marginBottom: 16 }}>
               12. CIERRE PERMISO DE TA POR LABOR TERMINADA
             </div>
             <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 260 }}>
-                <div style={{ fontWeight: 600, marginBottom: 6 }}>Trabajador autorizado responsable de la actividad</div>
+                <div style={{ fontWeight: 600, marginBottom: 6 }}>
+                  Trabajador autorizado responsable de la actividad
+                </div>
                 <textarea
                   name="trabajador_nombre"
                   value={cierreLabor.trabajador_nombre}
@@ -1192,13 +1056,15 @@ function PermisoTrabajo(props) {
                   disabled={cierreLaborGuardado}
                 />
                 <div style={{ fontSize: "0.95rem", color: "#444", marginTop: 6 }}>
-                  Personalmente he verificado que:<br />
-                  el área queda limpia y sin residuos, no se han presentado accidentes y/o incidentes, las<br />
-                  condiciones de seguridad, Las condiciones de seguridad declaradas se cumplieron a cabalidad.
+                  Personalmente he verificado que: el área queda limpia y sin residuos, no se han
+                  presentado accidentes y/o incidentes, las condiciones de seguridad declaradas se
+                  cumplieron a cabalidad.
                 </div>
               </div>
               <div style={{ flex: 1, minWidth: 260 }}>
-                <div style={{ fontWeight: 600, marginBottom: 6 }}>Coordinador Trabajo seguro en alturas</div>
+                <div style={{ fontWeight: 600, marginBottom: 6 }}>
+                  Coordinador Trabajo seguro en alturas
+                </div>
                 <textarea
                   name="coordinador_nombre"
                   value={cierreLabor.coordinador_nombre}
@@ -1208,16 +1074,14 @@ function PermisoTrabajo(props) {
                   disabled={cierreLaborGuardado}
                 />
                 <div style={{ fontSize: "0.95rem", color: "#444", marginTop: 6 }}>
-                  Personalmente declaro que:<br />
-                  *El trabajo ha sido terminado. *El sitio queda en condiciones seguras. *Entrego el área limpia y libre de residuos de materiales y concreto. *Los equipos de elevación se encuentran en<br />
-                  buenas condiciones de operación.
+                  Personalmente declaro que: *El trabajo ha sido terminado. *El sitio queda en
+                  condiciones seguras. *Entrego el área limpia y libre de residuos de materiales y
+                  concreto. *Los equipos de elevación se encuentran en buenas condiciones de operación.
                 </div>
               </div>
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 18 }}>
-              <button type="button" onClick={() => setModalCierreLaborOpen(false)}>
-                Cerrar
-              </button>
+              <button type="button" onClick={() => setModalCierreLaborOpen(false)}>Cerrar</button>
               <button
                 type="button"
                 disabled={cierreLaborGuardado}
@@ -1240,4 +1104,3 @@ function PermisoTrabajo(props) {
 }
 
 export default PermisoTrabajo;
-
