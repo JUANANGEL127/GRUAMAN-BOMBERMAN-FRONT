@@ -129,7 +129,9 @@ function ChequeoAlturas({ value = {}, onChange }) {
 	useEffect(() => {
 		const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
 		const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
-		const fechaHoy = new Date().toISOString().slice(0, 10);
+		const today = new Date();
+		const pad = (n) => String(n).padStart(2, '0');
+		const fechaHoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 		const cargo = localStorage.getItem("cargo_trabajador") || "";
 
 		// Obtener cliente/constructora como en permiso_trabajo.jsx

@@ -65,6 +65,8 @@ function InventariosObraAdmin() {
         cedula: filters.cedula || '',
         obra: filters.obra || '',
         constructora: filters.constructora || '',
+        empresa_id: 2,
+        empresa_ids: [2, 5],
         fecha_inicio: toYMD(filters.fecha_inicio),
         fecha_fin: toYMD(filters.fecha_fin),
         limit: filters.limit || 50,
@@ -89,6 +91,8 @@ function InventariosObraAdmin() {
         cedula: filters.cedula || '',
         obra: filters.obra || '',
         constructora: filters.constructora || '',
+        empresa_id: 2,
+        empresa_ids: [2, 5],
         fecha_inicio: toYMD(filters.fecha_inicio),
         fecha_fin: toYMD(filters.fecha_fin),
         formato: tipo,
@@ -179,7 +183,10 @@ function InventariosObraAdmin() {
       try {
         const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
         if (Array.isArray(res.data.datos)) {
-          setNombresOperarios(res.data.datos.filter(d => d.empresa_id === 2).map(d => d.nombre));
+          setNombresOperarios(res.data.datos.filter(d => {
+            const id = Number(d.empresa_id);
+            return id === 2 || id === 5;
+          }).map(d => d.nombre));
         } else {
           setNombresOperarios([]);
         }
@@ -191,7 +198,10 @@ function InventariosObraAdmin() {
 
     axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
-        const obras = (res.data.obras || []).filter(o => o.empresa_id === 2);
+        const obras = (res.data.obras || []).filter(o => {
+          const id = Number(o.empresa_id);
+          return id === 2 || id === 5;
+        });
         setListaObras(obras);
         const constructoras = Array.from(new Set(obras.map(o => o.constructora).filter(Boolean)));
         setListaConstructoras(constructoras);

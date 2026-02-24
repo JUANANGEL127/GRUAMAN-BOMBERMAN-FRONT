@@ -189,7 +189,9 @@ function Checklist(props) {
   }, []);
 
   useEffect(() => {
-    const fecha_hoy = new Date().toISOString().slice(0, 10);
+    const today = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const fecha_hoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
     axios
       .get(`${API_BASE_URL}/obras`)
       .then((res) => {

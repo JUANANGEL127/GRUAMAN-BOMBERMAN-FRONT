@@ -195,7 +195,10 @@ function PermisoTrabajo(props) {
       localStorage.getItem("operador") ||
       "";
 
-    const fechaHoy = new Date().toISOString().slice(0, 10);
+    // Fecha local YYYY-MM-DD para evitar desfases por UTC
+    const today = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const fechaHoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 
     // ── Manejo de datos guardados por semana ────────────────────────────────
     const weekKey = getCurrentWeekKey();

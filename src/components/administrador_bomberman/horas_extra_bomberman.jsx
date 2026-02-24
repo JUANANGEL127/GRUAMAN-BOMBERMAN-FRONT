@@ -73,6 +73,8 @@ function horasExtraBomberman() {
         obra: filters.obra || "",
         constructora: filters.constructora || "",
         empresa_id: 2,
+        // Soporte para consultas multi-empresa (cliente quiere 2 y 5)
+        empresa_ids: [2, 5],
         fecha_inicio: toYMD(filters.fecha_inicio),
         fecha_fin: toYMD(filters.fecha_fin),
         limit: filters.limit || 20,
@@ -86,7 +88,10 @@ function horasExtraBomberman() {
         });
         data = res.data || {};
         const filteredRows = Array.isArray(data.rows)
-          ? data.rows.filter(r => (r.empresa_id === 2 || (r.raw && r.raw.empresa_id === 2)))
+          ? data.rows.filter(r => {
+              const id = r.empresa_id ?? (r.raw && r.raw.empresa_id);
+              return id === 2 || id === 5;
+            })
           : [];
         setResultados(filteredRows);
         setTotal(filteredRows.length);
@@ -124,6 +129,8 @@ function horasExtraBomberman() {
         obra: filters.obra || "",
         constructora: filters.constructora || "",
         empresa_id: 2,
+        // Incluir también empresa 5 en la descarga
+        empresa_ids: [2, 5],
         fecha_inicio: toYMD(filters.fecha_inicio),
         fecha_fin: toYMD(filters.fecha_fin),
         formato: tipo,
@@ -168,7 +175,10 @@ function horasExtraBomberman() {
       try {
         const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
         if (Array.isArray(res.data.datos)) {
-          const datosEmpresa = res.data.datos.filter(d => Number(d.empresa_id) === 2);
+          const datosEmpresa = res.data.datos.filter(d => {
+            const id = Number(d.empresa_id);
+            return id === 2 || id === 5;
+          });
           setNombresOperarios(datosEmpresa.map(d => d.nombre));
         } else {
           setNombresOperarios([]);
@@ -182,7 +192,10 @@ function horasExtraBomberman() {
     axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
         const obrasAll = res.data.obras || [];
-        const obras = obrasAll.filter(o => Number(o.empresa_id) === 2);
+        const obras = obrasAll.filter(o => {
+          const id = Number(o.empresa_id);
+          return id === 2 || id === 5;
+        });
         setListaObras(obras);
         const constructoras = Array.from(new Set(obras.map(o => o.constructora).filter(Boolean)));
         setListaConstructoras(constructoras);

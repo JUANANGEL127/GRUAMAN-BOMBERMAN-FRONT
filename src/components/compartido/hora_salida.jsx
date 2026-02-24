@@ -31,10 +31,16 @@ export default function HoraSalida() {
   const [horaSalida, setHoraSalida] = useState("");
   const [guardado, setGuardado] = useState(false);
   const [error, setError] = useState("");
+  const makeLocalDate = () => {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
+
   const [generales, setGenerales] = useState({
     cliente: "",
     proyecto: datos.obra,
-    fecha: new Date().toISOString().slice(0, 10),
+    fecha: makeLocalDate(),
     operador: datos.nombre,
     cargo: datos.cargo,
   });
@@ -43,7 +49,9 @@ export default function HoraSalida() {
   useEffect(() => {
     const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
-    const fechaHoy = new Date().toISOString().slice(0, 10);
+    const today = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const fechaHoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
     const cargo = localStorage.getItem("cargo_trabajador") || "";
 
     axios.get(`${API_BASE_URL}/obras`)

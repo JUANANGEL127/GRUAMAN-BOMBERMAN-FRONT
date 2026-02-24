@@ -177,7 +177,9 @@ function ChequeoElevador() {
 
   useEffect(() => {
     const init = async () => {
-      const fechaHoy = new Date().toISOString().slice(0, 10);
+      const today = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const fechaHoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
       const nombre_operador =
         localStorage.getItem("nombre_trabajador") ||
         localStorage.getItem("usuario_nombre") ||

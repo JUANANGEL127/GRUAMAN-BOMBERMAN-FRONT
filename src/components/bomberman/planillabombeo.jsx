@@ -56,7 +56,9 @@ function PlanillaBombeo(props) {
 
   useEffect(() => {
     const nombre_obra = localStorage.getItem("obra") || "";
-    const fecha_hoy = new Date().toISOString().slice(0, 10);
+    const today = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const fecha_hoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
     const hora_llegada_obra = localStorage.getItem("hora_llegada_obra") || "";
     const hora_salida_obra = localStorage.getItem("hora_salida_obra") || "";
     setDatos(prev => ({
@@ -94,7 +96,9 @@ function PlanillaBombeo(props) {
         const nombre_obra = localStorage.getItem("obra") || "";
         const obra_seleccionada = obras.find(o => o.nombre_obra === nombre_obra);
         const constructora = obra_seleccionada ? obra_seleccionada.constructora : "";
-        const fecha_hoy = new Date().toISOString().slice(0, 10);
+        const today = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const fecha_hoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
         setDatos(prev => ({
           ...prev,
           nombre_proyecto: nombre_obra,

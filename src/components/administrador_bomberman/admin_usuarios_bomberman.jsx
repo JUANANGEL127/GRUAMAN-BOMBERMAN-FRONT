@@ -38,7 +38,9 @@ function AdminUsuarios() {
       try {
         const res = await axios.get(`${API_BASE_URL}/admin_usuarios/listar`, {
           params: {
+            // Mantener empresa_id por compatibilidad, pero añadir empresa_ids para consultas multi-empresa
             empresa_id: 2,
+            empresa_ids: [2, 5],
             offset,
             limit,
             busqueda

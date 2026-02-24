@@ -22,7 +22,10 @@ export default function HoradaIngreso() {
   useEffect(() => {
     const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
-    const fechaHoy = new Date().toISOString().slice(0, 10);
+    // Generar la fecha en la zona local (YYYY-MM-DD) para evitar desfases por UTC
+    const today = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const fechaHoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
     const cargo = localStorage.getItem("cargo_trabajador") || "";
 
     axios.get(`${API_BASE_URL}/obras`)

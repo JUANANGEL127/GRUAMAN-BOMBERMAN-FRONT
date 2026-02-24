@@ -131,10 +131,9 @@ const camposDB = [
 ];
 
 function getColombiaDateString() {
-  const date = new Date();
-  return new Date(date.toLocaleString("en-US", { timeZone: "America/Bogota" }))
-    .toISOString()
-    .slice(0, 10);
+  const dt = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }));
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
 }
 
 function getCurrentWeekKey() {
