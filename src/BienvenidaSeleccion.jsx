@@ -40,6 +40,8 @@ function BienvenidaSeleccion({ usuario }) {
       if (usuario.nombre) localStorage.setItem("nombre_trabajador", usuario.nombre);
       if (usuario.numero_identificacion) localStorage.setItem("cedula_trabajador", usuario.numero_identificacion);
       if (usuario.empresa) localStorage.setItem("empresa_trabajador", usuario.empresa);
+      const cargo = usuario.cargo || usuario.cargo_trabajador || usuario.puesto;
+      if (cargo) localStorage.setItem("cargo_trabajador", cargo);
     } catch (e) {
       console.error("Error guardando usuario en localStorage", e);
     }

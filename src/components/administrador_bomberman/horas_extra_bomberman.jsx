@@ -36,7 +36,7 @@ function horasExtraBomberman() {
     fecha_fin: "",
     limit: 50,
     offset: 0,
-    empresa_id: 2
+    empresa_ids: [2, 5]
   });
   const [resultados, setResultados] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -72,8 +72,6 @@ function horasExtraBomberman() {
         nombre: filters.nombre || "",
         obra: filters.obra || "",
         constructora: filters.constructora || "",
-        empresa_id: 2,
-        // Soporte para consultas multi-empresa (cliente quiere 2 y 5)
         empresa_ids: [2, 5],
         fecha_inicio: toYMD(filters.fecha_inicio),
         fecha_fin: toYMD(filters.fecha_fin),
@@ -128,8 +126,6 @@ function horasExtraBomberman() {
         nombre: filters.nombre || "",
         obra: filters.obra || "",
         constructora: filters.constructora || "",
-        empresa_id: 2,
-        // Incluir también empresa 5 en la descarga
         empresa_ids: [2, 5],
         fecha_inicio: toYMD(filters.fecha_inicio),
         fecha_fin: toYMD(filters.fecha_fin),
