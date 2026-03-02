@@ -227,7 +227,7 @@ const SECCIONES = [
   },
   { titulo: "MANGUERAS Y ACOPLES", fields: ITEM_FIELDS.slice(57, 64) },
   { titulo: "SISTEMA ELÉCTRICO", fields: ITEM_FIELDS.slice(64, 73) },
-  { titulo: "TUBERÍA", fields: ITEM_FIELDS.slice(73, 85) }
+  { titulo: "TUBERÍA", fields: ITEM_FIELDS.slice(73) }
 ];
 
 function detectarCargo() {
@@ -439,65 +439,66 @@ function Checklist() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setEnviando(true);
-    setCamposFaltantes([]);
-
-    const headerErrores = [];
-    if (!datos.bomba_numero) headerErrores.push("bomba_numero");
-    if (!datos.horometro_motor) headerErrores.push("horometro_motor");
-
-    const erroresDetectados = [];
-    itemToFieldFiltered.forEach((field) => {
-      if (field in CAMPOS_EN_DATOS) return;
-      if ((estadoItems[field]?.estado ?? "") === "") {
-        erroresDetectados.push(field);
-      }
-    });
-    itemToFieldFiltered.forEach((field) => {
-      if (field in CAMPOS_EN_DATOS) return;
-      const estado = estadoItems[field]?.estado ?? "";
-      const obs = (estadoItems[field]?.observacion ?? "").trim();
-      const opts = FIELD_OPTIONS[field];
-      const requiereObs = opts ? (opts.indexOf(estado) > 0) : (estado === "REGULAR" || estado === "MALO");
-      if (requiereObs && obs === "") {
-        erroresDetectados.push(`${field}_observacion`);
-      }
-    });
-
-    const todosLosErrores = [...headerErrores, ...erroresDetectados];
-    if (todosLosErrores.length > 0) {
-      setCamposFaltantes(todosLosErrores);
-      setEnviando(false);
-      scrollToFirstError(todosLosErrores);
-      return;
-    }
-
-    const checklistPayload = {};
-    ITEM_FIELDS.forEach((field) => {
-      if (field in CAMPOS_EN_DATOS) {
-        const v = datos[field];
-        checklistPayload[field] = v !== undefined && v !== null ? v : "";
-      } else {
-        const est = estadoItems[field]?.estado ?? "";
-        const obs = (estadoItems[field]?.observacion ?? "").trim();
-        checklistPayload[field] = est || "BUENO";
-        checklistPayload[`${field}_observacion`] = obs;
-      }
-    });
-
-    const payload = {
-      nombre_cliente: datos.nombre_cliente || "",
-      nombre_proyecto: datos.nombre_proyecto || "",
-      fecha_servicio: datos.fecha_servicio || "",
-      nombre_operador: datos.nombre_operador || "",
-      bomba_numero: datos.bomba_numero || "",
-      horometro_motor: datos.horometro_motor || "",
-      empresa_id: datos.empresa_id ?? undefined,
-      observaciones: datos.observaciones || "",
-      ...checklistPayload
-    };
 
     try {
+      setEnviando(true);
+      setCamposFaltantes([]);
+
+      const headerErrores = [];
+      if (!datos.bomba_numero) headerErrores.push("bomba_numero");
+      if (!datos.horometro_motor) headerErrores.push("horometro_motor");
+
+      const erroresDetectados = [];
+      itemToFieldFiltered.forEach((field) => {
+        if (field in CAMPOS_EN_DATOS) return;
+        if ((estadoItems[field]?.estado ?? "") === "") {
+          erroresDetectados.push(field);
+        }
+      });
+      itemToFieldFiltered.forEach((field) => {
+        if (field in CAMPOS_EN_DATOS) return;
+        const estado = estadoItems[field]?.estado ?? "";
+        const obs = (estadoItems[field]?.observacion ?? "").trim();
+        const opts = FIELD_OPTIONS[field];
+        const requiereObs = opts ? (opts.indexOf(estado) > 0) : (estado === "REGULAR" || estado === "MALO");
+        if (requiereObs && obs === "") {
+          erroresDetectados.push(`${field}_observacion`);
+        }
+      });
+
+      const todosLosErrores = [...headerErrores, ...erroresDetectados];
+      if (todosLosErrores.length > 0) {
+        setCamposFaltantes(todosLosErrores);
+        scrollToFirstError(todosLosErrores);
+        alert("Por favor complete todos los campos obligatorios. Revise los campos marcados en rojo.");
+        return;
+      }
+
+      const checklistPayload = {};
+      ITEM_FIELDS.forEach((field) => {
+        if (field in CAMPOS_EN_DATOS) {
+          const v = datos[field];
+          checklistPayload[field] = v !== undefined && v !== null ? v : "";
+        } else {
+          const est = estadoItems[field]?.estado ?? "";
+          const obs = (estadoItems[field]?.observacion ?? "").trim();
+          checklistPayload[field] = est || "BUENO";
+          checklistPayload[`${field}_observacion`] = obs;
+        }
+      });
+
+      const payload = {
+        nombre_cliente: datos.nombre_cliente || "",
+        nombre_proyecto: datos.nombre_proyecto || "",
+        fecha_servicio: datos.fecha_servicio || "",
+        nombre_operador: datos.nombre_operador || "",
+        bomba_numero: datos.bomba_numero || "",
+        horometro_motor: datos.horometro_motor || "",
+        empresa_id: datos.empresa_id ?? undefined,
+        observaciones: datos.observaciones || "",
+        ...checklistPayload
+      };
+
       await axios.post(`${API_BASE_URL}/bomberman/checklist`, payload);
       localStorage.setItem(
         "bomberman_checklist_respuestas",
@@ -510,15 +511,16 @@ function Checklist() {
       alert("✅ Checklist guardado correctamente.");
       navigate(-1);
     } catch (err) {
-      console.error("Error al enviar el checklist:", err?.response?.data ?? err?.message);
-      alert("Error al guardar el checklist.");
+      const msg = err?.response?.data?.message ?? err?.response?.data ?? err?.message ?? err;
+      console.error("Error al enviar el checklist:", msg);
+      alert("Error al guardar el checklist. Verifique la consola del navegador para más detalles.");
     } finally {
       setEnviando(false);
     }
   };
 
   return (
-    <form className="form-container" onSubmit={handleSubmit}>
+    <form className="form-container" onSubmit={handleSubmit} noValidate>
       <div className="card-section" style={{ marginBottom: 16 }}>
         <h3 className="card-title" style={{ marginBottom: 12 }}>
           LISTA DE CHEQUEO PARA BOMBA ESTACIONARIA DE CONCRETO (CIFA O TURBOSOL)
