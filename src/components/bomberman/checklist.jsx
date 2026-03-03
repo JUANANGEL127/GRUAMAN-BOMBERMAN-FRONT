@@ -478,7 +478,16 @@ function Checklist() {
       ITEM_FIELDS.forEach((field) => {
         if (field in CAMPOS_EN_DATOS) {
           const v = datos[field];
-          checklistPayload[field] = v !== undefined && v !== null ? v : "";
+          const tipo = CAMPOS_EN_DATOS[field];
+          const vacio = v === undefined || v === null || v === "";
+          if (tipo === "number") {
+            const n = Number(v);
+            checklistPayload[field] = vacio ? null : (isNaN(n) ? null : n);
+          } else if (tipo === "date") {
+            checklistPayload[field] = vacio ? null : (v || null);
+          } else {
+            checklistPayload[field] = vacio ? "" : v;
+          }
         } else {
           const est = estadoItems[field]?.estado ?? "";
           const obs = (estadoItems[field]?.observacion ?? "").trim();
