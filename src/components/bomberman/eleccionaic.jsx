@@ -11,6 +11,7 @@ import ChequeoAlturas from "../compartido/chequeo_alturas";
 import inspeccionEpccBomberman from "./inspeccion_epcc_bomberman"; // importación del nuevo componente
 import HoraIngreso from "../compartido/horada_ingreso";
 import HoraSalida from "../compartido/hora_salida";
+import { markWorldComplete } from '../../db/gameProgress';
 
 // Usa variable de entorno para la base de la API (por si se usa en este archivo en el futuro)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
@@ -63,6 +64,18 @@ function isFirstDayOfMonth() {
 
 function BienvenidaAIC() {
   const navigate = useNavigate();
+
+  // ── Detección de completado de misión del juego ──
+  useEffect(() => {
+    const worldId = localStorage.getItem('game_mode');
+    if (worldId) {
+      localStorage.removeItem('game_mode');
+      markWorldComplete(worldId);
+      navigate('/game/world-map', { replace: true });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const empresa = localStorage.getItem("empresa") || "";
   const nombre = localStorage.getItem("nombre_trabajador") || "";
   let empresaNombre = "";

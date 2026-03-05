@@ -41,6 +41,8 @@ import HorasExtraBombermanAdmin from "./components/administrador_bomberman/horas
 import HorasExtraGruamanAdmin from "./components/administrador_gruaman/horas_extra_gruaman";
 import EleccionLideres from "./components/Lideres_bombas/eleccion_lideres";
 import RegistrosDiariosAdmin from './components/administrador/RegistrosDiariosAdmin';
+import GameFlow     from './components/game/GameFlow';
+import LevelWrapper from './components/game/LevelWrapper';
 
 // Función para obtener usuario y obra de localStorage
 function getUsuarioObra() {
@@ -908,10 +910,23 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             userSelect: "none",
           }}
         />
+        {/* ─── Nubes globales sobre fondo.jpeg (páginas no-game) ─── */}
+        <div className="global-clouds" aria-hidden="true">
+          <span className="global-cloud global-cloud--1">☁️</span>
+          <span className="global-cloud global-cloud--2">☁️</span>
+          <span className="global-cloud global-cloud--3">☁️</span>
+          <span className="global-cloud global-cloud--4">☁️</span>
+        </div>
         <SOSButton />
         <STPButton />
         <div style={{ position: "relative", zIndex: 1 }}>
           <Routes>
+            {/* ─── Rutas del juego ─── */}
+            <Route path="/game/rotate-screen" element={<GameFlow key="rotate" step="rotate" />} />
+            <Route path="/game/story-intro"   element={<GameFlow key="story"  step="story"  />} />
+            <Route path="/game/world-map"     element={<GameFlow key="map"    step="map"    />} />
+            <Route path="/game/level/:worldId" element={<LevelWrapper />} />
+
             <Route path="/" element={<App />} />
             <Route path="/cedula" element={<CedulaIngreso />} />
             <Route path="/bienvenida" element={<BienvenidaSeleccion usuario={{ nombre: "Invitado", empresa: "GyE" }} />} />

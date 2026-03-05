@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Nubes globales — flotan sobre fondo.jpeg en páginas no-game ─── */
+.global-clouds {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.global-cloud {
+  position: absolute;
+  animation: global-cloud-drift linear infinite;
+}
+
+.global-cloud--1 { top: 12%; font-size: 3rem;   opacity: 0.55; animation-duration: 35s; animation-delay: 0s;   left: -12%; }
+.global-cloud--2 { top: 40%; font-size: 2.4rem;  opacity: 0.40; animation-duration: 50s; animation-delay: -18s; left: -12%; }
+.global-cloud--3 { top: 6%;  font-size: 2rem;    opacity: 0.32; animation-duration: 27s; animation-delay: -9s;  left: -12%; }
+.global-cloud--4 { top: 68%; font-size: 2.8rem;  opacity: 0.38; animation-duration: 43s; animation-delay: -24s; left: -12%; }
+
+@keyframes global-cloud-drift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(125vw); }
+}
+
 /* Variables y estilos base para la aplicación */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;

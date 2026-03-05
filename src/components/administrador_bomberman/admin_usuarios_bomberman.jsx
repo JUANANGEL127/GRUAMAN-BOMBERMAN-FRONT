@@ -100,6 +100,19 @@ function AdminUsuarios() {
     setLoading(false);
   };
 
+  const handleTogglePin = async (id, actual) => {
+    try {
+      await axios.patch(`${API_BASE_URL}/admin_usuarios/pin/${id}`, {
+        pin_habilitado: !actual
+      });
+      setTrabajadores(trabajadores =>
+        trabajadores.map(t => t.id === id ? { ...t, pin_habilitado: !actual } : t)
+      );
+    } catch (e) {
+      alert("Error al cambiar PIN");
+    }
+  };
+
   return (
     <div className="form-container">
       <div className="card-section" style={{ marginBottom: 24 }}>
@@ -148,39 +161,49 @@ function AdminUsuarios() {
                       transition: "background 0.2s"
                     }}
                   >
-                    <span style={{ fontWeight: 500, color: "#222" }}>{t.nombre}</span>
-                    <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: 36,
-                          height: 20,
-                          borderRadius: 12,
-                          background: t.activo ? "#43a047" : "#e53935",
-                          position: "relative",
-                          transition: "background 0.2s",
-                          cursor: "pointer"
-                        }}
-                        onClick={() => handleToggleActivo(t.id, t.activo)}
-                      >
+                    <span style={{ fontWeight: 500, color: "#222", flex: 1, marginRight: 8 }}>{t.nombre}</span>
+                    <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                      {/* Toggle activo/inactivo */}
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: t.activo ? "#43a047" : "#e53935" }}>
+                          {t.activo ? "Activo" : "Inactivo"}
+                        </span>
                         <span
                           style={{
-                            position: "absolute",
-                            left: t.activo ? 18 : 2,
-                            top: 2,
-                            width: 16,
-                            height: 16,
-                            borderRadius: "50%",
-                            background: "#fff",
-                            boxShadow: "0 1px 4px #bdbdbd",
-                            transition: "left 0.2s"
+                            display: "inline-block", width: 36, height: 20, borderRadius: 12,
+                            background: t.activo ? "#43a047" : "#e53935",
+                            position: "relative", transition: "background 0.2s", cursor: "pointer"
                           }}
-                        />
-                      </span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: t.activo ? "#43a047" : "#e53935" }}>
-                        {t.activo ? "Activo" : "Inactivo"}
-                      </span>
-                    </label>
+                          onClick={() => handleToggleActivo(t.id, t.activo)}
+                        >
+                          <span style={{
+                            position: "absolute", left: t.activo ? 18 : 2, top: 2,
+                            width: 16, height: 16, borderRadius: "50%",
+                            background: "#fff", boxShadow: "0 1px 4px #bdbdbd", transition: "left 0.2s"
+                          }} />
+                        </span>
+                      </div>
+                      {/* Toggle PIN */}
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: t.pin_habilitado ? "#1976d2" : "#9e9e9e" }}>
+                          PIN
+                        </span>
+                        <span
+                          style={{
+                            display: "inline-block", width: 36, height: 20, borderRadius: 12,
+                            background: t.pin_habilitado ? "#1976d2" : "#9e9e9e",
+                            position: "relative", transition: "background 0.2s", cursor: "pointer"
+                          }}
+                          onClick={() => handleTogglePin(t.id, !!t.pin_habilitado)}
+                        >
+                          <span style={{
+                            position: "absolute", left: t.pin_habilitado ? 18 : 2, top: 2,
+                            width: 16, height: 16, borderRadius: "50%",
+                            background: "#fff", boxShadow: "0 1px 4px #bdbdbd", transition: "left 0.2s"
+                          }} />
+                        </span>
+                      </div>
+                    </div>
                   </li>
                 ))
               )}

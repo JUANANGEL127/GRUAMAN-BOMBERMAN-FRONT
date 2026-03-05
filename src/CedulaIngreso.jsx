@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { registerWebAuthn, authenticateWebAuthn, WebAuthnError } from "./components/webauthn";
+import { registerWebAuthn, authenticateWebAuthn, WebAuthnError, checkWebAuthnSupport } from "./components/webauthn";
 import { subscribeUser } from "./pushNotifications";
 
 // Usa variable de entorno para la base de la API
@@ -38,6 +38,17 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
   const [showRegistrarLlaveModal, setShowRegistrarLlaveModal] = useState(false);
   const [registrarLlaveLoading, setRegistrarLlaveLoading] = useState(false);
   const [pendingUsuario, setPendingUsuario] = useState(null);
+
+  // Estado para el modal de diagnóstico (cuando el dispositivo no soporta biometría)
+  const [diagnostico, setDiagnostico] = useState(null); // { titulo, pasos: [] }
+
+  // Estados para el flujo de PIN (fallback para dispositivos sin Google Services)
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinModo, setPinModo] = useState('verificar'); // 'crear' | 'verificar'
+  const [pinInput, setPinInput] = useState('');
+  const [pinConfirm, setPinConfirm] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [pinLoading, setPinLoading] = useState(false);
 
   const isMobile = useIsMobile(); // <-- ocultar animación en tablet/desktop
 
@@ -90,6 +101,23 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           console.error("Error guardando datos en localStorage:", e);
         }
 
+        // Verificar si el usuario tiene PIN habilitado (fallback para dispositivos sin biometría)
+        try {
+          const pinRes = await axios.get(`${API_BASE_URL}/auth/pin/status?numero_identificacion=${encodeURIComponent(cedula)}`);
+          const pinStatus = pinRes.data;
+          if (pinStatus && pinStatus.pinHabilitado) {
+            setPendingUsuario(usuario);
+            setPinModo(pinStatus.pinConfigurado ? 'verificar' : 'crear');
+            setPinInput('');
+            setPinConfirm('');
+            setPinError('');
+            setShowPinModal(true);
+            return;
+          }
+        } catch (e) {
+          // Si no se puede verificar el estado PIN, continuar con el flujo biométrico
+        }
+
         // Solicitar permiso de notificaciones push al guardar usuario
         if ("Notification" in window && "serviceWorker" in navigator) {
           try {
@@ -109,22 +137,42 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         }
 
         // --- INICIO INTEGRACIÓN WEBAUTHN ---
-        // Verificar si el usuario ya tiene credencial biométrica registrada
+        // 1. Verificar soporte del dispositivo antes de intentar
+        const soportaBiometria = await checkWebAuthnSupport();
+        if (!soportaBiometria) {
+          setDiagnostico({
+            titulo: 'Este dispositivo no puede usar huella dactilar',
+            pasos: [
+              'Verifica que tengas Google Services instalado y actualizado.',
+              'Asegúrate de tener una cuenta de Google activa y configurada en el teléfono.',
+              'Revisa que tengas huella dactilar registrada en Ajustes → Seguridad.',
+              'Revisa que las Llaves de acceso estén habilitadas en tu cuenta de Google (passwords.google.com).',
+              'Si ninguna de las anteriores aplica, contacta al administrador.'
+            ]
+          });
+          return;
+        }
+
+        // 2. Verificar si el usuario ya tiene credencial biométrica registrada
         let biometriaRegistrada = false;
         try {
           const res = await axios.post(`${API_BASE_URL}/webauthn/hasCredential`, { numero_identificacion: cedula });
           biometriaRegistrada = !!(res.data && res.data.hasCredential);
         } catch (e) {
-          // Si el endpoint no existe, se asume que no está registrada
           biometriaRegistrada = false;
         }
 
         if (!biometriaRegistrada) {
-          // Registrar credencial biométrica (solo la primera vez en el dispositivo)
+          // Primera vez: registrar credencial biométrica
           try {
             await registerWebAuthn({ numero_identificacion: cedula, nombre: usuario.nombre });
           } catch (e) {
-            setError("No se pudo registrar la biometría en este dispositivo.");
+            console.log('[CedulaIngreso] Error de registro WebAuthn:', e);
+            if (e instanceof WebAuthnError && e.code === 'USER_CANCELLED') {
+              setError("Cancelaste el registro de huella. Inténtalo de nuevo.");
+            } else {
+              setError("No se pudo registrar la biometría. Verifica que tengas huella dactilar configurada en los ajustes del teléfono.");
+            }
             return;
           }
         } else {
@@ -133,15 +181,20 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
             await authenticateWebAuthn({ numero_identificacion: cedula });
           } catch (e) {
             console.log('[CedulaIngreso] Error de autenticación WebAuthn:', e);
-            
-            // Si el error es por falta de llaves en este dispositivo, ofrecer registrar una nueva
+
+            if (e instanceof WebAuthnError && e.code === 'USER_CANCELLED') {
+              setError("Cancelaste la autenticación. Inténtalo de nuevo.");
+              return;
+            }
+
             if (e instanceof WebAuthnError && e.code === 'NO_CREDENTIALS') {
+              // Credencial registrada en otro dispositivo — ofrecer registrar en este
               setPendingUsuario(usuario);
               setShowRegistrarLlaveModal(true);
               return;
             }
-            
-            setError("No se pudo autenticar la biometría en este dispositivo.");
+
+            setError("No se pudo autenticar. Inténtalo de nuevo.");
             return;
           }
         }
@@ -232,6 +285,68 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
     setShowRegistrarLlaveModal(false);
     setPendingUsuario(null);
     setError("Debes registrar una llave de acceso para continuar.");
+  };
+
+  // Maneja el envío del PIN (creación o verificación)
+  const handlePinSubmit = async () => {
+    if (!pendingUsuario) return;
+    const numeroId = pendingUsuario.numero_identificacion || cedula;
+    setPinError('');
+
+    if (!/^\d{4,8}$/.test(pinInput)) {
+      setPinError('El PIN debe ser numérico de 4 a 8 dígitos.');
+      return;
+    }
+
+    if (pinModo === 'crear') {
+      if (pinInput !== pinConfirm) {
+        setPinError('Los PINes no coinciden.');
+        return;
+      }
+      setPinLoading(true);
+      try {
+        const res = await axios.post(`${API_BASE_URL}/auth/pin/set`, { numero_identificacion: numeroId, pin: pinInput });
+        if (res.data.success) {
+          setShowPinModal(false);
+          setPendingUsuario(null);
+          onUsuarioEncontrado && onUsuarioEncontrado({
+            nombre: pendingUsuario.nombre,
+            empresa: pendingUsuario.empresa_id === 1 ? "GyE" : pendingUsuario.empresa_id === 2 ? "AIC" : pendingUsuario.empresa_id === 5 ? "Lideres" : "",
+            numero_identificacion: numeroId
+          });
+        } else {
+          setPinError(res.data.error || 'No se pudo guardar el PIN.');
+        }
+      } catch (e) {
+        setPinError('Error de conexión al guardar el PIN.');
+      } finally {
+        setPinLoading(false);
+      }
+    } else {
+      setPinLoading(true);
+      try {
+        const res = await axios.post(`${API_BASE_URL}/auth/pin/verify`, { numero_identificacion: numeroId, pin: pinInput });
+        if (res.data.success) {
+          setShowPinModal(false);
+          setPendingUsuario(null);
+          onUsuarioEncontrado && onUsuarioEncontrado({
+            nombre: pendingUsuario.nombre,
+            empresa: pendingUsuario.empresa_id === 1 ? "GyE" : pendingUsuario.empresa_id === 2 ? "AIC" : pendingUsuario.empresa_id === 5 ? "Lideres" : "",
+            numero_identificacion: numeroId
+          });
+        } else {
+          setPinError('PIN incorrecto. Inténtalo de nuevo.');
+        }
+      } catch (e) {
+        if (e.response?.status === 401) {
+          setPinError('PIN incorrecto. Inténtalo de nuevo.');
+        } else {
+          setPinError('Error de conexión al verificar el PIN.');
+        }
+      } finally {
+        setPinLoading(false);
+      }
+    }
   };
 
   return (
@@ -547,6 +662,151 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         </div>
       )}
       
+      {/* Modal de PIN (crear o verificar) */}
+      {showPinModal && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(31,38,135,0.18)", zIndex: 10002,
+          display: "flex", alignItems: "center", justifyContent: "center"
+        }}>
+          <div style={{
+            background: "rgba(255,255,255,0.28)", borderRadius: 18,
+            boxShadow: "0 8px 32px 0 rgba(31,38,135,0.37)",
+            backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+            border: "1.5px solid rgba(255,255,255,0.35)",
+            padding: "32px 24px", minWidth: 300, maxWidth: 360,
+            textAlign: "center", fontFamily: "inherit"
+          }}>
+            <div style={{ marginBottom: 14 }}>
+              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#1976d2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto" }}>
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <h3 style={{ marginBottom: 8, color: "#1976d2", fontWeight: 700, fontSize: 18 }}>
+              {pinModo === 'crear' ? 'Crea tu PIN de acceso' : 'Ingresa tu PIN'}
+            </h3>
+            {pinModo === 'crear' && (
+              <p style={{ color: "#555", fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>
+                Este dispositivo usará un PIN en lugar de huella dactilar. Elige un PIN de 4 a 8 dígitos.
+              </p>
+            )}
+            <input
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={8}
+              placeholder={pinModo === 'crear' ? 'Nuevo PIN (4-8 dígitos)' : 'Tu PIN'}
+              value={pinInput}
+              onChange={e => setPinInput(e.target.value.replace(/\D/g, ''))}
+              onKeyDown={e => { if (e.key === 'Enter') handlePinSubmit(); }}
+              style={{
+                width: "100%", boxSizing: "border-box",
+                padding: "12px 14px", border: "1.5px solid #1976d2",
+                borderRadius: 8, fontSize: 20, letterSpacing: 6,
+                textAlign: "center", background: "#f7faff",
+                marginBottom: 12, outline: "none", fontFamily: "inherit"
+              }}
+              autoFocus
+            />
+            {pinModo === 'crear' && (
+              <input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={8}
+                placeholder="Confirmar PIN"
+                value={pinConfirm}
+                onChange={e => setPinConfirm(e.target.value.replace(/\D/g, ''))}
+                onKeyDown={e => { if (e.key === 'Enter') handlePinSubmit(); }}
+                style={{
+                  width: "100%", boxSizing: "border-box",
+                  padding: "12px 14px", border: "1.5px solid #1976d2",
+                  borderRadius: 8, fontSize: 20, letterSpacing: 6,
+                  textAlign: "center", background: "#f7faff",
+                  marginBottom: 12, outline: "none", fontFamily: "inherit"
+                }}
+              />
+            )}
+            {pinError && <div style={{ color: "#c00", fontSize: 13, marginBottom: 12, fontWeight: 500 }}>{pinError}</div>}
+            <div style={{ display: "flex", justifyContent: "center", gap: 12 }}>
+              <button
+                onClick={handlePinSubmit}
+                disabled={pinLoading}
+                style={{
+                  background: "#1976d2", color: "#fff", border: "none",
+                  borderRadius: 8, padding: "10px 24px", fontSize: 15,
+                  fontWeight: 600, cursor: pinLoading ? "not-allowed" : "pointer",
+                  boxShadow: "0 2px 8px rgba(25,118,210,0.18)", opacity: pinLoading ? 0.7 : 1
+                }}
+              >
+                {pinLoading ? "Verificando..." : pinModo === 'crear' ? 'Guardar PIN' : 'Ingresar'}
+              </button>
+              <button
+                onClick={() => { setShowPinModal(false); setPendingUsuario(null); }}
+                disabled={pinLoading}
+                style={{
+                  background: "#f5f5f5", color: "#666", border: "1px solid #ddd",
+                  borderRadius: 8, padding: "10px 20px", fontSize: 15,
+                  fontWeight: 500, cursor: pinLoading ? "not-allowed" : "pointer"
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de diagnóstico: dispositivo sin soporte biométrico */}
+      {diagnostico && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(31,38,135,0.18)", zIndex: 10002,
+          display: "flex", alignItems: "center", justifyContent: "center"
+        }}>
+          <div style={{
+            background: "rgba(255,255,255,0.28)", borderRadius: 18,
+            boxShadow: "0 8px 32px 0 rgba(31,38,135,0.37)",
+            backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+            border: "1.5px solid rgba(255,255,255,0.35)",
+            padding: "32px 24px", minWidth: 300, maxWidth: 370,
+            textAlign: "center", fontFamily: "inherit"
+          }}>
+            <div style={{ marginBottom: 14 }}>
+              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#e65100" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto" }}>
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <h3 style={{ marginBottom: 12, color: "#e65100", fontWeight: 700, fontSize: 17 }}>
+              {diagnostico.titulo}
+            </h3>
+            <p style={{ color: "#555", fontSize: 13, marginBottom: 14, lineHeight: 1.5 }}>
+              Para solucionar el problema, verifica lo siguiente:
+            </p>
+            <ol style={{ textAlign: "left", color: "#333", fontSize: 13, lineHeight: 1.8, paddingLeft: 20, marginBottom: 20 }}>
+              {diagnostico.pasos.map((paso, i) => (
+                <li key={i}>{paso}</li>
+              ))}
+            </ol>
+            <button
+              className="button"
+              onClick={() => setDiagnostico(null)}
+              style={{
+                background: "#e65100", color: "#fff", border: "none",
+                borderRadius: 8, padding: "10px 28px", fontSize: 15,
+                fontWeight: 600, cursor: "pointer",
+                boxShadow: "0 2px 8px rgba(230,81,0,0.18)"
+              }}
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Mostrar la animación solo en mobile */}
       {isMobile && (
         <img

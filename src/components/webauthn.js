@@ -1,6 +1,16 @@
 // WebAuthn integration for registration and authentication (biometría)
 // Usa variable de entorno para la base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
+// Verifica si el dispositivo soporta biometría via WebAuthn antes de intentar
+export async function checkWebAuthnSupport() {
+  if (!window.PublicKeyCredential) return false;
+  try {
+    return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+  } catch (e) {
+    return false;
+  }
+}
 // Adapt endpoints to your backend domain if needed
 
 // Helper: base64/base64url to Uint8Array
@@ -92,11 +102,19 @@ export async function registerWebAuthn({ numero_identificacion, nombre }) {
 }
 
 // Clase de error personalizada para WebAuthn
+// Códigos posibles:
+//   NOT_SUPPORTED   → el dispositivo no soporta biometría via web (sin Google Services, sin authenticator)
+//   USER_CANCELLED  → el usuario canceló el prompt de huella/face
+//   NO_CREDENTIALS  → el usuario tiene credencial en BD pero no en este dispositivo (cambió de celular, etc.)
+//   INVALID_STATE   → estado inválido de autenticación
+//   NETWORK_ERROR   → error de conexión con el backend
+//   PARSE_ERROR     → error procesando respuesta del backend
+//   UNKNOWN         → error no clasificado
 export class WebAuthnError extends Error {
   constructor(message, code) {
     super(message);
     this.name = 'WebAuthnError';
-    this.code = code; // 'NO_CREDENTIALS', 'USER_CANCELLED', 'NOT_ALLOWED', 'UNKNOWN'
+    this.code = code;
   }
 }
 
@@ -137,34 +155,33 @@ export async function authenticateWebAuthn({ numero_identificacion }) {
   try {
     assertion = await navigator.credentials.get({ publicKey: options });
   } catch (e) {
-    console.error('[WebAuthn] Error en navigator.credentials.get:', e);
-    
-    // Detectar errores específicos
-    const errorMessage = e.message?.toLowerCase() || '';
+    console.error('[WebAuthn] Error en navigator.credentials.get:', e, 'name:', e.name, 'message:', e.message);
+
+    const errorMsg = e.message?.toLowerCase() || '';
     const errorName = e.name || '';
-    
-    // Detectar "no hay llaves de acceso disponibles" o errores similares
-    if (
-      errorName === 'NotAllowedError' ||
-      errorMessage.includes('no credentials') ||
-      errorMessage.includes('no passkey') ||
-      errorMessage.includes('no hay llaves') ||
-      errorMessage.includes('not available') ||
-      errorMessage.includes('no authenticator') ||
-      errorMessage.includes('cancel') ||
-      errorMessage.includes('abort')
-    ) {
-      // Podría ser que el usuario canceló o no hay credenciales en este dispositivo
-      throw new WebAuthnError(
-        'No hay llaves de acceso disponibles en este dispositivo. ¿Desea registrar una nueva llave?',
-        'NO_CREDENTIALS'
-      );
+
+    // Usuario canceló explícitamente el prompt de huella/face
+    const usuarioCancelo = errorMsg.includes('cancel') || errorMsg.includes('abort') ||
+      errorMsg.includes('dismissed') || errorMsg.includes('user gesture') ||
+      errorMsg.includes('not focused');
+
+    if (errorName === 'NotAllowedError') {
+      if (usuarioCancelo) {
+        throw new WebAuthnError('Cancelaste la autenticación', 'USER_CANCELLED');
+      }
+      // NotAllowedError sin cancelación = dispositivo no tiene credencial disponible
+      // (puede ser sin Google Services, sin huella registrada, o credencial en otro dispositivo)
+      throw new WebAuthnError('No hay llaves de acceso disponibles en este dispositivo', 'NO_CREDENTIALS');
     }
-    
+
     if (errorName === 'InvalidStateError') {
       throw new WebAuthnError('Estado inválido de autenticación', 'INVALID_STATE');
     }
-    
+
+    if (errorName === 'SecurityError') {
+      throw new WebAuthnError('Error de seguridad: origen no permitido', 'UNKNOWN');
+    }
+
     throw new WebAuthnError('Error durante la autenticación biométrica', 'UNKNOWN');
   }
 

@@ -107,13 +107,10 @@ function BienvenidaSeleccion({ usuario }) {
             console.error("Error guardando obra en localStorage antes de navegar", err);
           }
         }
-        if (usuario.empresa === "GyE") {
-          navigate("/eleccion");
-        } else if (usuario.empresa === "Lideres") {
-          navigate("/eleccion_lideres");
-        } else {
-          navigate("/eleccionaic");
-        }
+        // Determinar personaje y arrrancar el juego
+        const character = usuario.empresa === "GyE" ? "gruaman" : "bomberman";
+        localStorage.setItem("selectedCharacter", character);
+        navigate("/game/rotate-screen");
       } else {
         setError("No se encuentra en la ubicación seleccionada.");
       }
