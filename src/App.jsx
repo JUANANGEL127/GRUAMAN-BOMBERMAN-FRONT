@@ -4,18 +4,19 @@ import BienvenidaSeleccion from "./BienvenidaSeleccion";
 import "./App.css";
 import InstallPWAButton from "./components/InstallPWAButton";
 import IntroVideo from "./components/IntroVideo";
+import SlowConnectionBanner from "./components/SlowConnectionBanner";
 import { subscribeUser } from "./pushNotifications";
 
-/**
- * Formulario de portada y registro de datos básicos con estructura y clases compatibles con permiso_trabajo.css
- */
 function App() {
   const [usuario, setUsuario] = useState(null);
-  const [showIntro, setShowIntro] = useState(true);
 
-  // Obtén el trabajadorId del usuario si está disponible
-  const trabajadorId = usuario?.id; // Ajusta según la estructura real de tu usuario
+  const isLiteMode = sessionStorage.getItem('lite_mode') === 'true';
 
+  // Saltar video si el usuario ya eligió modo lite previamente
+  const [showIntro,      setShowIntro]      = useState(!isLiteMode);
+  const [showLiteBanner, setShowLiteBanner] = useState(false);
+
+  const trabajadorId = usuario?.id;
   useEffect(() => {
     if (trabajadorId && 'serviceWorker' in navigator && 'PushManager' in window) {
       subscribeUser(trabajadorId)
@@ -24,23 +25,42 @@ function App() {
     }
   }, [trabajadorId]);
 
-  const handleIntroEnd = () => {
-    setShowIntro(false);
+  const handleIntroEnd = () => setShowIntro(false);
+
+  // El video no cargó en 6s o dio error → conexión lenta real → sugerir lite
+  const handleSlowDetected = () => {
+    if (!isLiteMode) setShowLiteBanner(true);
   };
+
+  const handleUseLite = () => {
+    sessionStorage.setItem('lite_mode', 'true');
+    setShowLiteBanner(false);
+  };
+
+  const handleDismissBanner = () => setShowLiteBanner(false);
 
   return (
     <div className="App">
-      {showIntro && <IntroVideo onVideoEnd={handleIntroEnd} />}
+      {showIntro && (
+        <IntroVideo
+          onVideoEnd={handleIntroEnd}
+          onSlowDetected={handleSlowDetected}
+        />
+      )}
       {!showIntro && (
         <>
-          {
-            !usuario ? (
-              <CedulaIngreso onUsuarioEncontrado={setUsuario} />
-            ) : (
-              <BienvenidaSeleccion usuario={usuario} />
-            )
-          }
+          {!usuario ? (
+            <CedulaIngreso onUsuarioEncontrado={setUsuario} />
+          ) : (
+            <BienvenidaSeleccion usuario={usuario} />
+          )}
         </>
+      )}
+      {showLiteBanner && (
+        <SlowConnectionBanner
+          onUseLite={handleUseLite}
+          onDismiss={handleDismissBanner}
+        />
       )}
       <InstallPWAButton />
     </div>

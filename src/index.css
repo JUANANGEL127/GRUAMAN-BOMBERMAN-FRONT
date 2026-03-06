@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
 
 /* ─── Nubes globales — flotan sobre fondo.jpeg en páginas no-game ─── */
 .global-clouds {

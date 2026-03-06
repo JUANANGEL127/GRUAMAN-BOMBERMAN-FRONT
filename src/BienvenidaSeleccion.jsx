@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
 function BienvenidaSeleccion({ usuario }) {
+  const isLite = sessionStorage.getItem('lite_mode') === 'true';
   const [obra_busqueda, setObraBusqueda] = useState("");
   const [lista_obras, setListaObras] = useState([]);
   const [obra_id_seleccionada, setObraIdSeleccionada] = useState("");
@@ -107,10 +108,19 @@ function BienvenidaSeleccion({ usuario }) {
             console.error("Error guardando obra en localStorage antes de navegar", err);
           }
         }
-        // Determinar personaje y arrrancar el juego
+        // Determinar personaje y arrancar el juego (o modo lite)
         const character = usuario.empresa === "GyE" ? "gruaman" : "bomberman";
         localStorage.setItem("selectedCharacter", character);
-        navigate("/game/rotate-screen");
+
+        if (sessionStorage.getItem('lite_mode') === 'true') {
+          // Modo lite → ir directo a la pantalla de selección de formularios
+          const liteRoute = usuario.empresa === "GyE"     ? "/eleccion"
+                          : usuario.empresa === "Lideres" ? "/eleccion_lideres"
+                          : "/eleccionaic";
+          navigate(liteRoute);
+        } else {
+          navigate("/game/rotate-screen");
+        }
       } else {
         setError("No se encuentra en la ubicación seleccionada.");
       }
@@ -122,7 +132,7 @@ function BienvenidaSeleccion({ usuario }) {
   return (
     <div className="form-container">
       {/* Bocadillo fuera de la card, usando la imagen texto1.png */}
-      {mostrarBocadillo && (
+      {mostrarBocadillo && sessionStorage.getItem('lite_mode') !== 'true' && (
         <div
           style={{
             position: "fixed",
@@ -186,6 +196,7 @@ function BienvenidaSeleccion({ usuario }) {
           placeholder="Buscar o selecciona la obra"
           value={obra_busqueda}
           onChange={handleObraChange}
+          style={isLite ? { background: "#f7faff", border: "1.5px solid #c5d5ea" } : undefined}
         />
         <datalist id="lista-obras">
           {lista_obras.map((obra) => (
@@ -197,29 +208,31 @@ function BienvenidaSeleccion({ usuario }) {
         </button>
         {error && <div style={{ color: "red", marginTop: 12 }}>{error}</div>}
       </div>
-      <div style={{
-        position: "fixed",
-        top: "50vh",
-        width: "100vw",
-        height: "100vh",
-        zIndex: 0,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-start",
-        pointerEvents: "none",
-        userSelect: "none"
-      }}>
-        <img
-          src={usuario.empresa === "GyE" ? "/gruaman1.1.gif" : (usuario.empresa === "Lideres" ? "/bomberman1.1.gif" : "/bomberman1.1.gif")}
-          alt={usuario.empresa}
-          style={{
-            width: "200vw",
-            height: "50vh",
-            objectFit: "cover",
-            borderRadius: 0,
-          }}
-        />
-      </div>
+      {sessionStorage.getItem('lite_mode') !== 'true' && (
+        <div style={{
+          position: "fixed",
+          top: "50vh",
+          width: "100vw",
+          height: "100vh",
+          zIndex: 0,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "flex-start",
+          pointerEvents: "none",
+          userSelect: "none"
+        }}>
+          <img
+            src={usuario.empresa === "GyE" ? "/gruaman1.1.gif" : (usuario.empresa === "Lideres" ? "/bomberman1.1.gif" : "/bomberman1.1.gif")}
+            alt={usuario.empresa}
+            style={{
+              width: "200vw",
+              height: "50vh",
+              objectFit: "cover",
+              borderRadius: 0,
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,19 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-// Usa variable de entorno para la base de la API (por si se usa en el futuro)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const MAX_WAIT_MS = 6000; // si en 6s no arranca, saltar
 
-function IntroVideo({ onVideoEnd }) {
+/**
+ * IntroVideo
+ * Props:
+ *   onVideoEnd      fn()           — el video terminó normalmente
+ *   onSlowDetected  fn() optional  — el video no cargó en 6s o dio error (posible red lenta)
+ */
+function IntroVideo({ onVideoEnd, onSlowDetected }) {
   const [isPlaying, setIsPlaying] = useState(true);
-  const [fadeOut, setFadeOut] = useState(false);
+  const [fadeOut, setFadeOut]     = useState(false);
+  const escapedRef                = useRef(false);
 
-  const handleVideoEnd = () => {
+  // slow=true → timeout/error;  slow=false → terminó normalmente
+  const escape = (slow = false) => {
+    if (escapedRef.current) return;
+    escapedRef.current = true;
     setFadeOut(true);
     setTimeout(() => {
       setIsPlaying(false);
       onVideoEnd();
-    }, 600); // Duración de la transición en ms
+      if (slow) onSlowDetected?.();
+    }, 400);
   };
+
+  // Red demasiado lenta o sin video → saltar y avisar
+  useEffect(() => {
+    const timer = setTimeout(() => escape(true), MAX_WAIT_MS);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!isPlaying) return null;
 
@@ -21,10 +38,8 @@ function IntroVideo({ onVideoEnd }) {
     <div
       style={{
         position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
+        top: 0, left: 0,
+        width: "100vw", height: "100vh",
         backgroundColor: "#184671",
         zIndex: 9999,
         display: "flex",
@@ -32,29 +47,27 @@ function IntroVideo({ onVideoEnd }) {
         justifyContent: "center",
         overflow: "hidden",
         opacity: fadeOut ? 0 : 1,
-        transition: "opacity 0.6s ease"
+        transition: "opacity 0.4s ease"
       }}
     >
       <video
         autoPlay
         muted
         playsInline
-        onEnded={handleVideoEnd}
+        onEnded={() => escape(false)}
+        onError={() => escape(true)}
+        onStalled={() => escape(true)}
         style={{
           maxWidth: "100vw",
           maxHeight: "100vh",
           width: "auto",
           height: "100vh",
           objectFit: "contain",
-          background: "#184671", // Cambia el fondo del video también
+          background: "#184671",
           borderRadius: 0
         }}
       >
-        {/* Si el video estuviera en la API, usar: 
-        <source src={`${API_BASE_URL}/intro.mp4`} type="video/mp4" /> 
-        */}
         <source src="/intro.mp4" type="video/mp4" />
-        Tu navegador no soporta el elemento de video.
       </video>
     </div>
   );

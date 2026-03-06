@@ -50,18 +50,17 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
   const [pinError, setPinError] = useState('');
   const [pinLoading, setPinLoading] = useState(false);
 
-  const isMobile = useIsMobile(); // <-- ocultar animación en tablet/desktop
-
-  // NO ocultar todo el componente: solo mostraremos el panel principal en mobile.
-  // El botón "Ingreso administrador" y su modal deben permanecer siempre visibles.
+  const isMobile = useIsMobile();
+  const isLite   = sessionStorage.getItem('lite_mode') === 'true';
 
   useEffect(() => {
+    if (isLite) return; // sin GIFs rotativos en modo lite
     const gifs = ["/gruaman1.1.gif", "/bomberman1.1.gif"];
     const interval = setInterval(() => {
       setGifIndex(prev => (prev + 1) % gifs.length);
-    }, 2500); // cambia cada 2.5 segundos
+    }, 2500);
     return () => clearInterval(interval);
-  }, []);
+  }, [isLite]);
 
   const handleBuscar = async () => {
     setError("");
@@ -356,12 +355,12 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         <div
           className="card-section"
           style={{
-            background: "rgba(255,255,255,0.22)",
+            background: isLite ? "#fff" : "rgba(255,255,255,0.22)",
             borderRadius: "18px",
-            boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            border: "1px solid rgba(255,255,255,0.28)",
+            boxShadow: isLite ? "0 2px 12px rgba(0,0,0,0.10)" : "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+            backdropFilter: isLite ? undefined : "blur(8px)",
+            WebkitBackdropFilter: isLite ? undefined : "blur(8px)",
+            border: isLite ? "1px solid #e0e0e0" : "1px solid rgba(255,255,255,0.28)",
             padding: "32px 24px",
             maxWidth: 400,
             margin: "0 auto",
@@ -376,6 +375,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
             value={cedula}
             onChange={e => setCedula(e.target.value)}
             placeholder="Número de identificación"
+            style={isLite ? { background: "#f7faff", border: "1.5px solid #c5d5ea" } : undefined}
           />
           <button className="button" onClick={handleBuscar} style={{ marginTop: 16 }}>
             Continuar
@@ -427,12 +427,12 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         >
           <div
             style={{
-              background: "rgba(255,255,255,0.22)",
+              background: isLite ? "#fff" : "rgba(255,255,255,0.22)",
               borderRadius: 18,
-              boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-              border: "1.5px solid rgba(255,255,255,0.28)",
+              boxShadow: isLite ? "0 2px 12px rgba(0,0,0,0.10)" : "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+              backdropFilter: isLite ? undefined : "blur(8px)",
+              WebkitBackdropFilter: isLite ? undefined : "blur(8px)",
+              border: isLite ? "1px solid #e0e0e0" : "1.5px solid rgba(255,255,255,0.28)",
               padding: "32px 24px",
               minWidth: 300,
               textAlign: "center",
@@ -580,12 +580,12 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         >
           <div
             style={{
-              background: "rgba(255,255,255,0.28)",
+              background: isLite ? "#fff" : "rgba(255,255,255,0.28)",
               borderRadius: 18,
-              boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              border: "1.5px solid rgba(255,255,255,0.35)",
+              boxShadow: isLite ? "0 2px 12px rgba(0,0,0,0.10)" : "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+              backdropFilter: isLite ? undefined : "blur(12px)",
+              WebkitBackdropFilter: isLite ? undefined : "blur(12px)",
+              border: isLite ? "1px solid #e0e0e0" : "1.5px solid rgba(255,255,255,0.35)",
               padding: "32px 24px",
               minWidth: 300,
               maxWidth: 360,
@@ -670,10 +670,10 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           display: "flex", alignItems: "center", justifyContent: "center"
         }}>
           <div style={{
-            background: "rgba(255,255,255,0.28)", borderRadius: 18,
-            boxShadow: "0 8px 32px 0 rgba(31,38,135,0.37)",
-            backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-            border: "1.5px solid rgba(255,255,255,0.35)",
+            background: isLite ? "#fff" : "rgba(255,255,255,0.28)", borderRadius: 18,
+            boxShadow: isLite ? "0 2px 12px rgba(0,0,0,0.10)" : "0 8px 32px 0 rgba(31,38,135,0.37)",
+            backdropFilter: isLite ? undefined : "blur(12px)", WebkitBackdropFilter: isLite ? undefined : "blur(12px)",
+            border: isLite ? "1px solid #e0e0e0" : "1.5px solid rgba(255,255,255,0.35)",
             padding: "32px 24px", minWidth: 300, maxWidth: 360,
             textAlign: "center", fontFamily: "inherit"
           }}>
@@ -766,10 +766,10 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           display: "flex", alignItems: "center", justifyContent: "center"
         }}>
           <div style={{
-            background: "rgba(255,255,255,0.28)", borderRadius: 18,
-            boxShadow: "0 8px 32px 0 rgba(31,38,135,0.37)",
-            backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-            border: "1.5px solid rgba(255,255,255,0.35)",
+            background: isLite ? "#fff" : "rgba(255,255,255,0.28)", borderRadius: 18,
+            boxShadow: isLite ? "0 2px 12px rgba(0,0,0,0.10)" : "0 8px 32px 0 rgba(31,38,135,0.37)",
+            backdropFilter: isLite ? undefined : "blur(12px)", WebkitBackdropFilter: isLite ? undefined : "blur(12px)",
+            border: isLite ? "1px solid #e0e0e0" : "1.5px solid rgba(255,255,255,0.35)",
             padding: "32px 24px", minWidth: 300, maxWidth: 370,
             textAlign: "center", fontFamily: "inherit"
           }}>
@@ -808,7 +808,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
       )}
 
       {/* Mostrar la animación solo en mobile */}
-      {isMobile && (
+      {isMobile && !isLite && (
         <img
           src={gifIndex === 0 ? "/gruaman1.1.gif" : "/bomberman1.1.gif"}
           alt={gifIndex === 0 ? "GruaMan animado" : "BomberMan animado"}
