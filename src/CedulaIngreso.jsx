@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { registerWebAuthn, authenticateWebAuthn, WebAuthnError, checkWebAuthnSupport } from "./components/webauthn";
 import { subscribeUser } from "./pushNotifications";
 
@@ -25,6 +26,20 @@ function useIsMobile() {
 }
 
 function CedulaIngreso({ onUsuarioEncontrado }) {
+  const navigate = useNavigate();
+
+  // Si el usuario es SST (empresa_id=4) va directo a /eleccion_sst, sin pasar por BienvenidaSeleccion
+  const handleUsuarioAutenticado = (usuario, empresa_id) => {
+    localStorage.setItem("nombre_trabajador", usuario.nombre || "");
+    localStorage.setItem("cedula_trabajador", usuario.numero_identificacion || "");
+    localStorage.setItem("empresa_id", String(empresa_id || ""));
+    if (empresa_id === 4) {
+      navigate("/eleccion_sst");
+      return;
+    }
+    onUsuarioEncontrado && onUsuarioEncontrado(usuario);
+  };
+
   const [cedula, setCedula] = useState("");
   const [error, setError] = useState("");
   const [gifIndex, setGifIndex] = useState(0);
@@ -199,12 +214,12 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         }
         // --- FIN INTEGRACIÓN WEBAUTHN ---
 
-        // Mantener callback existente
-        onUsuarioEncontrado && onUsuarioEncontrado({
+        // Mantener callback existente (SST → redirige directo, otros → BienvenidaSeleccion)
+        handleUsuarioAutenticado({
           nombre: usuario.nombre,
           empresa: usuario.empresa_id === 1 ? "GyE" : usuario.empresa_id === 2 ? "AIC" : usuario.empresa_id === 5 ? "Lideres" : "",
           numero_identificacion: usuario.numero_identificacion
-        });
+        }, usuario.empresa_id);
       } else {
         setError("No haces parte de nuestros super héroes o tu usuario está inactivo.");
       }
@@ -262,12 +277,12 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
       // Registro exitoso, cerrar modal y continuar con el flujo
       setShowRegistrarLlaveModal(false);
       
-      // Continuar con el callback original
-      onUsuarioEncontrado && onUsuarioEncontrado({
+      // Continuar con el callback original (SST → redirige directo)
+      handleUsuarioAutenticado({
         nombre: pendingUsuario.nombre,
         empresa: pendingUsuario.empresa_id === 1 ? "GyE" : pendingUsuario.empresa_id === 2 ? "AIC" : pendingUsuario.empresa_id === 5 ? "Lideres" : "",
         numero_identificacion: pendingUsuario.numero_identificacion
-      });
+      }, pendingUsuario.empresa_id);
       
       setPendingUsuario(null);
     } catch (e) {
@@ -308,11 +323,11 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         if (res.data.success) {
           setShowPinModal(false);
           setPendingUsuario(null);
-          onUsuarioEncontrado && onUsuarioEncontrado({
+          handleUsuarioAutenticado({
             nombre: pendingUsuario.nombre,
             empresa: pendingUsuario.empresa_id === 1 ? "GyE" : pendingUsuario.empresa_id === 2 ? "AIC" : pendingUsuario.empresa_id === 5 ? "Lideres" : "",
             numero_identificacion: numeroId
-          });
+          }, pendingUsuario.empresa_id);
         } else {
           setPinError(res.data.error || 'No se pudo guardar el PIN.');
         }
@@ -328,11 +343,11 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         if (res.data.success) {
           setShowPinModal(false);
           setPendingUsuario(null);
-          onUsuarioEncontrado && onUsuarioEncontrado({
+          handleUsuarioAutenticado({
             nombre: pendingUsuario.nombre,
             empresa: pendingUsuario.empresa_id === 1 ? "GyE" : pendingUsuario.empresa_id === 2 ? "AIC" : pendingUsuario.empresa_id === 5 ? "Lideres" : "",
             numero_identificacion: numeroId
-          });
+          }, pendingUsuario.empresa_id);
         } else {
           setPinError('PIN incorrecto. Inténtalo de nuevo.');
         }

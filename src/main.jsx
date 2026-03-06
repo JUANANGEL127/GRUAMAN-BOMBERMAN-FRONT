@@ -41,6 +41,9 @@ import HorasExtraBombermanAdmin from "./components/administrador_bomberman/horas
 import HorasExtraGruamanAdmin from "./components/administrador_gruaman/horas_extra_gruaman";
 import EleccionLideres from "./components/Lideres_bombas/eleccion_lideres";
 import RegistrosDiariosAdmin from './components/administrador/RegistrosDiariosAdmin';
+import EleccionSST from './components/sst/eleccion_sst';
+import PQR from './components/sst/pqr';
+import Hallazgos from './components/sst/hallazgos';
 import GameFlow     from './components/game/GameFlow';
 import LevelWrapper from './components/game/LevelWrapper';
 
@@ -965,6 +968,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/horas_extra_gruaman" element={<HorasExtraGruamanAdmin />} />
             <Route path="/eleccion_lideres/*" element={<EleccionLideres />} />
             <Route path="/registros_diarios_admin" element={<RegistrosDiariosAdmin />} />
+            <Route path="/eleccion_sst/*" element={<EleccionSST />} />
+            <Route path="/pqr" element={<PQR />} />
+            <Route path="/hallazgos" element={<Hallazgos />} />
           </Routes>
           {/* <Footer /> */}
         </div>

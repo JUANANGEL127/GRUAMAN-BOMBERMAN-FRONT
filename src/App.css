@@ -247,14 +247,15 @@ body {
 
 input,
 select,
-textarea {
+textarea,
+.input {
   width: 95%;
   padding: 0.75rem;
   font-size: 0.95rem;
   color: var(--negro);
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  border-radius: 0.75rem !important;
   outline: none;
   transition: all 0.2s ease;
 }
