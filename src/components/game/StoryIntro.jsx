@@ -89,10 +89,13 @@ function StoryIntro({ character = 'bomberman', obraName = 'la obra', onComplete 
       {/* Fondo con estrellas */}
       <div className="si-bg" />
 
-      {/* Botón saltar */}
-      <button className="si-skip" onClick={handleSkip} aria-label="Saltar introducción">
-        Saltar ›
-      </button>
+      {/* Botón saltar — estilo PS5 */}
+      <div className="si-skip-wrap">
+        <span className="si-skip-label">Saltar intro</span>
+        <button className="si-skip" onClick={handleSkip} aria-label="Saltar introducción">
+          <span className="si-skip-arrows">»</span>
+        </button>
+      </div>
 
       {/* Personaje — esquina inferior izquierda */}
       <div className="si-character">

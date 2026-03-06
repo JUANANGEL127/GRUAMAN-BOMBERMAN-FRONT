@@ -41,30 +41,56 @@
   to   { opacity: 1;   }
 }
 
-/* ─── Botón saltar ─── */
-.si-skip {
+/* ─── Botón saltar — estilo PS5 ─── */
+.si-skip-wrap {
   position: absolute;
   top: 1.2rem;
-  right: 1.2rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: rgba(255, 255, 255, 0.65);
-  padding: 0.45rem 1.1rem;
-  border-radius: 20px;
-  font-size: 0.88rem;
-  font-family: inherit;
-  cursor: pointer;
+  right: 1.3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
   z-index: 10;
-  letter-spacing: 0.3px;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
-  -webkit-tap-highlight-color: transparent;
 }
 
-.si-skip:hover,
-.si-skip:focus-visible {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.35);
+.si-skip-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  user-select: none;
+}
+
+.si-skip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #e8003d 0%, #a8002c 100%);
+  border: none;
+  box-shadow:
+    0 4px 16px rgba(232, 0, 61, 0.55),
+    0 1px 0 rgba(255, 255, 255, 0.18) inset;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.si-skip:active {
+  transform: scale(0.9);
+  box-shadow: 0 2px 8px rgba(232, 0, 61, 0.4);
+}
+
+.si-skip-arrows {
+  font-size: 1.5rem;
+  font-weight: 900;
   color: #fff;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 /* ─── Personaje (esquina inferior izquierda) ─── */

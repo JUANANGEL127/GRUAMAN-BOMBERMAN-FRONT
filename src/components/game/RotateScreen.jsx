@@ -55,34 +55,14 @@ function RotateScreen({ duration = 4000, onComplete }) {
     <div className="rs-overlay">
       <div className="rs-content">
 
-        {/* Ícono de teléfono animado */}
-        <div className={`rs-phone ${landscape ? 'rs-phone--land' : ''}`}>
-          <svg viewBox="0 0 60 100" className="rs-phone-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="4" y="4" width="52" height="92" rx="8" stroke="currentColor" strokeWidth="4" fill="rgba(255,255,255,0.05)" />
-            <circle cx="30" cy="86" r="4" fill="currentColor" opacity="0.6" />
-            <rect x="20" y="10" width="20" height="3" rx="1.5" fill="currentColor" opacity="0.4" />
-          </svg>
-        </div>
-
-        {/* Flecha de rotación */}
-        <div className={`rs-rotate-arrow ${landscape ? 'rs-rotate-arrow--done' : ''}`}>
-          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M 15 40 A 25 25 0 1 1 40 65"
-              stroke="currentColor" strokeWidth="5" strokeLinecap="round" fill="none"
-            />
-            <polygon points="40,56 40,74 28,65" fill="currentColor" />
-          </svg>
-        </div>
-
         {/* Texto */}
         <h2 className="rs-title">
-          {landscape ? '¡Modo héroe activado!' : 'Gira tu dispositivo'}
+          {landscape ? '¡Modo héroe activado!' : '¿Estás listo súper héroe?'}
         </h2>
         <p className="rs-subtitle">
           {landscape
             ? 'Preparando la misión...'
-            : 'Necesitas el modo horizontal para continuar'}
+            : 'Estás a punto de empezar una nueva aventura'}
         </p>
 
         {/* Barra de progreso */}

@@ -60,7 +60,7 @@ export const gameWorlds = {
       route: '/planillabombeo',
       color: '#9C27B0',
       bgColor: '#F3E5F5',
-      daily: true,
+      daily: false,
       order: 3,
       sections: 3
     },
@@ -77,7 +77,7 @@ export const gameWorlds = {
       route: '/checklist',
       color: '#F44336',
       bgColor: '#FFEBEE',
-      daily: true,
+      daily: false,
       order: 4,
       sections: 3
     },
@@ -94,7 +94,7 @@ export const gameWorlds = {
       route: '/chequeo_alturas',
       color: '#2196F3',
       bgColor: '#E3F2FD',
-      daily: true,
+      daily: false,
       order: 5,
       sections: 4
     },
@@ -111,7 +111,7 @@ export const gameWorlds = {
       route: '/inspeccion_epcc_bomberman',
       color: '#00BCD4',
       bgColor: '#E0F7FA',
-      daily: true,
+      daily: false,
       order: 6,
       sections: 2
     },
@@ -203,7 +203,7 @@ export const gameWorlds = {
       route: '/chequeo_alturas',
       color: '#2196F3',
       bgColor: '#E3F2FD',
-      daily: true,
+      daily: false,
       order: 3,
       sections: 4
     },
@@ -220,7 +220,7 @@ export const gameWorlds = {
       route: '/chequeo_torregruas',
       color: '#673AB7',
       bgColor: '#EDE7F6',
-      daily: true,
+      daily: false,
       order: 4,
       sections: 3
     },
@@ -237,7 +237,7 @@ export const gameWorlds = {
       route: '/chequeo_elevador',
       color: '#E91E63',
       bgColor: '#FCE4EC',
-      daily: true,
+      daily: false,
       order: 5,
       sections: 3
     },
@@ -254,7 +254,7 @@ export const gameWorlds = {
       route: '/inspeccion_epcc',
       color: '#009688',
       bgColor: '#E0F2F1',
-      daily: true,
+      daily: false,
       order: 6,
       sections: 2
     },
@@ -271,7 +271,7 @@ export const gameWorlds = {
       route: '/inspeccion_izaje',
       color: '#3F51B5',
       bgColor: '#E8EAF6',
-      daily: true,
+      daily: false,
       order: 7,
       sections: 2
     },

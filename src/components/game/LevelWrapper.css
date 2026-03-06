@@ -181,6 +181,88 @@
   to   { transform: rotate(360deg); }
 }
 
+/* ─── Progreso de sección (modo gamificado) ─── */
+.lw-section-progress {
+  font-size:   0.62rem;
+  font-weight: 500;
+  color:       rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  overflow:    hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Container del modo gamificado ─── */
+.lw-game-container {
+  flex:       1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  position:   relative;
+  z-index:    5;
+  display:    flex;
+  flex-direction: column;
+}
+
+/* ─── Pantallas de estado (submit / success / error) ─── */
+.lw-status {
+  flex:            1;
+  display:         flex;
+  flex-direction:  column;
+  align-items:     center;
+  justify-content: center;
+  gap:             1rem;
+  padding:         2rem;
+  text-align:      center;
+  color:           #fff;
+}
+
+.lw-status-icon {
+  font-size: 3.5rem;
+  line-height: 1;
+}
+
+.lw-status p {
+  font-size:   1.1rem;
+  font-weight: 600;
+  margin:      0;
+  opacity:     0.9;
+}
+
+.lw-status--loading .lw-status-icon {
+  animation: lw-spin 1.5s linear infinite;
+}
+
+.lw-status--success .lw-status-icon {
+  animation: lw-bounce 0.6s ease both;
+}
+
+.lw-status--error {
+  color: #fecdd3;
+}
+
+.lw-retry-btn {
+  margin-top:    0.5rem;
+  padding:       0.7rem 1.5rem;
+  border:        2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 12px;
+  background:    rgba(255, 255, 255, 0.1);
+  color:         #fff;
+  font-size:     0.95rem;
+  font-weight:   600;
+  cursor:        pointer;
+  transition:    background 0.15s ease;
+}
+
+.lw-retry-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes lw-bounce {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.2);             }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
 /* ─── Landscape compact ─── */
 @media (max-height: 420px) {
   .lw-header     { height: 44px; }
