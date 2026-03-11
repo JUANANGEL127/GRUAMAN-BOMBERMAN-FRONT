@@ -98,7 +98,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           const nombre = usuario.nombre || usuario.nombres || usuario.nombre_trabajador || "";
           const numeroId = usuario.numero_identificacion || usuario.cedula || usuario.id || cedula;
           const cargo = usuario.cargo || usuario.cargo_trabajador || usuario.puesto || "";
-          const empresaName = usuario.empresa || (usuario.empresa_id === 1 ? "GyE" : usuario.empresa_id === 2 ? "AIC" : usuario.empresa_id === 5 ? "Lideres" : "") || "";
+          const empresaName = usuario.empresa || (usuario.empresa_id === 1 ? "GyE" : usuario.empresa_id === 2 ? "AIC" : usuario.empresa_id === 4 ? "SST" : usuario.empresa_id === 5 ? "Lideres" : "") || "";
           const obra = usuario.obra || usuario.nombre_proyecto || usuario.nombre_obra || "";
 
           localStorage.setItem("nombre_trabajador", nombre);
@@ -217,7 +217,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         // Mantener callback existente (SST → redirige directo, otros → BienvenidaSeleccion)
         handleUsuarioAutenticado({
           nombre: usuario.nombre,
-          empresa: usuario.empresa_id === 1 ? "GyE" : usuario.empresa_id === 2 ? "AIC" : usuario.empresa_id === 5 ? "Lideres" : "",
+          empresa: usuario.empresa_id === 1 ? "GyE" : usuario.empresa_id === 2 ? "AIC" : usuario.empresa_id === 4 ? "SST" : usuario.empresa_id === 5 ? "Lideres" : "",
           numero_identificacion: usuario.numero_identificacion
         }, usuario.empresa_id);
       } else {

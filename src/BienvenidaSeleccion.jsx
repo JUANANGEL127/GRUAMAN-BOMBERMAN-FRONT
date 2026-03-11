@@ -109,13 +109,14 @@ function BienvenidaSeleccion({ usuario }) {
           }
         }
         // Determinar personaje y arrancar el juego (o modo lite)
-        const character = usuario.empresa === "GyE" ? "gruaman" : "bomberman";
+        const character = usuario.empresa === "GyE" ? "gruaman" : usuario.empresa === "SST" ? "bomberman" : "bomberman";
         localStorage.setItem("selectedCharacter", character);
 
         if (sessionStorage.getItem('lite_mode') === 'true') {
           // Modo lite → ir directo a la pantalla de selección de formularios
           const liteRoute = usuario.empresa === "GyE"     ? "/eleccion"
                           : usuario.empresa === "Lideres" ? "/eleccion_lideres"
+                          : usuario.empresa === "SST"     ? "/eleccion_sst"
                           : "/eleccionaic";
           navigate(liteRoute);
         } else {

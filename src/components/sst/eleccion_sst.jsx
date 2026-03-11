@@ -9,7 +9,7 @@ function getUsadosFromStorage(usuario) {
     const data = localStorage.getItem(`sst_usados_${usuario}`);
     if (data) return JSON.parse(data);
   } catch {}
-  return { pqr: false, hallazgos: false };
+  return { pqr: false, hallazgos: false, hora_ingreso: false, hora_salida: false };
 }
 
 function setUsadosToStorage(usados, usuario) {
@@ -79,6 +79,20 @@ function BienvenidaSST() {
           Selecciona el formulario que deseas usar:
         </p>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+          <button
+            className={getButtonClass(usados.hora_ingreso)}
+            style={{ maxWidth: 320 }}
+            onClick={() => handleNavigate("/hora_ingreso", "hora_ingreso")}
+          >
+            Hora de Ingreso
+          </button>
+          <button
+            className={getButtonClass(usados.hora_salida)}
+            style={{ maxWidth: 320 }}
+            onClick={() => handleNavigate("/hora_salida", "hora_salida")}
+          >
+            Hora de Salida
+          </button>
           <button
             className={getButtonClass(usados.pqr)}
             style={{ maxWidth: 320 }}
