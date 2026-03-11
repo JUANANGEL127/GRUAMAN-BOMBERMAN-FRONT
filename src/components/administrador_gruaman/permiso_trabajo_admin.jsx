@@ -72,7 +72,7 @@ function PermisoTrabajoAdmin() {
       try {
         const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
         if (Array.isArray(res.data.datos)) {
-          setNombresOperarios(res.data.datos.map(d => d.nombre));
+          setNombresOperarios(res.data.datos.filter(d => Number(d.empresa_id) === 1).map(d => d.nombre));
         } else {
           setNombresOperarios([]);
         }

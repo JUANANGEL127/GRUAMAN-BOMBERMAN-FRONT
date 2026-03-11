@@ -195,10 +195,8 @@ function PermisoTrabajo(props) {
       localStorage.getItem("operador") ||
       "";
 
-    // Fecha local YYYY-MM-DD para evitar desfases por UTC
-    const today = new Date();
-    const pad = (n) => String(n).padStart(2, '0');
-    const fechaHoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+    // Fecha local YYYY-MM-DD en zona horaria Colombia para evitar desfases por UTC
+    const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 
     // ── Manejo de datos guardados por semana ────────────────────────────────
     const weekKey = getCurrentWeekKey();
@@ -387,8 +385,10 @@ function PermisoTrabajo(props) {
       firmas.trabajador_autorizado ||
       "";
 
-    if (!generales.proyecto || !generales.cliente) {
-      alert("Completa los datos generales: cliente y proyecto.");
+    // "cliente" se omite de la validación: puede quedar vacío si la red falla
+    // al cargar /obras. El backend acepta nombre_cliente vacío.
+    if (!generales.proyecto) {
+      alert("Completa los datos generales: proyecto.");
       return;
     }
 

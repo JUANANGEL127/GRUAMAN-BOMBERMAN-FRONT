@@ -85,7 +85,7 @@ function horasExtraGruaman() {
         });
         data = res.data || {};
         const filteredRows = Array.isArray(data.rows)
-          ? data.rows.filter(r => (r.empresa_id === 1 || (r.raw && r.raw.empresa_id === 1)))
+          ? data.rows.filter(r => (Number(r.empresa_id) === 1 || (r.raw && Number(r.raw.empresa_id) === 1)))
           : [];
         setResultados(filteredRows);
         setTotal(filteredRows.length);

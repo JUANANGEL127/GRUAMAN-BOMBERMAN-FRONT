@@ -175,9 +175,7 @@ function InspeccionIzaje({ value = {}, onChange }) {
 	useEffect(() => {
 		const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
 		const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
-		const today = new Date();
-		const pad = (n) => String(n).padStart(2, '0');
-		const fechaHoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+		const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 		const cargo = localStorage.getItem("cargo_trabajador") || "";
 
 		axios.get(`${API_BASE_URL}/obras`)
@@ -217,7 +215,7 @@ function InspeccionIzaje({ value = {}, onChange }) {
 	};
 
 	const handleGeneralesChange = (e) => {
-		setGenerales({ ...generales, [e.target.name]: e.target.value });
+		setGenerales(prev => ({ ...prev, [e.target.name]: e.target.value }));
 		setErrores((prev) => ({ ...prev, [e.target.name]: false }));
 	};
 
@@ -317,8 +315,9 @@ function InspeccionIzaje({ value = {}, onChange }) {
 		let primerError = null;
 
 		// Validación de datos generales obligatorios
+		// "cliente_constructora" se omite: puede quedar vacío si la red falla al cargar /obras,
+		// el backend no lo requiere estrictamente para registrar la inspección.
 		[
-			"cliente_constructora",
 			"proyecto_constructora",
 			"fecha_final",
 			"nombre_operador",
@@ -353,24 +352,23 @@ function InspeccionIzaje({ value = {}, onChange }) {
 			return;
 		}
 
-		// --- NUEVO: Guardar respuestas en localStorage por semana ---
-		const weekKey = getCurrentWeekKey();
-		localStorage.setItem(
-			"inspeccion_izaje_respuestas",
-			JSON.stringify({
-				weekKey,
-				respuestas,
-				generales,
-			})
-		);
-		// --- FIN NUEVO ---
-
 		try {
 			// Eliminar el campo si existe en el payload por compatibilidad
 			if ('grillete_identificacion_legible' in payload) {
 				delete payload.grillete_identificacion_legible;
 			}
 			await axios.post(`${API_BASE_URL}/gruaman/inspeccion_izaje`, payload);
+			// --- NUEVO: Guardar respuestas en localStorage solo tras éxito del servidor ---
+			const weekKey = getCurrentWeekKey();
+			localStorage.setItem(
+				"inspeccion_izaje_respuestas",
+				JSON.stringify({
+					weekKey,
+					respuestas,
+					generales,
+				})
+			);
+			// --- FIN NUEVO ---
 			alert("Lista de inspección enviada correctamente.");
 			if (onChange) onChange({});
 			setRespuestas({});

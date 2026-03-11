@@ -304,9 +304,7 @@ function Checklist() {
   }, []);
 
   useEffect(() => {
-    const today = new Date();
-    const pad = (n) => String(n).padStart(2, "0");
-    const fecha_hoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+    const fecha_hoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
     let empresa_id = null;
     try {
       const usuario = localStorage.getItem("usuario");
@@ -497,13 +495,13 @@ function Checklist() {
       });
 
       const payload = {
-        nombre_cliente: datos.nombre_cliente || "",
-        nombre_proyecto: datos.nombre_proyecto || "",
+        nombre_cliente: datos.nombre_cliente || "Sin registrar",
+        nombre_proyecto: datos.nombre_proyecto || "Sin registrar",
         fecha_servicio: datos.fecha_servicio || "",
         nombre_operador: datos.nombre_operador || "",
         bomba_numero: datos.bomba_numero || "",
         horometro_motor: datos.horometro_motor || "",
-        empresa_id: datos.empresa_id ?? undefined,
+        empresa_id: (datos.empresa_id !== null && datos.empresa_id !== undefined) ? datos.empresa_id : 2,
         observaciones: datos.observaciones || "",
         ...checklistPayload
       };

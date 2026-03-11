@@ -115,7 +115,7 @@ function InspeccionEPCCAdmins() {
         const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
         if (Array.isArray(res.data.datos)) {
           // Filtrar solo los que tengan empresa_id=1
-          setNombresOperarios(res.data.datos.filter(d => d.empresa_id === 1).map(d => d.nombre));
+          setNombresOperarios(res.data.datos.filter(d => Number(d.empresa_id) === 1).map(d => d.nombre));
         } else {
           setNombresOperarios([]);
         }
@@ -128,7 +128,7 @@ function InspeccionEPCCAdmins() {
     // Obras y constructoras
     axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
-        const obras = (res.data.obras || []).filter(o => o.empresa_id === 1);
+        const obras = (res.data.obras || []).filter(o => Number(o.empresa_id) === 1);
         setListaObras(obras);
         const constructoras = Array.from(new Set(obras.map(o => o.constructora).filter(Boolean)));
         setListaConstructoras(constructoras);

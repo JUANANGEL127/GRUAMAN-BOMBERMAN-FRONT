@@ -33,6 +33,8 @@ const FORM_MAP = {
   'checklist':                 lazy(() => import('../bomberman/checklist')),
   'inspeccion-epcc-bomberman': lazy(() => import('../bomberman/inspeccion_epcc_bomberman')),
   'inventarios-obra':          lazy(() => import('../bomberman/inventariosobra')),
+  'herramientas-mantenimiento':lazy(() => import('../bomberman/herramientas_mantenimiento')),
+  'kit-limpieza':              lazy(() => import('../bomberman/kit_limpieza')),
 
   // ─── Gruaman ───
   'chequeo-torregruas':        lazy(() => import('../gruaman/chequeo_torregruas')),
@@ -75,17 +77,32 @@ export default function LevelWrapper() {
 
   const allAnswersRef = useRef({});
 
+  // Restaurar respuestas acumuladas desde sessionStorage al montar (resiliencia ante recarga)
+  useEffect(() => {
+    if (!isGamified) return;
+    try {
+      const saved = sessionStorage.getItem('lw_answers_' + worldId);
+      if (saved) {
+        allAnswersRef.current = JSON.parse(saved);
+      }
+    } catch {
+      // sessionStorage no disponible o JSON inválido — se ignora
+    }
+  }, [worldId, isGamified]);
+
   // Señalizar game_mode (usado por formularios originales al navegar a /eleccion)
   useEffect(() => {
     localStorage.setItem('game_mode', worldId);
   }, [worldId]);
 
-  // worldId desconocido → volver al mapa
+  // worldId desconocido → volver al mapa (en efecto para evitar side-effect en render)
   const FormComponent = FORM_MAP[worldId];
-  if (!FormComponent) {
-    navigate('/game/world-map', { replace: true });
-    return null;
-  }
+  useEffect(() => {
+    if (!FormComponent) {
+      navigate('/game/world-map', { replace: true });
+    }
+  }, [FormComponent, navigate]);
+  if (!FormComponent) return null;
 
   const shortName  = world?.name.replace(/^Misión:\s*/i, '') || worldId;
   const orderLabel = world?.order ? `MISIÓN ${world.order}` : 'MISIÓN';
@@ -103,10 +120,18 @@ export default function LevelWrapper() {
     allAnswersRef.current = merged;
     setAllAnswers(merged);
 
+    // Persistir en sessionStorage para sobrevivir recargas de página
+    try {
+      sessionStorage.setItem('lw_answers_' + worldId, JSON.stringify(merged));
+    } catch {
+      // sessionStorage no disponible — se continúa sin persistencia
+    }
+
     // ── Detección de skip (preámbulo: "¿Debes llenar este formulario? → No") ──
     if (sectionAnswers['__preamble__'] === 'skip') {
       markWorldComplete(worldId);
       localStorage.removeItem('game_mode');
+      sessionStorage.removeItem('lw_answers_' + worldId);
       setMissionDone(true);
       setTimeout(() => navigate('/game/world-map', { replace: true }), 800);
       return;
@@ -127,6 +152,7 @@ export default function LevelWrapper() {
       await submitFormData(worldId, merged);
       markWorldComplete(worldId);
       localStorage.removeItem('game_mode');
+      sessionStorage.removeItem('lw_answers_' + worldId);
       setMissionDone(true);
       // Pequeña pausa para mostrar pantalla de éxito antes de navegar
       setTimeout(() => navigate('/game/world-map', { replace: true }), 1800);

@@ -6,6 +6,8 @@ import EleccionAIC from "./components/bomberman/eleccionaic";
 import PlanillaBombeo from "./components/bomberman/planillabombeo";
 import Checklist from "./components/bomberman/checklist";
 import InventarioObra from "./components/bomberman/inventariosobra";
+import HerramientasMantenimiento from "./components/bomberman/herramientas_mantenimiento";
+import KitLimpieza from "./components/bomberman/kit_limpieza";
 import Administrador from "./components/administrador_gruaman/administrador";
 import Footer from "./components/Footer";
 import PermisoTrabajo from "./components/compartido/permiso_trabajo";
@@ -20,7 +22,6 @@ import BienvenidaSeleccion from "./BienvenidaSeleccion";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
 import PermisoTrabajoAdmin from "./components/administrador_gruaman/permiso_trabajo_admin";
-import LlegadaSalidaAdmin from "./components/administrador_gruaman/llegada_salida_admin";
 import ChequeoAlturasAdmin from "./components/administrador_gruaman/chequeo_alturas_admin";
 import ChequeoTorreGruasAdmin from "./components/administrador_gruaman/chequeo_torregruas_admin";
 import ChequeoElevadorAdmin from "./components/administrador_gruaman/chequeo_elevador_admin";
@@ -31,6 +32,8 @@ import PlanillaBombeoAdmin from "./components/administrador_bomberman/planilla_b
 import InventariosObraAdmin from "./components/administrador_bomberman/inventarios_obra_admin";
 import ChecklistAdmin from "./components/administrador_bomberman/checklist_admin";
 import InspeccionEPCCBombermanAdmin from "./components/administrador_bomberman/inspeccion_epcc_bomberman_admin";
+import HerramientasMantenimientoAdmin from "./components/administrador_bomberman/herramientas_mantenimiento_admin";
+import KitLimpiezaAdmin from "./components/administrador_bomberman/kit_limpieza_admin";
 import AdminUsuarios from "./components/administrador_gruaman/admin_usuarios";
 import AdminUsuariosBomberman from "./components/administrador_bomberman/admin_usuarios_bomberman";
 import AdminsObras from "./components/administrador_gruaman/admins_obras";
@@ -939,6 +942,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/planillabombeo" element={<PlanillaBombeo />} />
             <Route path="/checklist" element={<Checklist />} />
             <Route path="/inventariosobra/*" element={<InventarioObra />} />
+            <Route path="/herramientas_mantenimiento" element={<HerramientasMantenimiento />} />
+            <Route path="/kit_limpieza" element={<KitLimpieza />} />
             <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />
             <Route path="/chequeo_alturas" element={<ChequeoAlturas />} />
             <Route path="/chequeo_torregruas" element={<ChequeoTorreGruas />} />
@@ -947,7 +952,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/inspeccion_izaje" element={<InspeccionIzaje />} />
             <Route path="/inspeccion_epcc_bomberman" element={<InspeccionEPCCBomberman />} />
             <Route path="/permiso_trabajo_admin" element={<PermisoTrabajoAdmin />} />
-            <Route path="/llegada_salida_admin" element={<LlegadaSalidaAdmin />} />
             <Route path="/chequeo_alturas_admin" element={<ChequeoAlturasAdmin />} />
             <Route path="/chequeo_torregruas_admin" element={<ChequeoTorreGruasAdmin />} />
             <Route path="/chequeo_elevador_admin" element={<ChequeoElevadorAdmin />} />
@@ -958,6 +962,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/inventarios_obra_admin" element={<InventariosObraAdmin />} />
             <Route path="/checklist_admin" element={<ChecklistAdmin />} />
             <Route path="/inspeccion_epcc_bomberman_admin" element={<InspeccionEPCCBombermanAdmin />} />
+            <Route path="/herramientas_mantenimiento_admin" element={<HerramientasMantenimientoAdmin />} />
+            <Route path="/kit_limpieza_admin" element={<KitLimpiezaAdmin />} />
             <Route path="/admin_usuarios" element={<AdminUsuarios />} />
             <Route path="/admin_usuarios_bomberman" element={<AdminUsuariosBomberman />} />
             <Route path="/admins_obras" element={<AdminsObras />} />

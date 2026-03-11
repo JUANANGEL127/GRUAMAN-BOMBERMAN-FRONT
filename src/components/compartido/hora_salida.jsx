@@ -31,16 +31,17 @@ export default function HoraSalida() {
   const [horaSalida, setHoraSalida] = useState("");
   const [guardado, setGuardado] = useState(false);
   const [error, setError] = useState("");
-  const makeLocalDate = () => {
-    const d = new Date();
-    const pad = (n) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  // Genera la fecha actual en la zona horaria Colombia (America/Bogota) como "YYYY-MM-DD".
+  // Usar toLocaleDateString con timeZone evita que dispositivos configurados en UTC
+  // devuelvan el día siguiente cuando son las 7pm en Colombia (= 00:00 UTC siguiente día).
+  const makeFechaColombia = () => {
+    return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
   };
 
   const [generales, setGenerales] = useState({
     cliente: "",
     proyecto: datos.obra,
-    fecha: makeLocalDate(),
+    fecha: makeFechaColombia(),
     operador: datos.nombre,
     cargo: datos.cargo,
   });
@@ -49,9 +50,7 @@ export default function HoraSalida() {
   useEffect(() => {
     const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
-    const today = new Date();
-    const pad = (n) => String(n).padStart(2, '0');
-    const fechaHoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+    const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
     const cargo = localStorage.getItem("cargo_trabajador") || "";
 
     axios.get(`${API_BASE_URL}/obras`)
@@ -88,28 +87,24 @@ export default function HoraSalida() {
   const handleGuardar = async () => {
     setError("");
 
+    // El backend /salida solo requiere nombre_operador, fecha_servicio y hora_salida.
+    // No bloquear por cliente ausente: puede no cargarse si la red falla, pero la
+    // salida igual debe poder registrarse con los datos del operador y la fecha.
     if (
-      !generales.cliente ||
       !generales.proyecto ||
       !generales.fecha ||
       !generales.operador ||
       !horaSalida
     ) {
-      setError("Faltan parámetros obligatorios. Verifica los datos generales y vuelve a intentarlo.");
+      setError("Faltan parámetros obligatorios. Verifica que tu nombre, obra y hora estén cargados.");
       return;
     }
 
-    const empresa_id = Number(localStorage.getItem("empresa_id")) || 1;
-
+    // El endpoint /salida solo usa nombre_operador, fecha_servicio y hora_salida.
     const payload = {
-      nombre_cliente: generales.cliente,
-      nombre_proyecto: generales.proyecto,
-      fecha_servicio: generales.fecha,
       nombre_operador: generales.operador,
-      cargo: generales.cargo || "",
-      empresa_id,
+      fecha_servicio: generales.fecha,
       hora_salida: horaSalida.slice(0, 5),
-      observaciones: ""
     };
 
     try {

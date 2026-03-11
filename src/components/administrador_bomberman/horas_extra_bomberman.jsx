@@ -462,6 +462,7 @@ function horasExtraBomberman() {
                         <div><strong>Cédula:</strong> {r.numero_identificacion || r.cedula || "—"}</div>
                         <div><strong>Empresa:</strong> {r.nombre_responsable || r.empresa || "—"}</div>
                         <div><strong>Obra:</strong> {r.nombre_proyecto || r.obra || "—"}</div>
+                        <div><strong>Sede:</strong> {r.sede || "—"}</div>
                         <div><strong>Constructora:</strong> {r.nombre_cliente || r.constructora || "—"}</div>
 
                         <button

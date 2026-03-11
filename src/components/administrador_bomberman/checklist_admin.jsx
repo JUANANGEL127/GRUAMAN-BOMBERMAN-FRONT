@@ -8,16 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bombe
 function toYMD(date) {
   if (!date) return '';
   if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
-  // Ajuste para zona horaria: si la fecha es tipo Date y la hora es >= 19, restar un día
-  const d = new Date(date);
-  const localHour = d.getHours();
-  if (localHour >= 19) {
-    d.setDate(d.getDate() - 1);
-  }
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  return new Date(date).toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 }
 
 function normalizaFlag(val) {

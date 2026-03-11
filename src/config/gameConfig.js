@@ -82,7 +82,41 @@ export const gameWorlds = {
       sections: 3
     },
 
-    // 5. TRABAJO EN ALTURA (Compartido)
+    // 5. HERRAMIENTAS DE MANTENIMIENTO (Exclusivo Bomberman)
+    {
+      id: 'herramientas-mantenimiento',
+      name: 'Misión: Herramientas de Mantenimiento',
+      description: 'Control de herramientas de mantenimiento',
+      icon: '🔩',
+      emoji: '🧰',
+      shared: false,
+      component: 'HerramientasMantenimiento',
+      route: '/herramientas_mantenimiento',
+      color: '#FF9800',
+      bgColor: '#FFF3E0',
+      daily: false,
+      order: 5,
+      sections: 2
+    },
+
+    // 6. KIT DE LAVADO Y MANTENIMIENTO (Exclusivo Bomberman)
+    {
+      id: 'kit-limpieza',
+      name: 'Misión: Kit de Lavado',
+      description: 'Kit de lavado y mantenimiento',
+      icon: '🧴',
+      emoji: '🧹',
+      shared: false,
+      component: 'KitLimpieza',
+      route: '/kit_limpieza',
+      color: '#4CAF50',
+      bgColor: '#E8F5E9',
+      daily: false,
+      order: 6,
+      sections: 2
+    },
+
+    // 7. TRABAJO EN ALTURA (Compartido)
     {
       id: 'chequeo-altura',
       name: 'Misión: Trabajo en Altura',
@@ -95,11 +129,11 @@ export const gameWorlds = {
       color: '#2196F3',
       bgColor: '#E3F2FD',
       daily: false,
-      order: 5,
+      order: 6,
       sections: 4
     },
 
-    // 6. INSPECCIÓN EPCC BOMBERMAN (Exclusivo Bomberman)
+    // 7. INSPECCIÓN EPCC BOMBERMAN (Exclusivo Bomberman)
     {
       id: 'inspeccion-epcc-bomberman',
       name: 'Misión: Inspección EPCC',
@@ -112,11 +146,11 @@ export const gameWorlds = {
       color: '#00BCD4',
       bgColor: '#E0F7FA',
       daily: false,
-      order: 6,
+      order: 7,
       sections: 2
     },
 
-    // 7. INVENTARIOS OBRA (Exclusivo Bomberman - NO DIARIO)
+    // 8. INVENTARIOS OBRA (Exclusivo Bomberman - NO DIARIO)
     {
       id: 'inventarios-obra',
       name: 'Misión: Inventario de Obra',
@@ -129,11 +163,11 @@ export const gameWorlds = {
       color: '#795548',
       bgColor: '#EFEBE9',
       daily: false, // ⚠️ IMPORTANTE: No es diario (mensual)
-      order: 7,
+      order: 8,
       sections: 2
     },
 
-    // 8. HORA DE SALIDA (Compartido)
+    // 9. HORA DE SALIDA (Compartido)
     {
       id: 'hora-salida',
       name: 'Misión: Registro de Salida',

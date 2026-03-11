@@ -4,7 +4,6 @@ import PermisoTrabajoAdmin from "./permiso_trabajo_admin";
 import ChequeoAlturasAdmin from "./chequeo_alturas_admin";
 import ChequeoTorreGruasAdmin from "./chequeo_torregruas_admin";
 import ChequeoElevadorAdmin from "./chequeo_elevador_admin";
-import LlegadaSalidaAdmin from "./llegada_salida_admin";
 import AdminsObras from "./admins_obras"; // importar el componente
 import HorasExtraGruamanAdmin from "./horas_extra_gruaman";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +20,6 @@ function AdministradorGruaman() {
   const [showChequeoAlturasAdmin, setShowChequeoAlturasAdmin] = useState(false);
   const [showChequeoTorreGruasAdmin, setShowChequeoTorreGruasAdmin] = useState(false);
   const [showChequeoElevadorAdmin, setShowChequeoElevadorAdmin] = useState(false);
-  const [showLlegadaSalidaAdmin, setShowLlegadaSalidaAdmin] = useState(false);
   const api_url = "http://localhost:3000";
   const navigate = useNavigate();
 
@@ -44,76 +42,68 @@ function AdministradorGruaman() {
         }}>
           <button
             className="button"
-            style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
-            onClick={() => navigate("/llegada_salida_admin")}
-          >
-            Formulario de llegada y salida
-          </button>
-          <button
-            className="button"
-            style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
+            style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
             onClick={() => navigate("/permiso_trabajo_admin")}
           >
             Permiso de Trabajo
           </button>
           <button
             className="button"
-            style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
+            style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
             onClick={() => navigate("/chequeo_alturas_admin")}
           >
             Chequeo Alturas
           </button>
           <button
             className="button"
-            style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
+            style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
             onClick={() => navigate("/chequeo_torregruas_admin")}
           >
             Chequeo Torre Grúa
           </button>
           <button
             className="button"
-            style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
+            style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
             onClick={() => navigate("/chequeo_elevador_admin")}
           >
             Chequeo Elevador
           </button>
-          <button className="button" 
-          style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
-          onClick={() => navigate("/inspeccion_EPCC_admins")}
+          <button
+            className="button"
+            style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
+            onClick={() => navigate("/inspeccion_EPCC_admins")}
           >
             Inspección EPCC
           </button>
-          <button className="button" 
-          style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
-          onClick={() => navigate("/inspeccion_izaje_admin")}
+          <button
+            className="button"
+            style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
+            onClick={() => navigate("/inspeccion_izaje_admin")}
           >
             Inspección Izaje
           </button>
-          <button className="button" 
-          style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
-          onClick={() => navigate("/admin_usuarios")}
+          <button
+            className="button"
+            style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
+            onClick={() => navigate("/admin_usuarios")}
           >
             Administrar Usuarios
           </button>
-          <button className="button" 
-          style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
-          onClick={() => navigate("/admins_obras")}
+          <button
+            className="button"
+            style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
+            onClick={() => navigate("/admins_obras")}
           >
             Administrar Obras
           </button>
           <button
             className="button"
-            style={{ maxWidth: 320, minHeight: 44, fontSize: 16, padding: "8px 0" }}
+            style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
             onClick={() => navigate("/horas_extra_gruaman")}
           >
             Horas Extra Gruaman
           </button>
         </div>
-        {showLlegadaSalidaAdmin && (
-          <div style={{ marginTop: 24 }}>
-            <LlegadaSalidaAdmin />
-          </div>
-        )}
         {showPermisoTrabajoAdmin && (
           <div style={{ marginTop: 24 }}>
             <PermisoTrabajoAdmin />

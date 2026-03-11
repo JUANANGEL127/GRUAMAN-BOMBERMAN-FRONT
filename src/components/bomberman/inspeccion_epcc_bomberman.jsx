@@ -131,9 +131,7 @@ const camposDB = [
 ];
 
 function getColombiaDateString() {
-  const dt = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }));
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 }
 
 function getCurrentWeekKey() {
@@ -272,8 +270,9 @@ function inspeccion_epcc_bomberman() {
     let primerError = null;
 
     // Datos generales
-    // 🔑 Cambiado: 'cliente' a 'nombre_cliente', 'proyecto' a 'nombre_proyecto'
-    ["nombre_cliente", "nombre_proyecto", "fecha", "nombre_operador", "cargo"].forEach(field => {
+    // "nombre_cliente" se omite: puede quedar vacío si la red falla al cargar /obras,
+    // el backend no lo requiere estrictamente para registrar la inspección.
+    ["nombre_proyecto", "fecha", "nombre_operador", "cargo"].forEach(field => {
       if (!datosGenerales[field] || datosGenerales[field].toString().trim() === "") {
         erroresTemp[field] = true;
         if (!primerError) primerError = field;

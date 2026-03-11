@@ -22,10 +22,9 @@ export default function HoradaIngreso() {
   useEffect(() => {
     const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
-    // Generar la fecha en la zona local (YYYY-MM-DD) para evitar desfases por UTC
-    const today = new Date();
-    const pad = (n) => String(n).padStart(2, '0');
-    const fechaHoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+    // Generar la fecha en America/Bogota (YYYY-MM-DD) para evitar desfases por UTC.
+    // toLocaleDateString("en-CA") produce "YYYY-MM-DD" directamente con la TZ forzada.
+    const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
     const cargo = localStorage.getItem("cargo_trabajador") || "";
 
     axios.get(`${API_BASE_URL}/obras`)
@@ -67,9 +66,9 @@ export default function HoradaIngreso() {
 
   const handleGuardar = async () => {
     setError("");
-    // Validación de campos obligatorios (cargo no obligatorio)
+    // Validación de campos obligatorios (cargo y cliente no son obligatorios:
+    // cliente puede quedar vacío si la red falla al cargar /obras).
     if (
-      !generales.cliente ||
       !generales.proyecto ||
       !generales.fecha ||
       !generales.operador ||

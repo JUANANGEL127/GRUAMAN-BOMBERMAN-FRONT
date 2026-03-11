@@ -129,9 +129,7 @@ function ChequeoAlturas({ value = {}, onChange }) {
 	useEffect(() => {
 		const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
 		const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
-		const today = new Date();
-		const pad = (n) => String(n).padStart(2, '0');
-		const fechaHoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+		const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 		const cargo = localStorage.getItem("cargo_trabajador") || "";
 
 		// Obtener cliente/constructora como en permiso_trabajo.jsx
@@ -170,7 +168,7 @@ function ChequeoAlturas({ value = {}, onChange }) {
 	};
 
 	const handleGeneralesChange = (e) => {
-		setGenerales({ ...generales, [e.target.name]: e.target.value });
+		setGenerales(prev => ({ ...prev, [e.target.name]: e.target.value }));
 		setErrores((prev) => ({ ...prev, [e.target.name]: false }));
 	};
 
@@ -250,7 +248,9 @@ function ChequeoAlturas({ value = {}, onChange }) {
 		let primerError = null;
 
 		// Validación de datos generales
-		["cliente", "proyecto", "fecha", "operador", "cargo"].forEach((campo) => {
+		// "cliente" se omite: puede quedar vacío si la red falla al cargar /obras,
+		// el backend no lo requiere para registrar el chequeo.
+		["proyecto", "fecha", "operador", "cargo"].forEach((campo) => {
 			if (!generales[campo]) {
 				erroresTemp[campo] = true;
 				if (!primerError) primerError = campo;

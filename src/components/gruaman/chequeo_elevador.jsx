@@ -52,6 +52,54 @@ function isSunday() {
   return new Date().getDay() === 0;
 }
 
+// Secciones a nivel de módulo para evitar recreación en cada render
+const secciones = [
+  {
+    titulo: "CONDICIONES DE SEGURIDAD",
+    items: [
+      "Cuenta con el Equipo de Protección Personal (guantes, casco con barbuquejo, tapaoídos, gafas con filtro UV, calzado de seguridad; la ropa de dotación).",
+      "Cuenta con el Equipo de Protección Contra Caídas (arnés de cuerpo completo, arrestador de caídas, mosquetones, eslinga en 'Y' con absorbedor, eslinga de posicionamiento, línea de vida, mecanismos de anclaje).",
+    ],
+  },
+  {
+    titulo: "EQUIPO DE ELEVACIÓN",
+    items: [
+      "Se ha verificado la estructura del equipo y se encuentra en buen estado?",
+      "El equipo presenta fugas de aceites, hidráulico o de alguna otra sustancia?",
+      "El tablero de mando del equipo está en buenas condiciones?",
+      "La puerta de acceso al equipo se encuentra en buen estado?",
+      "El gancho de seguridad de la cabina está en buen estado y se garantiza su correcto funcionamiento?",
+      "La plataforma se encuentra limpia y libre de sustancias deslizantes que puedan provocar la caída de personas u objetos?",
+      "La cabina está libre de escombros y barro (orden y aseo).",
+      "Los cables del circuito eléctrico y del motor se encuentran en buen estado (sin cables sueltos ni cortos)?",
+      "Los anclajes y/o arriostramientos se encuentran bien asegurados?",
+      "Las secciones del equipo se encuentran bien acopladas?",
+      "Los rodillos de guía se encuentran bien lubricados y en buen estado?",
+      "Rieles de seguridad en el techo de la cabina están en buen estado?",
+      "Cuenta con la plataforma de trabajo encima de la cabina y ésta se encuentra en buen estado?",
+      "La escalera de acceso al techo se encuentra en buen estado?",
+      "El freno eléctrico-magnético se encuentra en buen estado?",
+      "El equipo cuenta con sistema de velocidad calibrado, dispositivo de reducción y piñones en buen estado y la cremallera de subida lubricada?",
+      "Los limitantes (superior e inferior) se encuentran calibrados y se garantiza el correcto funcionamiento?",
+    ],
+  },
+  {
+    titulo: "DISPOSITIVOS DE SEGURIDAD",
+    items: [
+      "El área del equipo se encuentra debidamente señalizada y demarcada?",
+      "El equipo de elevación cuenta con la parada de emergencia?",
+      "El equipo tiene la placa de identificación donde se muestra la carga máxima?",
+      "Se garantiza el correcto funcionamiento del sistema de sobrecarga?",
+    ],
+  },
+  {
+    titulo: "PROCESO DE DESINFECCIÓN DE CABINA",
+    items: [
+      "La cabina ha sido previamente desinfectada antes de iniciar labores de operación de torre grúa (limpieza para la prevención del virus COVID-19)?",
+    ],
+  },
+];
+
 function ChequeoElevador() {
   const navigate = useNavigate();
 
@@ -71,54 +119,6 @@ function ChequeoElevador() {
   const [mostrarFlecha, setMostrarFlecha] = useState(false);
   const submitRef = useRef(null);
   const itemRefs = useRef({});
-
-  // Secciones (sin cambios)
-  const secciones = [
-    {
-      titulo: "CONDICIONES DE SEGURIDAD",
-      items: [
-        "Cuenta con el Equipo de Protección Personal (guantes, casco con barbuquejo, tapaoídos, gafas con filtro UV, calzado de seguridad; la ropa de dotación).",
-        "Cuenta con el Equipo de Protección Contra Caídas (arnés de cuerpo completo, arrestador de caídas, mosquetones, eslinga en 'Y' con absorbedor, eslinga de posicionamiento, línea de vida, mecanismos de anclaje).",
-      ],
-    },
-    {
-      titulo: "EQUIPO DE ELEVACIÓN",
-      items: [
-        "Se ha verificado la estructura del equipo y se encuentra en buen estado?",
-        "El equipo presenta fugas de aceites, hidráulico o de alguna otra sustancia?",
-        "El tablero de mando del equipo está en buenas condiciones?",
-        "La puerta de acceso al equipo se encuentra en buen estado?",
-        "El gancho de seguridad de la cabina está en buen estado y se garantiza su correcto funcionamiento?",
-        "La plataforma se encuentra limpia y libre de sustancias deslizantes que puedan provocar la caída de personas u objetos?",
-        "La cabina está libre de escombros y barro (orden y aseo).",
-        "Los cables del circuito eléctrico y del motor se encuentran en buen estado (sin cables sueltos ni cortos)?",
-        "Los anclajes y/o arriostramientos se encuentran bien asegurados?",
-        "Las secciones del equipo se encuentran bien acopladas?",
-        "Los rodillos de guía se encuentran bien lubricados y en buen estado?",
-        "Rieles de seguridad en el techo de la cabina están en buen estado?",
-        "Cuenta con la plataforma de trabajo encima de la cabina y ésta se encuentra en buen estado?",
-        "La escalera de acceso al techo se encuentra en buen estado?",
-        "El freno eléctrico-magnético se encuentra en buen estado?",
-        "El equipo cuenta con sistema de velocidad calibrado, dispositivo de reducción y piñones en buen estado y la cremallera de subida lubricada?",
-        "Los limitantes (superior e inferior) se encuentran calibrados y se garantiza el correcto funcionamiento?",
-      ],
-    },
-    {
-      titulo: "DISPOSITIVOS DE SEGURIDAD",
-      items: [
-        "El área del equipo se encuentra debidamente señalizada y demarcada?",
-        "El equipo de elevación cuenta con la parada de emergencia?",
-        "El equipo tiene la placa de identificación donde se muestra la carga máxima?",
-        "Se garantiza el correcto funcionamiento del sistema de sobrecarga?",
-      ],
-    },
-    {
-      titulo: "PROCESO DE DESINFECCIÓN DE CABINA",
-      items: [
-        "La cabina ha sido previamente desinfectada antes de iniciar labores de operación de torre grúa (limpieza para la prevención del virus COVID-19)?",
-      ],
-    },
-  ];
 
   // La función makeKey ahora usará el mapeo a la columna de la DB (sin cambios)
   const makeKey = (itemText) => MAPEO_DB[itemText] || itemText; 
@@ -177,9 +177,7 @@ function ChequeoElevador() {
 
   useEffect(() => {
     const init = async () => {
-      const today = new Date();
-      const pad = (n) => String(n).padStart(2, '0');
-      const fechaHoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+      const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
       const nombre_operador =
         localStorage.getItem("nombre_trabajador") ||
         localStorage.getItem("usuario_nombre") ||
@@ -258,7 +256,9 @@ function ChequeoElevador() {
     const faltantes = [];
 
     // Validar Datos Generales (usando las nuevas claves)
-    ["nombre_cliente", "nombre_proyecto", "fecha_servicio", "nombre_operador", "cargo"].forEach(
+    // "nombre_cliente" se omite: puede quedar vacío si la red falla al cargar /obras,
+    // el backend no lo requiere estrictamente para registrar el chequeo.
+    ["nombre_proyecto", "fecha_servicio", "nombre_operador", "cargo"].forEach(
       (g) => {
         if (!generales[g] || !generales[g].toString().trim()) faltantes.push(g);
       }

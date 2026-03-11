@@ -9,6 +9,8 @@ import "../../App.css";
 import PermisoTrabajo from "../compartido/permiso_trabajo";
 import ChequeoAlturas from "../compartido/chequeo_alturas";
 import inspeccionEpccBomberman from "./inspeccion_epcc_bomberman"; // importación del nuevo componente
+import HerramientasMantenimiento from "./herramientas_mantenimiento";
+import KitLimpieza from "./kit_limpieza";
 import HoraIngreso from "../compartido/horada_ingreso";
 import HoraSalida from "../compartido/hora_salida";
 import { markWorldComplete } from '../../db/gameProgress';
@@ -27,6 +29,8 @@ function getUsadosFromStorage(usuario) {
     permiso_trabajo: false,
     planillabombeo: false,
     checklist: false,
+    herramientas_mantenimiento: false,
+    kit_limpieza: false,
     inventariosobra: false,
     chequeo_alturas: false,
     inspeccion_epcc_bomberman: false,
@@ -44,22 +48,18 @@ function limpiarUsados(usuario) {
   try { localStorage.removeItem(`aic_usados_date_${usuario}`); } catch {}
 }
 
-// Helper para obtener la fecha actual en formato YYYY-MM-DD
+// Helper para obtener la fecha actual en formato YYYY-MM-DD (zona horaria Colombia)
 function getTodayDateStr() {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 }
 
-// --- NUEVO: Helpers para control mensual de inventario de obra ---
+// --- NUEVO: Helpers para control mensual de inventario de obra (zona horaria Colombia) ---
 function getCurrentMonthKey() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  // Formato "YYYY-MM" usando los primeros 7 caracteres de la fecha Colombia
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" }).slice(0, 7);
 }
 function isFirstDayOfMonth() {
-  return new Date().getDate() === 1;
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" }).slice(8, 10) === "01";
 }
 
 function BienvenidaAIC() {
@@ -188,7 +188,7 @@ function BienvenidaAIC() {
   }
   // Ajustar usados para barra y color
   const usadosParaBarra = { ...usados, inventariosobra: inventarioObraVigente ? true : false };
-  const total = 8; // ahora hay 9 formularios
+  const total = 10; // ahora hay 10 formularios
   const completados = Object.values({
     ...usadosParaBarra,
     hora_ingreso: usados.hora_ingreso,
@@ -272,7 +272,21 @@ function BienvenidaAIC() {
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/checklist", "checklist")}
           >
-            Checklist 
+            Checklist
+          </button>
+          <button
+            className={getButtonClass(usados.herramientas_mantenimiento)}
+            style={{ maxWidth: 320 }}
+            onClick={() => handleNavigate("/herramientas_mantenimiento", "herramientas_mantenimiento")}
+          >
+            Herramientas de Mantenimiento
+          </button>
+          <button
+            className={getButtonClass(usados.kit_limpieza)}
+            style={{ maxWidth: 320 }}
+            onClick={() => handleNavigate("/kit_limpieza", "kit_limpieza")}
+          >
+            Kit de Lavado y Mantenimiento
           </button>
           <button
             className={getButtonClass(usados.chequeo_alturas)}
@@ -348,6 +362,8 @@ function EleccionAIC() {
       <Route path="/planillabombeo" element={<PlanillaDeBombeo />} />
       <Route path="/checklist" element={<Checklist />} />
       <Route path="/inventariosobra" element={<InventariosObra />} />
+      <Route path="/herramientas_mantenimiento" element={<HerramientasMantenimiento />} />
+      <Route path="/kit_limpieza" element={<KitLimpieza />} />
       <Route path="/administrador" element={<Administrador />} />
       <Route path="/administrador_bomberman" element={<AdministradorBomberman />} />
       <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />

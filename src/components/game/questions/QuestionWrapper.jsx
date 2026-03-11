@@ -24,7 +24,8 @@ import MultiSelectQuestion from './MultiSelectQuestion';
 import TimeRegister        from './TimeRegister';
 import TimerChallenge      from './TimerChallenge';
 import MicroCelebration    from './MicroCelebration';
-import TextInputQuestion   from './TextInputQuestion';
+import TextInputQuestion      from './TextInputQuestion';
+import InventoryItemQuestion  from './InventoryItemQuestion';
 import './QuestionWrapper.css';
 
 const FLIP_DURATION = 350; // ms — debe coincidir con la duración CSS
@@ -170,8 +171,17 @@ function QuestionWrapper({ questions = [], onComplete, sectionName = '', timerCo
             />
           )}
 
+          {/* InventoryItem — 3 campos: cantidad buena, cantidad mala, estado */}
+          {current.type === 'inventory-item' && (
+            <InventoryItemQuestion
+              key={current.id}
+              question={current}
+              onAnswer={handleAnswer}
+            />
+          )}
+
           {/* Fallback para tipos no implementados */}
-          {current.type && !['yesno', 'multiselect', 'time', 'text', 'number', 'date'].includes(current.type) && (
+          {current.type && !['yesno', 'multiselect', 'time', 'text', 'number', 'date', 'inventory-item'].includes(current.type) && (
             <div className="qw-fallback">
               <p className="qw-fallback-text">{current.question}</p>
               <button

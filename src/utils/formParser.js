@@ -12,6 +12,7 @@
  * del localStorage (datos guardados previamente) o usan 'NA' como default.
  */
 import axios from 'axios';
+import { getCurrentWeekKey, todayStrBogota } from './dateUtils';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
   || 'https://gruaman-bomberman-back.onrender.com';
@@ -43,21 +44,11 @@ function getGameContext() {
   }
 }
 
-/** Fecha de hoy en formato YYYY-MM-DD */
-function todayStr() {
-  const d = new Date();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${m}-${day}`;
-}
+/** Fecha de hoy en formato YYYY-MM-DD (zona horaria Colombia) */
+const todayStr = todayStrBogota;
 
-/** Clave de semana actual (para localStorage) */
-function weekKey() {
-  const d = new Date();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const w = String(Math.ceil(d.getDate() / 7)).padStart(2, '0');
-  return `${d.getFullYear()}-${m}-W${w}`;
-}
+/** Clave de semana actual (para localStorage) — misma lógica que los formularios */
+const weekKey = getCurrentWeekKey;
 
 // ─── Datos del Checklist (duplicados aquí para builders y secciones dinámicas) ─
 
@@ -906,6 +897,9 @@ const QUESTIONS_CONFIG = {
   ],
 
 
+  // Nota: 'herramientas-mantenimiento' se construye dinámicamente con buildHerramientasMantenimientoSections()
+  // (necesita leer la lista de bombas cacheada en localStorage)
+
   // Nota: 'planilla-bombeo' NO está aquí → usa el formulario original (parseFormToQuestions retorna null)
 
 };
@@ -943,9 +937,117 @@ const PREAMBLE_SECTION = {
  * o null si ese mundo no tiene config gamificada (usa el form original).
  * Para mundos opcionales inyecta una sección preámbulo al inicio.
  */
+/** Lee la lista de bombas cacheada en localStorage (guardada por herramientas_mantenimiento.jsx) */
+function getCachedBombas() {
+  try {
+    const cached = localStorage.getItem('cached_bombas');
+    if (cached) {
+      return JSON.parse(cached).map(b => ({ value: b.numero_bomba, label: b.numero_bomba, icon: '🏎️' }));
+    }
+  } catch {}
+  return [];
+}
+
+/** Construye secciones del formulario de Herramientas de Mantenimiento */
+function buildHerramientasMantenimientoSections() {
+  const opcionesBombas = getCachedBombas();
+  return [
+    {
+      id: 'seleccion-bomba-herramientas',
+      name: 'Seleccionar Bomba',
+      questions: [
+        {
+          id: 'bomba_numero',
+          fieldName: 'bomba_numero',
+          type: opcionesBombas.length > 0 ? 'multiselect' : 'text',
+          maxSelections: 1,
+          minSelections: 1,
+          question: '¿Cuál bomba vas a registrar?',
+          icon: '🏎️',
+          options: opcionesBombas,
+          required: true
+        }
+      ]
+    },
+    {
+      id: 'herramientas-items',
+      name: 'Herramientas para Mantenimiento Básico',
+      questions: [
+        { id: 'copa_bristol_10mm',       fieldName: 'copa_bristol_10mm',       label: '1. COPA BRISTOL DE 10 MM',        type: 'inventory-item', required: false },
+        { id: 'extension_media_x12_a',   fieldName: 'extension_media_x12_a',   label: '2. EXTENSIÓN DE 1/2 X 12"',      type: 'inventory-item', required: false },
+        { id: 'palanca_media_x15',       fieldName: 'palanca_media_x15',       label: '3. PALANCA DE 1/2 X 15"',        type: 'inventory-item', required: false },
+        { id: 'llave_bristol_14',        fieldName: 'llave_bristol_14',        label: '4. LLAVE BRISTOL 14',             type: 'inventory-item', required: false },
+        { id: 'llave_11',                fieldName: 'llave_11',                label: '5. LLAVE 11',                     type: 'inventory-item', required: false },
+        { id: 'llave_12',                fieldName: 'llave_12',                label: '6. LLAVE 12',                     type: 'inventory-item', required: false },
+        { id: 'llave_13',                fieldName: 'llave_13',                label: '7. LLAVE 13',                     type: 'inventory-item', required: false },
+        { id: 'llave_14',                fieldName: 'llave_14',                label: '8. LLAVE 14',                     type: 'inventory-item', required: false },
+        { id: 'llave_19',                fieldName: 'llave_19',                label: '9. LLAVE 19',                     type: 'inventory-item', required: false },
+        { id: 'destornillador_pala',     fieldName: 'destornillador_pala',     label: '10. DESTORNILLADOR DE PALA',      type: 'inventory-item', required: false },
+        { id: 'destornillador_estrella', fieldName: 'destornillador_estrella', label: '11. DESTORNILLADOR DE ESTRELLA',  type: 'inventory-item', required: false },
+        { id: 'copa_punta_10_media',     fieldName: 'copa_punta_10_media',     label: '12. COPA EN PUNTA 10 DE 1/2',    type: 'inventory-item', required: false },
+        { id: 'extension_media_x12_b',   fieldName: 'extension_media_x12_b',   label: '13. EXTENSIÓN DE 1/2 X 12" (2)', type: 'inventory-item', required: false },
+        { id: 'rachet_media',            fieldName: 'rachet_media',            label: '14. RACHET DE 1/2',               type: 'inventory-item', required: false },
+        { id: 'llave_mixta_17',          fieldName: 'llave_mixta_17',          label: '15. LLAVE MIXTA 17',              type: 'inventory-item', required: false },
+        { id: 'llave_expansiva_15',      fieldName: 'llave_expansiva_15',      label: '16. LLAVE EXPANSIVA 15"',         type: 'inventory-item', required: false },
+        { id: 'observaciones', fieldName: 'observaciones', question: 'Observaciones (opcional):', label: 'Observaciones', type: 'text', required: false },
+      ]
+    }
+  ];
+}
+
+/** Construye secciones del formulario de Kit de Lavado y Mantenimiento */
+function buildKitLimpiezaSections() {
+  const opcionesBombas = getCachedBombas();
+  return [
+    {
+      id: 'seleccion-bomba-kit',
+      name: 'Seleccionar Bomba',
+      questions: [
+        {
+          id: 'bomba_numero',
+          fieldName: 'bomba_numero',
+          type: opcionesBombas.length > 0 ? 'multiselect' : 'text',
+          maxSelections: 1,
+          minSelections: 1,
+          question: '¿Cuál bomba vas a registrar?',
+          icon: '🏎️',
+          options: opcionesBombas,
+          required: true
+        }
+      ]
+    },
+    {
+      id: 'kit-items',
+      name: 'Kit de Lavado y Mantenimiento',
+      questions: [
+        { id: 'detergente_polvo',         fieldName: 'detergente_polvo',         label: '1. DETERGENTE EN POLVO',             type: 'inventory-item', required: false },
+        { id: 'jabon_rey',                fieldName: 'jabon_rey',                label: '2. JABON REY',                       type: 'inventory-item', required: false },
+        { id: 'espatula_flexible',        fieldName: 'espatula_flexible',        label: '3. ESPATULA FLEXIBLE',               type: 'inventory-item', required: false },
+        { id: 'grasa_litio',             fieldName: 'grasa_litio',             label: '4. GRASA LITIO',                     type: 'inventory-item', required: false },
+        { id: 'aceite_hidraulico',        fieldName: 'aceite_hidraulico',        label: '5. ACEITE HIDRAULICO',               type: 'inventory-item', required: false },
+        { id: 'plastico_grueso',          fieldName: 'plastico_grueso',          label: '6. PLASTICO GRUESO',                 type: 'inventory-item', required: false },
+        { id: 'talonario_bombeo',         fieldName: 'talonario_bombeo',         label: '7. TALONARIO DE BOMBEO',             type: 'inventory-item', required: false },
+        { id: 'extintor',                 fieldName: 'extintor',                 label: '8. EXTINTOR',                        type: 'inventory-item', required: false },
+        { id: 'botiquin',                 fieldName: 'botiquin',                 label: '9. BOTIQUIN',                        type: 'inventory-item', required: false },
+        { id: 'grasera',                  fieldName: 'grasera',                  label: '10. GRASERA',                        type: 'inventory-item', required: false },
+        { id: 'manguera_inyector_grasa',  fieldName: 'manguera_inyector_grasa',  label: '11. MANGUERA PARA INYECTOR DE GRASA', type: 'inventory-item', required: false },
+        { id: 'radio',                    fieldName: 'radio',                    label: '12. RADIO',                          type: 'inventory-item', required: false },
+        { id: 'auricular',                fieldName: 'auricular',                label: '13. AURICULAR',                      type: 'inventory-item', required: false },
+        { id: 'pimpina_acpm',             fieldName: 'pimpina_acpm',             label: '14. PIMPINA ACPM',                   type: 'inventory-item', required: false },
+        { id: 'bola_limpieza',            fieldName: 'bola_limpieza',            label: '15. BOLA DE LIMPIEZA',               type: 'inventory-item', required: false },
+        { id: 'perros',                   fieldName: 'perros',                   label: '16. PERROS',                         type: 'inventory-item', required: false },
+        { id: 'guaya',                    fieldName: 'guaya',                    label: '17. GUAYA',                          type: 'inventory-item', required: false },
+        { id: 'observaciones', fieldName: 'observaciones', question: 'Observaciones (opcional):', label: 'Observaciones', type: 'text', required: false },
+      ]
+    }
+  ];
+}
+
 export function parseFormToQuestions(worldId) {
   let sections;
   if (worldId === 'checklist') sections = buildChecklistSections();
+  else if (worldId === 'herramientas-mantenimiento') sections = buildHerramientasMantenimientoSections();
+  else if (worldId === 'kit-limpieza') sections = buildKitLimpiezaSections();
   else sections = QUESTIONS_CONFIG[worldId] ?? null;
 
   if (!sections) return null;
@@ -1345,6 +1447,61 @@ export function convertAnswersToFormData(worldId, answers) {
   if (worldId === 'inspeccion-izaje')         return buildInspeccionIzaje(answers);
   if (worldId === 'inspeccion-epcc-bomberman')return buildInspeccionEpccBomberman(answers);
   if (worldId === 'checklist')                return buildChecklist(answers);
+  if (worldId === 'herramientas-mantenimiento') {
+    const ctx = getGameContext();
+    // Cada answer[base] = { buena, mala, estado } → expandir a campos individuales
+    const tools = [
+      'copa_bristol_10mm','extension_media_x12_a','palanca_media_x15','llave_bristol_14',
+      'llave_11','llave_12','llave_13','llave_14','llave_19',
+      'destornillador_pala','destornillador_estrella','copa_punta_10_media',
+      'extension_media_x12_b','rachet_media','llave_mixta_17','llave_expansiva_15'
+    ];
+    const result = {
+      nombre_cliente:  ctx.cliente || ctx.proyecto,
+      nombre_proyecto: ctx.proyecto,
+      fecha_servicio:  todayStr(),
+      nombre_operador: ctx.operador,
+      empresa_id:      2,
+      observaciones:   answers.observaciones || '',
+      bomba_numero: Array.isArray(answers.bomba_numero)
+        ? (answers.bomba_numero[0] || '')
+        : (answers.bomba_numero || '')
+    };
+    tools.forEach(base => {
+      const val = answers[base] || {};
+      result[`${base}_buena`]  = parseInt(val.buena)  || 0;
+      result[`${base}_mala`]   = parseInt(val.mala)   || 0;
+      result[`${base}_estado`] = val.estado || '';
+    });
+    return result;
+  }
+  if (worldId === 'kit-limpieza') {
+    const ctx = getGameContext();
+    const tools = [
+      'detergente_polvo','jabon_rey','espatula_flexible','grasa_litio',
+      'aceite_hidraulico','plastico_grueso','talonario_bombeo','extintor',
+      'botiquin','grasera','manguera_inyector_grasa','radio',
+      'auricular','pimpina_acpm','bola_limpieza','perros','guaya'
+    ];
+    const result = {
+      nombre_cliente:  ctx.cliente || ctx.proyecto,
+      nombre_proyecto: ctx.proyecto,
+      fecha_servicio:  todayStr(),
+      nombre_operador: ctx.operador,
+      empresa_id:      2,
+      observaciones:   answers.observaciones || '',
+      bomba_numero: Array.isArray(answers.bomba_numero)
+        ? (answers.bomba_numero[0] || '')
+        : (answers.bomba_numero || '')
+    };
+    tools.forEach(base => {
+      const val = answers[base] || {};
+      result[`${base}_buena`]  = parseInt(val.buena)  || 0;
+      result[`${base}_mala`]   = parseInt(val.mala)   || 0;
+      result[`${base}_estado`] = val.estado || '';
+    });
+    return result;
+  }
   return answers;
 }
 
@@ -1394,6 +1551,8 @@ const ENDPOINTS = {
   'inspeccion-izaje':          '/gruaman/inspeccion_izaje',
   'inspeccion-epcc-bomberman': '/bomberman/inspeccion_epcc_bomberman',
   'checklist':                 '/bomberman/checklist',
+  'herramientas-mantenimiento':'/bomberman/herramientas_mantenimiento',
+  'kit-limpieza':              '/bomberman/kit_limpieza',
 };
 
 /**

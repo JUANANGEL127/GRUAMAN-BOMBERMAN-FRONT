@@ -207,9 +207,7 @@ function inventariosobra() {
   useEffect(() => {
     const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
-    const today = new Date();
-    const pad = (n) => String(n).padStart(2, '0');
-    const fechaHoy = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+    const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 
     axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
