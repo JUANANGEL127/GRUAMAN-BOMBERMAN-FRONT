@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import { registerWebAuthn, authenticateWebAuthn, WebAuthnError, checkWebAuthnSupport } from "./components/webauthn";
 import { subscribeUser } from "./pushNotifications";
 
@@ -26,17 +25,10 @@ function useIsMobile() {
 }
 
 function CedulaIngreso({ onUsuarioEncontrado }) {
-  const navigate = useNavigate();
-
-  // Si el usuario es SST (empresa_id=4) va directo a /eleccion_sst, sin pasar por BienvenidaSeleccion
   const handleUsuarioAutenticado = (usuario, empresa_id) => {
     localStorage.setItem("nombre_trabajador", usuario.nombre || "");
     localStorage.setItem("cedula_trabajador", usuario.numero_identificacion || "");
     localStorage.setItem("empresa_id", String(empresa_id || ""));
-    if (empresa_id === 4) {
-      navigate("/eleccion_sst");
-      return;
-    }
     onUsuarioEncontrado && onUsuarioEncontrado(usuario);
   };
 
