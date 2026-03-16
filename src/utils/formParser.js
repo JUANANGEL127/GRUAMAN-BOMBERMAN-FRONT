@@ -347,8 +347,8 @@ function buildChecklistSections() {
     name: 'Datos de la Bomba',
     enableTimer: false,
     questions: [
-      { id: 'bomba_numero', type: 'text', question: 'Ingresa el número de la bomba:', icon: '🏎️', fieldName: 'bomba_numero' },
-      { id: 'horometro_motor', type: 'text', question: 'Ingresa el valor del horómetro del motor:', icon: '⏱️', fieldName: 'horometro_motor' },
+      { id: 'bomba_numero', type: 'number', question: 'Ingresa el número de la bomba:', icon: '🏎️', fieldName: 'bomba_numero' },
+      { id: 'horometro_motor', type: 'number', question: 'Ingresa el valor del horómetro del motor:', icon: '⏱️', fieldName: 'horometro_motor' },
     ],
   };
 
@@ -360,9 +360,10 @@ function buildChecklistSections() {
 
     const questions = visibleFields.map(f => {
       if (f in CHECKLIST_CAMPOS_EN_DATOS) {
+        const tipoCampo = CHECKLIST_CAMPOS_EN_DATOS[f];
         return {
           id: f,
-          type: 'text',
+          type: tipoCampo === 'date' ? 'date' : tipoCampo === 'number' ? 'number' : 'text',
           question: CHECKLIST_FIELD_TO_TEXT[f] || f,
           fieldName: f,
         };

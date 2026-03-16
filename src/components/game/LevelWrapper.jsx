@@ -158,7 +158,10 @@ export default function LevelWrapper() {
       setTimeout(() => navigate('/game/world-map', { replace: true }), 1800);
     } catch (err) {
       console.error('[LevelWrapper] submit error:', err);
-      setSubmitError('No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+      const detalle = err?.response?.data?.detalle || err?.response?.data?.error || null;
+      setSubmitError(detalle
+        ? `Error del servidor: ${detalle}`
+        : 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
       setSubmitting(false);
     }
   }, [sectionIdx, gamifiedSections, worldId, navigate]);
