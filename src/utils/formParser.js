@@ -388,6 +388,458 @@ function buildChecklistSections() {
   return secciones;
 }
 
+// ─── ATS: Pasos por tipo ───────────────────────────────────────────────────────
+
+const ATS_PASOS = {
+  'ats-operacion-torregrua': [
+    {
+      nombre: 'Ingreso al Área de Trabajo',
+      peligros: 'Resbalones, tropezones, caídas. Caída de objetos. Movimiento de maquinaria y vehículos. Choque de vehículos. Mordedura de caninos. Picaduras de zancudos.',
+      consecuencias: 'Golpes, contusiones, raspaduras. Infección por herida abierta. Atropellamientos. Daños materiales.',
+      controles: 'Caminar con precaución. Uso de senderos peatonales. Atención a la señalización. Orientar al personal sobre los riesgos. Supervisión SSTA de la obra.',
+    },
+    {
+      nombre: 'Ascenso y Descenso con Equipos de Protección Contra Caídas (Arnés, Arrestador y Eslinga en Y)',
+      peligros: 'Caída de objetos y personas. Trabajo en alturas. Desplome de estructura. Superficies irregulares. Exposición a rayos UV. Ruido por impactos. Posturas prolongadas y sobre esfuerzo. Riesgo biológico (virus, bacterias). Riesgo químico (material particulado). Fenómenos naturales: sismos, vendavales.',
+      consecuencias: 'Caídas a diferente nivel. Fracturas, traumas, politraumatismos. Enfermedades infecciosas. Lesiones musculares, hernias discales. Aplastamientos. Muerte.',
+      controles: 'Uso adecuado de EPP (casco, guantes, gafas, tapa oídos). Arnés cuerpo completo, eslinga en Y, arrestador de caídas. Inspección de equipos. Pausas durante la actividad. Diligenciar permiso de trabajo en alturas. Uso de bloqueador solar. Radios de comunicación.',
+    },
+    {
+      nombre: 'Operación de Torre Grúa',
+      peligros: 'Riesgo biológico, físico y químico por condiciones del ambiente. Posturas prolongadas, sobre esfuerzo, movimientos repetitivos. Desplome de estructura. Caída de objetos. Accidentes de tránsito. Fenómenos naturales: sismos, vendavales. Riesgo psicosocial.',
+      consecuencias: 'Enfermedades infecciosas. Fatiga, cansancio, estrés. Dolores musculares y articulares. Politraumatismos. Lesiones leves y graves. Muerte.',
+      controles: 'Uso adecuado de EPP. Dotación completa (camisa manga larga y jean). Equipos de protección contra caídas. Inspección de equipos de alturas. Pausas durante la actividad.',
+    },
+    {
+      nombre: 'Izaje de Cargas',
+      peligros: 'Caída de materiales. Caída de equipos y herramientas. Exceso de cargas. Mal amarre de la carga.',
+      consecuencias: 'Aplastamientos. Muerte de peatones. Golpes, contusiones, heridas, raspaduras. Traumas. Muerte.',
+      controles: 'Uso adecuado de equipos de protección contra caídas. Uso y revisión de aparejos. Inspección diaria de aparejos. Señalización y demarcación de las áreas. Uso de peatonales.',
+    },
+  ],
+
+  'ats-mando-inalam': [
+    {
+      nombre: 'Ingreso al Área de Trabajo (Verificación de la Base y Encendido con Mando Inalámbrico)',
+      peligros: 'Resbalones, tropezones, caídas. Caída de objetos. Movimiento de maquinaria y vehículos. Choque de vehículos. Mordedura de caninos. Picaduras de zancudos.',
+      consecuencias: 'Golpes, contusiones, raspaduras. Infección por herida abierta. Atropellamientos. Daños materiales.',
+      controles: 'Caminar con precaución. Uso de senderos peatonales. Atención a la señalización. Orientar al personal sobre los riesgos. Supervisión SSTA.',
+    },
+    {
+      nombre: 'Operación de Torre Grúa desde Piso',
+      peligros: 'Riesgo biológico, físico, químico y biomecánico. Posturas prolongadas de pie, movimientos repetitivos, manipulación manual de cargas. Desplome de estructura. Superficies irregulares. Fenómenos naturales: sismos, vendavales. Riesgo psicosocial.',
+      consecuencias: 'Enfermedades infecciosas. Fatiga, estrés, cansancio. Dolores musculares. Lesiones osteomusculares. Politraumatismos. Lesiones leves y graves.',
+      controles: 'Uso adecuado de EPP (casco, guantes, gafas, tapa oídos). Dotación completa (camisa manga larga y jean). Inspección de equipos de alturas. Pausas durante la actividad. Precaución y supervisión al realizar actividades críticas. Conocimiento de procedimientos en alturas.',
+    },
+    {
+      nombre: 'Izaje de Cargas',
+      peligros: 'Caída de materiales. Caída de equipos y herramientas. Exceso de cargas. Mal amarre de la carga.',
+      consecuencias: 'Aplastamientos. Muerte de peatones. Golpes, contusiones, heridas, raspaduras. Traumas. Muerte.',
+      controles: 'Uso adecuado de equipos de protección. Revisión e inspección de aparejos. Señalización y demarcación de áreas. Uso de peatonales.',
+    },
+    {
+      nombre: 'Ascenso y Descenso para Verificación Eléctrica y Mecánica (Esporádico)',
+      peligros: 'Caída de personas y objetos. Trabajo en alturas. Exposición a rayos UV. Riesgo eléctrico. Posturas forzadas y sobre esfuerzo. Riesgo biológico y químico. Fenómenos naturales.',
+      consecuencias: 'Caídas a diferente nivel. Electrocución. Fracturas, traumas. Enfermedades infecciosas. Lesiones musculares. Muerte.',
+      controles: 'EPP completo. Arnés cuerpo completo, eslinga en Y, arrestador. Permiso de trabajo en alturas. Inspección de equipos. Bloqueador solar. Radios de comunicación.',
+    },
+  ],
+
+  'ats-montaje-torregrua': [
+    {
+      nombre: 'Ingreso al Área de Trabajo',
+      peligros: 'Resbalones, tropezones, caídas. Caída de objetos. Distribución de máquinas y equipos. Movimiento de maquinaria y vehículos. Choque de vehículos.',
+      consecuencias: 'Golpes, contusiones, raspaduras. Infección por herida abierta. Atropellamientos. Daños materiales.',
+      controles: 'Caminar y conducir con precaución. Uso de senderos peatonales. Atención a la señalización. Orientar al personal sobre riesgos. Supervisión SSTA.',
+    },
+    {
+      nombre: 'Cargue y Descargue de Equipos y Herramientas',
+      peligros: 'Locativo: superficies irregulares, obstáculos. Biomecánico: posturas sostenidas, manipulación de cargas. Químico: material particulado. Mecánico: partes en movimiento, izaje de cargas. Biológico: virus, bacterias. Fenómenos naturales: sismo.',
+      consecuencias: 'Fatiga, cansancio, estrés. Cortaduras, heridas abiertas. Quemaduras por el sol. Golpes, contusiones, traumas. Muerte.',
+      controles: 'Uso adecuado de EPP y ropa adecuada (guantes, casco, botas punteras, camisa manga larga, jean). Precaución durante la actividad. Ayuda entre compañeros.',
+    },
+    {
+      nombre: 'Montaje de Torre Grúa (Instalación de Brazo, Mástil, Cabina, Carrito, Cable de Carga, Flecha, Contra Flecha, Contra Peso, Contra Brazo, Secciones)',
+      peligros: 'Caída de objetos, equipos, herramientas y materiales. Sobre esfuerzo. Trabajo en alturas. Desplome de estructura. Posturas prolongadas. Atrapamientos de dedos. Atrapamientos en la estructura. Caídas de diferentes niveles. Ruido. Vibraciones. Exposición a radiaciones UV.',
+      consecuencias: 'Lesiones en piel, dermatitis, laceraciones en manos y dedos. Quemaduras en la piel. Lesiones osteomusculares. Golpes, lesiones, fracturas. Fracturas por atrapamientos en la estructura.',
+      controles: 'EPP completo (casco, guantes, gafas, tapa oídos). Dotación (camisa manga larga y jean). Equipos de protección contra caídas. Inspección de seguridad y equipos. Pausas durante la actividad. Charla de seguridad. Conocimiento de procedimientos en alturas. Bloqueador solar.',
+    },
+    {
+      nombre: 'Izaje de Cargas (Por Medio de Ayuda Hidráulica PH)',
+      peligros: 'Atropellamientos. Caída de materiales. Aplastamiento. Caída de equipos y herramientas. Exceso de cargas. Mal amarre de la carga.',
+      consecuencias: 'Aplastamientos. Muerte de peatones. Golpes, contusiones, heridas, raspaduras. Traumas. Muerte.',
+      controles: 'Plan de izaje. Uso adecuado de equipos de protección contra caída. Uso adecuado de los aparejos. Inspección diaria de aparejos. Señalización y demarcación de las áreas. No pasar por el área donde esté la carga suspendida.',
+    },
+  ],
+
+  'ats-montaje-elevador': [
+    {
+      nombre: 'Ingreso al Área de Trabajo',
+      peligros: 'Locativos: pisos en diferentes niveles, rampas, terreno inestable, acceso de áreas por escaleras. Biomecánico: movimientos repetitivos, posturas prolongadas, sobre esfuerzo. Biológico: bacterias, virus. Físico: ruido, iluminación deficiente. Fenómenos Naturales: sismos, terremotos, granizadas.',
+      consecuencias: 'Caída a mismo y diferente nivel. Fracturas, traumatismos, golpes, atropellamiento, machucones. Golpes, fracturas, traumatismos, machucones, laceraciones. Daños materiales. Muerte por fenómenos naturales.',
+      controles: 'Transitar por las áreas asignadas. Precaución durante el desplazamiento. Seguir indicaciones del personal. EPP: casco, guantes, botas antideslizantes con puntera, guantes de camaza, ropa de trabajo, gafas, tener precaución con los trabajos que se están realizando en el área. Solicitar al personal de seguridad el plan de inducción.',
+    },
+    {
+      nombre: 'Cargue y Descargue de Equipos y Herramientas',
+      peligros: 'Locativos: pisos en diferentes niveles, terreno inestable. Biomecánico: movimientos repetitivos, posturas prolongadas, sobre esfuerzo, manipulación manual de cargas. Biológico: bacterias, virus. Fenómenos Naturales: sismos, temblores.',
+      consecuencias: 'Caída a mismo y diferente nivel. Fracturas, traumatismos, golpes, atropellamiento. Molestias musculares, dolor de espalda, lumbalgias. Disminución de la capacidad auditiva. Lesiones laborales.',
+      controles: 'Transitar por las áreas asignadas. EPP completo. Realizar pausas activas para las extremidades inferiores. Organizar, coordinar y distribuir el trabajo para no exceder el horario estipulado. Utilizar ayudas mecánicas para el transporte de elementos pesados.',
+    },
+    {
+      nombre: 'Inspección y Señalización',
+      peligros: 'Locativos: pisos en diferentes niveles, rampas, terreno inestable. Biomecánico: movimientos repetitivos, posturas prolongadas. Biológico: bacterias, virus. Físico: ruido, iluminación deficiente. Fenómenos Naturales: sismos, temblores.',
+      consecuencias: 'Caída a mismo y diferente nivel. Fracturas, golpes, traumatismos, atropellamiento. Disminución de la capacidad auditiva. Fatiga, cansancio.',
+      controles: 'Transitar por áreas asignadas. EPP adecuado. Señalizar el área de trabajo. Realizar pausas activas.',
+    },
+    {
+      nombre: 'Cableado de Alimentación para Motor, Bancada e Izaje de Motor (Con Diferencial o Winche)',
+      peligros: 'Atropellamientos. Caída de materiales. Caída de equipos y herramientas. Exceso de cargas. Mal amarre de la carga.',
+      consecuencias: 'Aplastamientos. Muerte de peatones. Golpes, contusiones, heridas, raspaduras. Traumas.',
+      controles: 'Plan de izaje. Señalización y demarcación de las áreas. Uso adecuado de equipos de protección. Inspección de equipos de alturas. Uso adecuado de la dotación.',
+    },
+    {
+      nombre: 'Perforación para Arriostramientos en Pared o Piso',
+      peligros: 'Locativos: acceso de áreas por escaleras, terreno inestable. Biomecánico: movimientos repetitivos, posturas prolongadas, sobre esfuerzo. Físico: ruido, vibración por uso del taladro. Trabajo en alturas. Biológico: bacterias, virus. Fenómenos Naturales: sismos.',
+      consecuencias: 'Caída a mismo y diferente nivel. Fatiga muscular, lumbalgias. Estrés, ansiedad, dolores de cabeza. Golpes, heridas, laceraciones. Politraumatismos. Disminución de la capacidad auditiva.',
+      controles: 'Realizar pausas activas. EPP completo. Botas de seguridad antideslizantes con puntera. Uso de EPP: protección auditiva. Buena iluminación en las áreas. Guantes de nitrilo y/o carnaza para evitar cortaduras.',
+    },
+    {
+      nombre: 'Puesta en Marcha y Prueba de Carga',
+      peligros: 'Locativos: acceso de áreas por escaleras, terreno inestable, sobre esfuerzo. Biomecánico: movimientos repetitivos. Mecánico: manejo de herramienta de mano y eléctricas. Fenómenos Naturales: sismos, vendavales, precipitaciones. Riesgo eléctrico: quemaduras, electrocución.',
+      consecuencias: 'Caída a mismo y diferente nivel. Fatiga muscular, lumbalgias. Golpes, contusiones. Caídas al mismo nivel. Disminución de la capacidad auditiva. Fatiga y cansancio. Tetanización muscular, quemaduras.',
+      controles: 'Charla de seguridad. Realizar pausas activas para las extremidades inferiores. EPP completo. Botas de seguridad antideslizantes. Capacitación. Formatos de permisos para trabajo en alturas. Inspección de equipos de alturas.',
+    },
+    {
+      nombre: 'Orden y Aseo',
+      peligros: 'Locativos: pisos en diferentes niveles, rampas, terreno inestable. Biomecánico: movimientos repetitivos. Biológico: bacterias, virus. Físico: ruido, iluminación deficiente. Fenómenos Naturales: sismos, temblores.',
+      consecuencias: 'Caída a mismo y diferente nivel. Fracturas, traumatismos, golpes. Fatiga muscular, lumbalgias. Estrés, ansiedad, dolores de cabeza. Golpes, heridas, laceraciones, machucones.',
+      controles: 'Charla de seguridad. Separación de residuos. Uso adecuado de EPP.',
+    },
+  ],
+
+  'ats-desmontaje-torregrua': [
+    {
+      nombre: 'Ingreso al Área de Trabajo',
+      peligros: 'Locativo: resbalones, tropezones, caídas. Mecánico: distribución de máquinas y equipos. Movimiento de maquinaria y vehículos. Biológico: virus, bacterias, hongos y parásitos. Químico: material particulado en el ambiente. Físico: iluminación natural. Psicosocial: gestión organizacional, jornada extensa de trabajo. Fenómenos naturales: sismos, terremotos, granizadas.',
+      consecuencias: 'Golpes, contusiones. Infección por herida abierta. Atropellamientos. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'Caminar con precaución. Uso de senderos peatonales. Atención a señalización y respetar señales de tránsito. Uso de EPP. Capacitación, inducción de ingreso. Trabajo en equipo, charla de comunicación asertiva. Supervisión SSTA.',
+    },
+    {
+      nombre: 'Cargue y Descargue de Equipos y Herramientas Previo a Realizar el Ascenso',
+      peligros: 'Locativo: superficies irregulares, obstáculos en los sitios de trabajo. Biomecánico: posturas sostenidas, manipulación de cargas, movimientos forzados. Físico: exposición a ruido simultáneo. Químico: material particulado. Biológico: virus, bacterias propias de la actividad. Fenómenos naturales: sismo.',
+      consecuencias: 'Golpes, traumas, contusiones. Machucones con herramientas. Raspaduras. Fracturas. Heridas abiertas. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'Uso adecuado de EPP y ropa adecuada (guantes, casco, botas punteras, camisa manga larga, jean). Precaución durante la actividad. Ayuda entre compañeros.',
+    },
+    {
+      nombre: 'Ascenso a la Torre Grúa',
+      peligros: 'Locativo: caída de equipos y herramientas, caída de personas, caída de materiales. Biomecánico: sobre esfuerzo, movimientos repetitivos. Alturas: trabajo en alturas, desplome de estructura. Biológico: virus, bacterias, hongos y parásitos. Químico: material particulado en el ambiente. Físico: iluminación natural, ruido. Psicosocial: gestión organizacional, jornada extensa de trabajo. Fenómenos naturales: sismos, terremotos, granizadas.',
+      consecuencias: 'Fatiga, cansancio, estrés. Golpes, contusiones, traumas. Fracturas. Quemaduras por el sol. Heridas abiertas. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'Uso adecuado de EPP (casco, guantes, gafas, tapa oídos). Dotación (camisa manga larga y jean). Equipos de protección contra caídas. Inspección de equipos de alturas. Pausas durante la actividad. Precaución al realizar actividades. Charla de seguridad. Conocimiento de procedimientos en alturas. Bloqueador solar.',
+    },
+    {
+      nombre: 'Desmontaje de Torre Grúa (Brazo, Mástil, Cabina, Cable de Carga, Contra Flecha, Contra Peso, Contra Brazo, Secciones)',
+      peligros: 'Caída de equipos y herramientas. Caída de personas. Caída de materiales. Biomecánico: sobre esfuerzo, movimientos repetitivos, manipulación de cargas. Alturas: trabajo en alturas, desplome de estructura. Mecánico: movimiento de partes y maquinaria, equipos. Físico: iluminación natural/ruido por golpe a estructuras. Psicosocial: gestión organizacional, jornada extensa.',
+      consecuencias: 'Fatiga, cansancio, estrés. Golpes, contusiones, traumas. Fracturas. Heridas abiertas. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'Trasladarse en alturas con precaución. Calentamiento previo, evitar malas posturas. EPP completo (casco, guantes, gafas, tapa oídos). Dotación (camisa manga larga y jean). Equipos de protección contra caídas. Inspección de equipos de alturas. Trabajo en equipo, charla de comunicación asertiva. Detener la operación hasta que mejoren las condiciones ambientales.',
+    },
+    {
+      nombre: 'Izaje de Cargas (Por Medio de Ayuda Hidráulica PH)',
+      peligros: 'Público: atropellamientos. Caída de materiales. Caída de equipos y herramientas. Biomecánico: exceso de cargas. Mal amarre de la carga. Biológico: virus, bacterias y hongos. Químico: material particulado. Físico: iluminación natural. Psicosocial: gestión organizacional, jornada extensa. Fenómenos naturales: sismos, terremotos.',
+      consecuencias: 'Aplastamientos. Muerte de peatones. Golpes, contusiones, heridas, raspaduras, traumas. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'Plan de izaje. Uso de señalización y demarcación de las áreas. No pasar por el área donde esté la carga suspendida. Uso de EPP. Capacitación. Formatos de permisos para trabajo en alturas. Inspección de equipos de alturas. Uso de chalecos reflectivos. Radios de comunicación.',
+    },
+    {
+      nombre: 'Desarme en Piso de Partes de la Torre Grúa',
+      peligros: 'Locativo: resbalones, tropezones, caídas. Mecánico: distribución de máquinas y equipos. Movimiento de maquinaria y vehículos. Biológico: virus, bacterias, hongos y parásitos. Químico: material particulado en el ambiente. Físico: iluminación natural, ruido. Psicosocial: gestión organizacional, jornada extensa. Fenómenos naturales: sismos.',
+      consecuencias: 'Golpes, contusiones. Infección por herida abierta. Atropellamientos. Daños materiales. Pérdida auditiva. Daños visuales. Estrés laboral.',
+      controles: 'Caminar con precaución. EPP completo. Uso de gafas de seguridad. Uso de protección auditiva. Trabajo en equipo, charla de comunicación asertiva. Detener la operación hasta que mejoren las condiciones ambientales.',
+    },
+    {
+      nombre: 'Izaje de Cargas Final (Traslado en Tractor Camión)',
+      peligros: 'Público: atropellamientos. Caída de materiales, equipos y herramientas. Biomecánico: exceso de cargas, sobre esfuerzo. Mecánico: mal amarre de la carga. Biológico: virus, bacterias y hongos. Físico: iluminación natural. Psicosocial: gestión organizacional, jornada extensa. Fenómenos naturales: sismos, terremotos, granizadas.',
+      consecuencias: 'Aplastamientos. Muerte de peatones. Golpes, contusiones, heridas, raspaduras, traumas. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'Plan de izaje. Uso adecuado de equipos de protección contra caída. Señalización y demarcación de áreas. No pasar por el área donde esté la carga suspendida. EPP completo. Capacitación. Trabajo en equipo, charla de comunicación asertiva.',
+    },
+    {
+      nombre: 'Orden y Aseo',
+      peligros: 'Locativos: pisos en diferentes niveles, terreno inestable, acceso de áreas por escaleras. Biomecánico: movimientos repetitivos. Biológico: bacterias, virus, en el entorno o por personas portadoras. Físico: ruido. Fenómenos Naturales: sismos, temblores, precipitaciones.',
+      consecuencias: 'Caída a mismo y diferente nivel. Fracturas, traumatismos, golpes, atropellamiento, machucones. Estrés, ansiedad, dolores de cabeza. Golpes, fracturas, traumas, laceraciones, heridas, golpes. Muerte.',
+      controles: 'Charla de seguridad. Separación de residuos. Uso adecuado de EPP.',
+    },
+  ],
+
+  'ats-telescopaje': [
+    {
+      nombre: 'Ingreso al Área de Trabajo',
+      peligros: 'Locativo: resbalones, tropezones, caídas. Mecánico: distribución de máquinas y equipos, movimiento de maquinaria y vehículos. Biológico: virus, bacterias, picaduras. Químico: material particulado. Físico: iluminación natural, ruido. Psicosocial: gestión organizacional, jornada extensa. Fenómenos Naturales: sismos, terremotos, granizadas.',
+      consecuencias: 'Golpes, contusiones, raspaduras. Infección por herida abierta. Atropellamientos. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'Caminar con precaución. Uso de senderos peatonales. Atención a señalización. Orientar al personal sobre los riesgos. Supervisión SSTA.',
+    },
+    {
+      nombre: 'Cargue y Descargue de Equipos y Herramientas Previo al Ascenso',
+      peligros: 'Locativo: superficies irregulares, obstáculos en los sitios de trabajo. Biomecánico: posturas sostenidas, manipulación de cargas, movimientos forzados. Físico: exposición a ruido, radiación solar. Químico: material particulado. Biológico: virus, bacterias. Fenómenos naturales: sismo.',
+      consecuencias: 'Golpes, traumas, contusiones. Machucones. Raspaduras. Fracturas. Heridas abiertas. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'EPP completo (guantes, casco, botas punteras, camisa manga larga, jean). Precaución durante la actividad. Ayuda entre compañeros.',
+    },
+    {
+      nombre: 'Ascenso con Equipos de Protección Contra Caídas (Arnés, Arrestador y Eslinga en Y con Absorbedor)',
+      peligros: 'Locativo: caída de equipos, herramientas y personas, caída de materiales. Biomecánico: sobre esfuerzo, movimientos repetitivos. Alturas: trabajo en alturas, desplome de estructura. Biológico: virus, bacterias, hongos. Químico: material particulado. Físico: iluminación natural, ruido. Fenómenos naturales: sismos, terremotos, granizadas.',
+      consecuencias: 'Fatiga, cansancio, estrés. Golpes, contusiones, traumas. Fracturas. Quemaduras por el sol. Heridas abiertas. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'EPP completo (casco, guantes, gafas, tapa oídos). Dotación (camisa manga larga, jean). Equipos de protección contra caídas. Inspección de equipos de alturas. Pausas. Charla de seguridad. Conocimiento de procedimientos en alturas. Bloqueador solar.',
+    },
+    {
+      nombre: 'Verificación del Cable de Poder y Elevación',
+      peligros: 'Locativo: caída de equipos, herramientas y personas. Biomecánico: sobre esfuerzo, movimientos repetitivos. Alturas: trabajo en alturas, desplome de estructura. Biológico: virus, bacterias, hongos. Químico: material particulado. Físico: iluminación natural, ruido. Riesgo eléctrico: electrocución, quemaduras por contacto, caídas y golpes. Fenómenos naturales: sismos, granizadas.',
+      consecuencias: 'Fatiga, cansancio, estrés. Golpes, contusiones, traumas. Fracturas. Heridas abiertas. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'Trasladarse en alturas con precaución. EPP completo (casco, guantes, gafas, tapa oídos). Dotación completa. Equipos de protección contra caídas. Inspección de equipos de alturas. Trabajo en equipo, charla de comunicación asertiva. Detener la operación hasta que mejoren las condiciones ambientales.',
+    },
+    {
+      nombre: 'Instalación de la Camisa de Telescopaje — Gato Hidráulico Bomba',
+      peligros: 'Público: atropellamientos. Caída de materiales, equipos y herramientas. Biomecánico: exceso de cargas. Mal amarre de carga. Biológico: virus, bacterias, hongos. Químico: material particulado. Físico: iluminación natural, ruido. Psicosocial: gestión organizacional, jornada extensa. Fenómenos naturales: sismos.',
+      consecuencias: 'Aplastamientos. Muerte de peatones. Golpes, contusiones, heridas, raspaduras, traumas. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'Realizar permiso izaje de cargas. Control de tránsito con paletas. Demarcación del área y control de pasos peatonales. Calentamiento previo, evitar malas posturas. EPP completo. Botas antideslizantes con puntera. Inspección de equipos de alturas. Capacitación.',
+    },
+    {
+      nombre: 'Izaje de Cargas',
+      peligros: 'Locativo: resbalones, tropezones, caídas. Mecánico: distribución de máquinas y equipos, movimiento de maquinaria y vehículos. Biológico: virus, bacterias, hongos. Químico: material particulado. Físico: iluminación natural, ruido. Psicosocial: gestión organizacional, jornada extensa. Fenómenos naturales: sismos, terremotos.',
+      consecuencias: 'Golpes, contusiones, raspaduras. Infección por herida abierta. Atropellamientos. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'Caminar con precaución. EPP completo, en buen estado. Atención a señalización y señales de tránsito. Controlar el tráfico con paletas. EPP adecuado. Charla de comunicación asertiva. Detener operación hasta que mejoren condiciones ambientales.',
+    },
+    {
+      nombre: 'Equilibrio en el Telescopaje',
+      peligros: 'RIESGO FÍSICO: Ruido por impactos permanentes y/o continuos, iluminación, exceso o falta de ella. Vibración por golpe a estructuras metálicas. Movimiento de la estructura por el viento. RIESGOS BIOMECÁNICOS: Posturas prolongadas, mantenidas, forzadas. Sobre-esfuerzo. Movimientos repetitivos. Manipulación manual de cargas. RIESGOS POR CONDICIONES DE SEGURIDAD: Desplome de estructura, uso de herramientas, equipos, piezas a trabajar. Superficies irregulares. Caída de objetos a diferente nivel. FENÓMENOS NATURALES: sismos, vendavales, precipitaciones. RIESGO PSICOSOCIAL: jornadas extensas, carga mental, condiciones de la tarea.',
+      consecuencias: 'Aplastamientos. Muerte de peatones. Golpes, contusiones, heridas, raspaduras, traumas. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'Plan de izaje. Uso adecuado de los equipos de protección contra caída. No pasar por el área donde está la carga suspendida. Uso de gafas de seguridad. Uso de EPP: protección auditiva. Trabajo en equipo, charla de comunicación asertiva. Detener la operación hasta que mejoren las condiciones ambientales.',
+    },
+    {
+      nombre: 'Descenso con Equipos de Protección Contra Caídas (Arnés, Arrestador y Eslinga en Y con Absorbedor)',
+      peligros: 'RIESGO FÍSICO: Ruido por impactos permanentes y/o continuos, iluminación. Vibración por golpe a estructuras metálicas. Movimiento de la estructura por el viento. RIESGOS BIOMECÁNICOS: Posturas prolongadas, mantenidas, forzadas. Sobre-esfuerzo. Movimientos repetitivos. RIESGOS POR CONDICIONES DE SEGURIDAD: Desplome de estructura. Superficies irregulares. Caída de objetos, Trabajos en Alturas. FENÓMENOS NATURALES: sismos, vendavales. RIESGO PSICOSOCIAL: características de las condiciones de trabajo, jornadas extensas, carga mental.',
+      consecuencias: 'Golpes, traumas, contusiones. Machucones con equipos. Raspaduras. Atrapamientos. Fracturas. Heridas abiertas. Quemaduras por el sol. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'Uso adecuado de Elementos de Protección Personal y Equipos de Protección Contra Caídas. Precaución durante la actividad. Firma de permisos para trabajo en alturas.',
+    },
+    {
+      nombre: 'Orden y Aseo',
+      peligros: 'Locativos: pisos en diferentes niveles, terreno inestable. Biomecánico: movimientos repetitivos. Biológico: bacterias, virus. Físico: ruido, iluminación deficiente. Fenómenos Naturales: sismos, temblores, precipitaciones.',
+      consecuencias: 'Caída a mismo y diferente nivel. Estrés, ansiedad, dolores de cabeza, depresión. Desagano, disminución de la energía. Golpes, fracturas, traumatismos, machucones, laceraciones, heridas, golpes. Muerte.',
+      controles: 'Charla de seguridad. Separación de residuos. Uso adecuado de EPP.',
+    },
+  ],
+
+  'ats-mantenimiento': [
+    {
+      nombre: 'Ingreso al Área de Trabajo (Alistamiento de Equipos, Herramientas, EPCC)',
+      peligros: 'Locativo: resbalones, tropezones, caídas. Mecánico: distribución de máquinas y equipos, movimiento de maquinaria y vehículos. Biológico: virus, bacterias, picaduras. Químico: material particulado en el ambiente. Físico: iluminación natural, ruido. Psicosocial: gestión organizacional, jornada extensa. Fenómenos Naturales: sismos, terremotos, granizadas.',
+      consecuencias: 'Golpes, contusiones, raspaduras. Infección por herida abierta. Atropellamientos. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'Caminar con precaución. Uso de senderos peatonales. Atención a señalización y respetar señales de tránsito. Uso de EPP. Capacitación, inducción de ingreso. Trabajo en equipo. Supervisión SSTA.',
+    },
+    {
+      nombre: 'Ascenso a la Torre Grúa con Equipos de Protección Contra Caídas',
+      peligros: 'Locativo: caída de equipos, herramientas y personas. Biomecánico: sobre esfuerzo, movimientos repetitivos. Alturas: trabajo en alturas, desplome de estructura. Biológico: virus, bacterias, hongos y parásitos. Químico: material particulado. Físico: iluminación natural, ruido. Fenómenos naturales: sismos, terremotos, granizadas.',
+      consecuencias: 'Fatiga, cansancio, estrés. Golpes, contusiones, traumas. Fracturas. Heridas abiertas. Quemaduras por el sol. Pérdida auditiva. Daños visuales. Muerte.',
+      controles: 'EPP completo (guantes, botas punteras, camisa manga larga, jean). Inspección EPCC. Precaución durante la actividad. Ayuda entre compañeros. Ayudas mecánicas.',
+    },
+    {
+      nombre: 'Mantenimiento General de Torre Grúa y/o Elevador (Revisión de guayas, pasadores, pines, motores, reductores, tableros eléctricos, engrase)',
+      peligros: 'Físico: Ruido por actividades alrededor, radiaciones solares. Biomecánico: presencia de material particulado, manipulación de grasa y aceites hidráulicos, movimientos repetitivos, posturas incómodas, posturas sostenidas. Mecánico: Uso de ganchos y hebillas de EPCC, uso de herramientas manuales. Locativo: superficies irregulares. Alturas: trabajo en alturas, desplome de estructura. Biológico: virus, bacterias, infecciones, mordeduras. Psicosocial: condiciones de la tarea.',
+      consecuencias: 'Sensibilidad auditiva, quemaduras del sol, lesiones oculares. Molestias respiratorias, alergias. Lesiones osteomusculares. Golpes, machucones, lesiones en manos y dedos. Atrapamientos. Caídas a diferente nivel. Accidentes fatales. Gripes, enfermedades infectocontagiosas. Estrés, dolor de cabeza.',
+      controles: 'Uso correspondiente de EPCC: eslinga en Y, arnés cuerpo completo, línea de vida y arrestador de caídas. Uso de EPP adecuados: casco con barbuquejo, gafas, tapa oídos, guantes de posicionamiento, botas de seguridad. Inspección preoperacional de EPCC y EPPs. Precaución en el ascenso de la torre grúa. Inspección continua con operador TG. Reportar cualquier condición insegura detectada. Señalización de obra.',
+    },
+    {
+      nombre: 'Verificación Eléctrica y Mecánica del Equipo de Elevación',
+      peligros: 'Físico: Ruido por actividades alrededor, radiaciones solares. Biomecánico: movimientos repetitivos, posturas incómodas, posturas sostenidas. Mecánico: uso de herramientas de mano, maceta, pinzas eléctricas. Locativo: superficies irregulares. Alturas: trabajo en alturas. Eléctrico: revisión de cables eléctricos. Fenómenos naturales: sismo, tormentas, vendavales. Biológico: bacterias, virus, infecciones, mordeduras. Psicosocial: condiciones de la tarea.',
+      consecuencias: 'Sensibilidad auditiva, quemaduras del sol, lesiones oculares. Molestias respiratorias, alergias. Lesiones osteomusculares. Golpes en manos y dedos, machucones. Caídas a diferente nivel. Accidentes fatales. Cortos eléctricos, electrocución. Gripes, enfermedades infecto contagiosas. Estrés, dolor de cabeza.',
+      controles: 'Uso correspondiente de EPCC: eslinga en Y, arnés cuerpo completo, línea de vida y arrestador de caídas. Uso de EPP adecuados: casco con barbuquejo, gafas, tapa oídos, guantes. Inspección preoperacional de EPCC y EPPs. Precaución en el ascenso. Inspección continua con operador TG. Reportar cualquier condición insegura. Señalización de obra.',
+    },
+    {
+      nombre: 'Descenso de Torre Grúa, Recolección de Herramientas y EPCC',
+      peligros: 'Locativo: superficies irregulares, obstáculos, pisos húmedos. Químico: presencia de material particulado. Biológico: presencia de animales. Fenómenos naturales: sismo, vendavales, precipitaciones. Mecánico: uso de ganchos y hebillas de EPCC.',
+      consecuencias: 'Caídas al mismo nivel, contusiones, esguinces. Fracturas, quemaduras del sol. Picaduras, mordeduras. Propias de un evento natural. Lesión de manos y dedos, machucones.',
+      controles: 'Caminar con precaución. Uso de senderos peatonales. Orientar al personal sobre los riesgos en el área. Uso de EPP. Uso correspondiente de EPPs.',
+    },
+    {
+      nombre: 'Orden y Aseo',
+      peligros: 'Locativos: pisos en diferentes niveles, terreno inestable. Biomecánico: movimientos repetitivos. Biológico: bacterias, virus. Físico: ruido, iluminación deficiente. Fenómenos Naturales: sismos, temblores, precipitaciones.',
+      consecuencias: 'Caída a mismo y diferente nivel. Fracturas, traumatismos, golpes, politraumatismos. Estrés, ansiedad, dolores de cabeza. Golpes, fracturas, traumas, laceraciones, heridas. Muerte.',
+      controles: 'Charla de seguridad. Separación de residuos. Uso adecuado de EPP.',
+    },
+  ],
+
+  'ats-elevador': [
+    {
+      nombre: 'Ingreso al Área de Trabajo (Elevador de Carga)',
+      peligros: 'Locativo: resbalones, tropezones, caídas. Mecánico: distribución de máquinas y equipos, movimiento de maquinaria y vehículos. Biológico: virus, bacterias, picaduras. Químico: material particulado. Físico: iluminación natural, ruido. Psicosocial: gestión organizacional, jornada extensa. Fenómenos Naturales: sismos, terremotos, granizadas.',
+      consecuencias: 'Golpes, contusiones, raspaduras. Infección por herida abierta. Atropellamientos. Pérdida auditiva. Daños visuales. Estrés laboral. Muerte por fenómenos naturales.',
+      controles: 'Caminar con precaución. Uso de senderos peatonales. Atención a señalización y respetar señales de tránsito. Uso de EPP. Capacitación, inducción de ingreso. Trabajo en equipo, charla de comunicación asertiva. Supervisión SSTA.',
+    },
+    {
+      nombre: 'Operación de Elevador de Carga',
+      peligros: 'BIOLÓGICO: Virus, Bacterias, picaduras, mordeduras, rickettsias, fluidos o picaduras. RIESGO FÍSICO: Ruido por impactos permanentes y/o continuos. Iluminación, exceso o falta de ella. Vibración por golpe a estructuras metálicas. Movimiento de la estructura por el viento. LOCATIVO: Caída herramientas, caída de personas, caída de materiales. QUÍMICO: Presencia de Material particulado. BIOMECÁNICOS: Posturas prolongadas, mantenidas, forzadas. Sobre-esfuerzo. Movimientos repetitivos. CONDICIONES DE SEGURIDAD: Desplome de estructura. Mecánico: maquinaria en movimiento, uso de herramientas, material proyectado. ALTURAS: Trabajo en altura. FENÓMENOS NATURALES: sismos, vendavales, precipitaciones. RIESGO PSICOSOCIAL: jornadas extensas, carga mental.',
+      consecuencias: 'Enfermedades infecciosas transmitidas por picaduras, rasguños, heridas abiertas. Malestares, estrés, trastornos de sueño. Pérdida de la atención, dificultad al comunicarse. Accidentes laborales, ansiedad, nervios, cansancio. Dolores abdominales, problemas de equilibrio. Lesiones en la frecuencia cardíaca, fatiga visual. Traumatismos en la columna vertical. Problemas de equilibrio, dolores de cabeza. Enfermedades contagiosas. Atropellamiento con vehículos. Desplome de estructura. Muerte.',
+      controles: 'Diligenciamiento de permisos diariamente. Verificación listas de chequeo. Capacitación. Uso adecuado de EPP (casco, guantes, gafas, tapa oídos). Dotación (camisa manga larga y jean). Inspección diaria del equipo. Inspección de seguridad y equipos. Pausas durante la actividad.',
+    },
+    {
+      nombre: 'Orden y Aseo',
+      peligros: 'Locativos: pisos en diferentes niveles, rampas, terreno inestable. Biomecánico: movimientos repetitivos. Biológico: bacterias, virus. Físico: ruido, iluminación deficiente. Fenómenos Naturales: sismos, temblores, precipitaciones.',
+      consecuencias: 'Caída a mismo y diferente nivel. Fracturas, traumatismos, golpes, atropellamiento. Estrés, ansiedad, dolores de cabeza. Golpes, fracturas, traumas, laceraciones, heridas. Muerte.',
+      controles: 'Charla de seguridad. Separación de residuos. Uso adecuado de EPP.',
+    },
+  ],
+};
+
+/** Construye las secciones gamificadas para un ATS dado */
+function buildAtsSections(worldId) {
+  const pasos = ATS_PASOS[worldId] || [];
+
+  const seccionesComunes = [
+    {
+      id: 'riesgos-fisicos-electricos',
+      name: 'Riesgos Físicos y Eléctricos',
+      enableTimer: false,
+      questions: [
+        {
+          id: 'riesgos_fisicos_electricos',
+          fieldName: 'riesgos_fisicos_electricos',
+          type: 'multiselect',
+          question: 'Selecciona los riesgos físicos y eléctricos presentes en la actividad:',
+          icon: '⚡',
+          options: [
+            { value: 'radiacion_solar',          label: 'Radiación Solar' },
+            { value: 'ruido',                    label: 'Ruido' },
+            { value: 'alta_tension',             label: 'Alta Tensión' },
+            { value: 'radiacion_ionizante',      label: 'Radiación Ionizante' },
+            { value: 'vibraciones',              label: 'Vibraciones' },
+            { value: 'electricidad_estatica',    label: 'Electricidad Estática' },
+            { value: 'tormentas_electricas',     label: 'Tormentas Eléctricas' },
+            { value: 'iluminacion_deficiente',   label: 'Iluminación Deficiente' },
+            { value: 'baja_tension',             label: 'Baja Tensión' },
+            { value: 'calor',                    label: 'Calor' },
+            { value: 'frio_humedad',             label: 'Frío + Humedad' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'riesgos-quimicos-erg',
+      name: 'Riesgos Químicos, Ergonómicos y Otros',
+      enableTimer: false,
+      questions: [
+        {
+          id: 'riesgos_quimicos_erg',
+          fieldName: 'riesgos_quimicos_erg',
+          type: 'multiselect',
+          question: 'Selecciona los riesgos químicos, ergonómicos y psicosociales:',
+          icon: '🧪',
+          options: [
+            { value: 'aerosol',                  label: 'Aerosol' },
+            { value: 'polvos',                   label: 'Polvos' },
+            { value: 'vapores',                  label: 'Vapores' },
+            { value: 'sobre_esfuerzo',           label: 'Sobre Esfuerzo (carga)' },
+            { value: 'posturas_incomodas',       label: 'Posturas Incómodas' },
+            { value: 'posturas_estaticas',       label: 'Posturas Estáticas' },
+            { value: 'movimientos_repetitivos',  label: 'Movimientos Repetitivos' },
+            { value: 'psicosocial',              label: 'Riesgo Psicosocial' },
+            { value: 'naturales',                label: 'Riesgos Naturales (sismos, vendavales)' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'riesgos-locativos-mec',
+      name: 'Riesgos Locativos, Mecánicos y Biológicos',
+      enableTimer: false,
+      questions: [
+        {
+          id: 'riesgos_locativos_mec',
+          fieldName: 'riesgos_locativos_mec',
+          type: 'multiselect',
+          question: 'Selecciona los riesgos locativos, mecánicos y biológicos:',
+          icon: '⚠️',
+          options: [
+            { value: 'caida_mismo_nivel',        label: 'Caída del Mismo Nivel' },
+            { value: 'caida_distinto_nivel',     label: 'Caída de Distinto Nivel' },
+            { value: 'caida_objetos',            label: 'Caída de Objetos' },
+            { value: 'cambio_temperatura',       label: 'Cambio de Temperatura' },
+            { value: 'desprendimiento',          label: 'Desprendimiento / Derrumbe' },
+            { value: 'hundimientos',             label: 'Hundimientos' },
+            { value: 'atropellamiento',          label: 'Atropellamiento' },
+            { value: 'golpes_machacones',        label: 'Golpes, Machacones, Trauma' },
+            { value: 'atrapamientos',            label: 'Atrapamientos' },
+            { value: 'mecanismos_movimiento',    label: 'Mecanismos en Movimiento' },
+            { value: 'proyeccion_particulas',    label: 'Proyección de Partículas' },
+            { value: 'choques',                  label: 'Choques (con/contra)' },
+            { value: 'espacios_reducidos',       label: 'Espacios Reducidos' },
+            { value: 'cortes_herramienta',       label: 'Cortes por Uso de Herramienta' },
+            { value: 'caida_objetos_mec',        label: 'Caída de Objetos (mecánico)' },
+            { value: 'bacterias_virus',          label: 'Bacterias, Virus, Hongos' },
+            { value: 'picadura_insectos',        label: 'Picadura de Insectos' },
+            { value: 'ofidio',                   label: 'Ofidio (serpientes)' },
+            { value: 'mordedura_caninos',        label: 'Mordedura de Caninos' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'herramientas-ats',
+      name: 'Equipos y Herramientas a Utilizar',
+      enableTimer: false,
+      questions: [
+        { id: 'herramientas_manuales',    fieldName: 'herramientas_manuales',    type: 'text', question: 'Herramientas MANUALES a utilizar (deja vacío si no aplica):', icon: '🔨' },
+        { id: 'herramientas_electricas',  fieldName: 'herramientas_electricas',  type: 'text', question: 'Herramientas ELÉCTRICAS a utilizar:', icon: '🔌' },
+        { id: 'herramientas_neumaticas',  fieldName: 'herramientas_neumaticas',  type: 'text', question: 'Herramientas NEUMÁTICAS a utilizar:', icon: '💨' },
+        { id: 'herramientas_hidraulicas', fieldName: 'herramientas_hidraulicas', type: 'text', question: 'Herramientas HIDRÁULICAS a utilizar:', icon: '💧' },
+        { id: 'herramientas_mecanicas',   fieldName: 'herramientas_mecanicas',   type: 'text', question: 'Herramientas MECÁNICAS a utilizar (ej: Torre Grúa):', icon: '⚙️' },
+        { id: 'herramientas_otras',       fieldName: 'herramientas_otras',       type: 'text', question: 'OTRAS herramientas o equipos:', icon: '🛠️' },
+      ],
+    },
+    {
+      id: 'epp-ats',
+      name: 'Elementos de Protección Personal (EPP)',
+      enableTimer: false,
+      questions: [
+        {
+          id: 'epp_seleccion',
+          fieldName: 'epp_seleccion',
+          type: 'multiselect',
+          question: 'Selecciona los elementos de protección personal a utilizar:',
+          icon: '🦺',
+          options: [
+            { value: 'casco',                  label: 'Casco' },
+            { value: 'proteccion_auditiva',    label: 'Protección Auditiva' },
+            { value: 'mascarilla_polvo',       label: 'Mascarilla para Polvo' },
+            { value: 'arnes_cuerpo_completo',  label: 'Arnés Cuerpo Completo' },
+            { value: 'botas_seguridad',        label: 'Botas de Seguridad' },
+            { value: 'guantes',                label: 'Guantes' },
+            { value: 'eslinga_y_absorbente',   label: 'Eslinga en Y con Absorbente' },
+            { value: 'lineas_vida',            label: 'Líneas de Vida: Horizontal y Vertical' },
+            { value: 'gafas_seguridad',        label: 'Gafas de Seguridad' },
+            { value: 'overol',                 label: 'Overol' },
+            { value: 'arrestador_caidas',      label: 'Arrestador de Caídas' },
+          ],
+        },
+      ],
+    },
+  ];
+
+  // Secciones de pasos — una sección por cada paso del ATS
+  const seccionesPasos = pasos.map((paso, i) => ({
+    id: `paso-${i + 1}`,
+    name: `Paso ${i + 1}`,
+    enableTimer: false,
+    questions: [
+      {
+        id: `paso_${i + 1}_confirmado`,
+        fieldName: `paso_${i + 1}_confirmado`,
+        type: 'yesno',
+        question: `📋 ${paso.nombre}\n\n🔴 PELIGROS:\n${paso.peligros}\n\n⚡ CONSECUENCIAS:\n${paso.consecuencias}\n\n✅ CONTROLES:\n${paso.controles}\n\n¿Quedó entendido?`,
+        icon: '📋',
+        customOptions: [{ value: 'yes', label: 'Entendido ✓', icon: '👍' }],
+      },
+    ],
+  }));
+
+  return [...seccionesComunes, ...seccionesPasos];
+}
+
 // ─── Configuración de secciones y preguntas ───────────────────────────────────
 
 const QUESTIONS_CONFIG = {
@@ -903,12 +1355,19 @@ const QUESTIONS_CONFIG = {
 
   // Nota: 'planilla-bombeo' NO está aquí → usa el formulario original (parseFormToQuestions retorna null)
 
+  // ATS: generados dinámicamente por buildAtsSections(worldId)
+
 };
 
 // ─── Exports principales ──────────────────────────────────────────────────────
 
 /** Mundos obligatorios — no llevan pregunta de preámbulo */
-const MANDATORY_WORLDS = new Set(['hora-ingreso', 'permiso-trabajo', 'hora-salida']);
+const MANDATORY_WORLDS = new Set([
+  'hora-ingreso', 'permiso-trabajo', 'hora-salida',
+  'ats-operacion-torregrua', 'ats-mando-inalam', 'ats-montaje-torregrua',
+  'ats-montaje-elevador', 'ats-desmontaje-torregrua', 'ats-telescopaje',
+  'ats-mantenimiento', 'ats-elevador',
+]);
 
 /**
  * Sección preámbulo inyectada al inicio de los mundos opcionales.
@@ -1045,6 +1504,12 @@ function buildKitLimpiezaSections() {
 }
 
 export function parseFormToQuestions(worldId) {
+  if (worldId.startsWith('ats-')) {
+    const atsSections = buildAtsSections(worldId);
+    // Los ATS no tienen preamble (ya están en MANDATORY_WORLDS)
+    return atsSections;
+  }
+
   let sections;
   if (worldId === 'checklist') sections = buildChecklistSections();
   else if (worldId === 'herramientas-mantenimiento') sections = buildHerramientasMantenimientoSections();
@@ -1437,6 +1902,105 @@ function buildChecklist(answers) {
 /**
  * Convierte las respuestas gamificadas al payload original del backend.
  */
+function buildAts(answers, tipoAts) {
+  const ctx = getGameContext();
+
+  const has = (arr, val) => Array.isArray(arr) ? arr.includes(val) : false;
+
+  const fisElec = answers['riesgos_fisicos_electricos'] || [];
+  const quimErg = answers['riesgos_quimicos_erg']       || [];
+  const locMec  = answers['riesgos_locativos_mec']      || [];
+  const epp     = answers['epp_seleccion']              || [];
+
+  return {
+    tipo_ats:           tipoAts,
+    fecha_elaboracion:  todayStr(),
+    lugar_obra:         ctx.proyecto || '',
+    valido_desde:       todayStr(),
+    valido_hasta:       todayStr(),
+    contratista:        ctx.cliente  || 'N/A',
+    nombre_operador:    ctx.operador,
+    cargo:              ctx.cargo,
+
+    // Riesgos físicos/eléctricos
+    riesgo_radiacion_solar:        has(fisElec, 'radiacion_solar'),
+    riesgo_ruido:                  has(fisElec, 'ruido'),
+    riesgo_alta_tension:           has(fisElec, 'alta_tension'),
+    riesgo_radiacion_ionizante:    has(fisElec, 'radiacion_ionizante'),
+    riesgo_vibraciones:            has(fisElec, 'vibraciones'),
+    riesgo_electricidad_estatica:  has(fisElec, 'electricidad_estatica'),
+    riesgo_tormentas_electricas:   has(fisElec, 'tormentas_electricas'),
+    riesgo_iluminacion_deficiente: has(fisElec, 'iluminacion_deficiente'),
+    riesgo_baja_tension:           has(fisElec, 'baja_tension'),
+    riesgo_calor:                  has(fisElec, 'calor'),
+    riesgo_frio_humedad:           has(fisElec, 'frio_humedad'),
+
+    // Riesgos químicos/ergonómicos/otros
+    riesgo_aerosol:                 has(quimErg, 'aerosol'),
+    riesgo_polvos:                  has(quimErg, 'polvos'),
+    riesgo_vapores:                 has(quimErg, 'vapores'),
+    riesgo_sobre_esfuerzo:          has(quimErg, 'sobre_esfuerzo'),
+    riesgo_posturas_incomodas:      has(quimErg, 'posturas_incomodas'),
+    riesgo_posturas_estaticas:      has(quimErg, 'posturas_estaticas'),
+    riesgo_movimientos_repetitivos: has(quimErg, 'movimientos_repetitivos'),
+    riesgo_psicosocial:             has(quimErg, 'psicosocial'),
+    riesgo_naturales:               has(quimErg, 'naturales'),
+
+    // Riesgos locativos/mecánicos/biológicos
+    riesgo_caida_mismo_nivel:      has(locMec, 'caida_mismo_nivel'),
+    riesgo_caida_distinto_nivel:   has(locMec, 'caida_distinto_nivel'),
+    riesgo_caida_objetos:          has(locMec, 'caida_objetos'),
+    riesgo_cambio_temperatura:     has(locMec, 'cambio_temperatura'),
+    riesgo_desprendimiento:        has(locMec, 'desprendimiento'),
+    riesgo_hundimientos:           has(locMec, 'hundimientos'),
+    riesgo_atropellamiento:        has(locMec, 'atropellamiento'),
+    riesgo_golpes_machacones:      has(locMec, 'golpes_machacones'),
+    riesgo_atrapamientos:          has(locMec, 'atrapamientos'),
+    riesgo_mecanismos_movimiento:  has(locMec, 'mecanismos_movimiento'),
+    riesgo_proyeccion_particulas:  has(locMec, 'proyeccion_particulas'),
+    riesgo_choques:                has(locMec, 'choques'),
+    riesgo_espacios_reducidos:     has(locMec, 'espacios_reducidos'),
+    riesgo_cortes_herramienta:     has(locMec, 'cortes_herramienta'),
+    riesgo_caida_objetos_mec:      has(locMec, 'caida_objetos_mec'),
+    riesgo_bacterias_virus:        has(locMec, 'bacterias_virus'),
+    riesgo_picadura_insectos:      has(locMec, 'picadura_insectos'),
+    riesgo_ofidio:                 has(locMec, 'ofidio'),
+    riesgo_mordedura_caninos:      has(locMec, 'mordedura_caninos'),
+
+    // Herramientas
+    herramientas_manuales:    answers['herramientas_manuales']    || '',
+    herramientas_electricas:  answers['herramientas_electricas']  || '',
+    herramientas_neumaticas:  answers['herramientas_neumaticas']  || '',
+    herramientas_hidraulicas: answers['herramientas_hidraulicas'] || '',
+    herramientas_mecanicas:   answers['herramientas_mecanicas']   || '',
+    herramientas_otras:       answers['herramientas_otras']       || '',
+
+    // EPP
+    epp_casco:                 has(epp, 'casco'),
+    epp_proteccion_auditiva:   has(epp, 'proteccion_auditiva'),
+    epp_mascarilla_polvo:      has(epp, 'mascarilla_polvo'),
+    epp_arnes_cuerpo_completo: has(epp, 'arnes_cuerpo_completo'),
+    epp_botas_seguridad:       has(epp, 'botas_seguridad'),
+    epp_guantes:               has(epp, 'guantes'),
+    epp_eslinga_y_absorbente:  has(epp, 'eslinga_y_absorbente'),
+    epp_lineas_vida:           has(epp, 'lineas_vida'),
+    epp_gafas_seguridad:       has(epp, 'gafas_seguridad'),
+    epp_overol:                has(epp, 'overol'),
+    epp_arrestador_caidas:     has(epp, 'arrestador_caidas'),
+
+    // Pasos confirmados (hasta 9)
+    paso_1_confirmado: answers['paso_1_confirmado'] === 'yes',
+    paso_2_confirmado: answers['paso_2_confirmado'] === 'yes',
+    paso_3_confirmado: answers['paso_3_confirmado'] === 'yes',
+    paso_4_confirmado: answers['paso_4_confirmado'] === 'yes',
+    paso_5_confirmado: answers['paso_5_confirmado'] === 'yes',
+    paso_6_confirmado: answers['paso_6_confirmado'] === 'yes',
+    paso_7_confirmado: answers['paso_7_confirmado'] === 'yes',
+    paso_8_confirmado: answers['paso_8_confirmado'] === 'yes',
+    paso_9_confirmado: answers['paso_9_confirmado'] === 'yes',
+  };
+}
+
 export function convertAnswersToFormData(worldId, answers) {
   if (worldId === 'hora-ingreso')             return buildHoraIngreso();
   if (worldId === 'hora-salida')              return buildHoraSalida();
@@ -1503,6 +2067,14 @@ export function convertAnswersToFormData(worldId, answers) {
     });
     return result;
   }
+  if (worldId === 'ats-operacion-torregrua')  return buildAts(answers, 'operacion-torregrua');
+  if (worldId === 'ats-mando-inalam')         return buildAts(answers, 'mando-inalam');
+  if (worldId === 'ats-montaje-torregrua')    return buildAts(answers, 'montaje-torregrua');
+  if (worldId === 'ats-montaje-elevador')     return buildAts(answers, 'montaje-elevador');
+  if (worldId === 'ats-desmontaje-torregrua') return buildAts(answers, 'desmontaje-torregrua');
+  if (worldId === 'ats-telescopaje')          return buildAts(answers, 'telescopaje');
+  if (worldId === 'ats-mantenimiento')        return buildAts(answers, 'mantenimiento');
+  if (worldId === 'ats-elevador')             return buildAts(answers, 'elevador');
   return answers;
 }
 
@@ -1554,6 +2126,14 @@ const ENDPOINTS = {
   'checklist':                 '/bomberman/checklist',
   'herramientas-mantenimiento':'/bomberman/herramientas_mantenimiento',
   'kit-limpieza':              '/bomberman/kit_limpieza',
+  'ats-operacion-torregrua':   '/gruaman/ats',
+  'ats-mando-inalam':          '/gruaman/ats',
+  'ats-montaje-torregrua':     '/gruaman/ats',
+  'ats-montaje-elevador':      '/gruaman/ats',
+  'ats-desmontaje-torregrua':  '/gruaman/ats',
+  'ats-telescopaje':           '/gruaman/ats',
+  'ats-mantenimiento':         '/gruaman/ats',
+  'ats-elevador':              '/gruaman/ats',
 };
 
 /**

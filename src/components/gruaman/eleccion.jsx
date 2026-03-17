@@ -47,8 +47,20 @@ function getTodayDateStr() {
   return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 }
 
+const ATS_LIST = [
+  { worldId: 'ats-operacion-torregrua',  label: 'Operación de Torre Grúa',                    icon: '🏗️' },
+  { worldId: 'ats-mando-inalam',         label: 'Torre Grúa con Mando Inalámbrico desde Piso', icon: '📡' },
+  { worldId: 'ats-montaje-torregrua',    label: 'Montaje de Torre Grúas',                      icon: '🔧' },
+  { worldId: 'ats-montaje-elevador',     label: 'Montaje Elevador de Carga',                   icon: '🛗' },
+  { worldId: 'ats-desmontaje-torregrua', label: 'Desmontaje de Torre Grúa',                    icon: '🔩' },
+  { worldId: 'ats-telescopaje',          label: 'Telescopaje',                                 icon: '🔭' },
+  { worldId: 'ats-mantenimiento',        label: 'Mantenimiento',                               icon: '⚙️' },
+  { worldId: 'ats-elevador',             label: 'Elevador de Carga',                           icon: '⬆️' },
+];
+
 function Bienvenida() {
   const navigate = useNavigate();
+  const [atsOpen, setAtsOpen] = useState(false);
 
   // ── Detección de completado de misión del juego ──
   // Cuando un formulario se guarda exitosamente navega aquí.
@@ -226,6 +238,40 @@ function Bienvenida() {
           >
             Inspección Izaje
           </button>
+          {/* ATS expandable */}
+          <button
+            className="button"
+            style={{
+              maxWidth: 320,
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              color: '#1a1a1a',
+              fontWeight: 700,
+              border: '2px solid #fbbf24',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+            }}
+            onClick={() => setAtsOpen(o => !o)}
+          >
+            <span>ATS — Análisis de Trabajo Seguro</span>
+            <span style={{ fontSize: 12 }}>{atsOpen ? '▲' : '▼'}</span>
+          </button>
+          {atsOpen && (
+            <div style={{ width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4, paddingLeft: 12, borderLeft: '3px solid #f59e0b' }}>
+              {ATS_LIST.map(ats => (
+                <button
+                  key={ats.worldId}
+                  className="button"
+                  style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.4)', color: '#92400e', fontWeight: 600, fontSize: 13, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8 }}
+                  onClick={() => navigate(`/game/level/${ats.worldId}`)}
+                >
+                  <span>{ats.icon}</span>
+                  <span>{ats.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
           {/* Hora de salida - último */}
           <button
             className={getButtonClass(usados.hora_salida)}

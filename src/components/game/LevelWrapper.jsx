@@ -41,6 +41,9 @@ const FORM_MAP = {
   'inspeccion-epcc':           lazy(() => import('../gruaman/inspeccion_epcc')),
   'inspeccion-izaje':          lazy(() => import('../gruaman/inspeccion_izaje')),
   'chequeo-elevador':          lazy(() => import('../gruaman/chequeo_elevador')),
+
+  // ─── Gruaman ATS (selector hub — los sub-mundos ats-* son gamificados puros) ───
+  'ats':  lazy(() => import('../gruaman/AtsSelector')),
 };
 
 /**
@@ -98,11 +101,10 @@ export default function LevelWrapper() {
   // worldId desconocido → volver al mapa (en efecto para evitar side-effect en render)
   const FormComponent = FORM_MAP[worldId];
   useEffect(() => {
-    if (!FormComponent) {
+    if (!FormComponent && !isGamified) {
       navigate('/game/world-map', { replace: true });
     }
-  }, [FormComponent, navigate]);
-  if (!FormComponent) return null;
+  }, [FormComponent, isGamified, navigate]);
 
   const shortName  = world?.name.replace(/^Misión:\s*/i, '') || worldId;
   const orderLabel = world?.order ? `MISIÓN ${world.order}` : 'MISIÓN';
@@ -150,7 +152,8 @@ export default function LevelWrapper() {
     setSubmitError(null);
     try {
       await submitFormData(worldId, merged);
-      markWorldComplete(worldId);
+      // Los sub-mundos ATS (ats-operacion-torregrua, etc.) marcan el mundo padre 'ats'
+      markWorldComplete(worldId.startsWith('ats-') ? 'ats' : worldId);
       localStorage.removeItem('game_mode');
       sessionStorage.removeItem('lw_answers_' + worldId);
       setMissionDone(true);
@@ -171,6 +174,9 @@ export default function LevelWrapper() {
   const timerConfig    = currentSection?.enableTimer
     ? { duration: currentSection.timerDuration ?? getTimerConfig(currentSection.id)?.duration ?? 90 }
     : null;
+
+  // ─── Guard: worldId desconocido (no gamificado y sin FormComponent) ─────────
+  if (!FormComponent && !isGamified) return null;
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (

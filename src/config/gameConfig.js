@@ -310,7 +310,24 @@ export const gameWorlds = {
       sections: 2
     },
 
-    // 8. HORA DE SALIDA (Compartido)
+    // 8. ATS — ANÁLISIS DE TRABAJO SEGURO (Exclusivo Gruaman)
+    {
+      id: 'ats',
+      name: 'Misión: ATS',
+      description: 'Análisis de Trabajo Seguro',
+      icon: '📋',
+      emoji: '🦺',
+      shared: false,
+      component: 'AtsSelector',
+      route: '/ats-selector',
+      color: '#FF5722',
+      bgColor: '#FBE9E7',
+      daily: false,
+      order: 8,
+      sections: 1
+    },
+
+    // 9. HORA DE SALIDA (Compartido)
     {
       id: 'hora-salida',
       name: 'Misión: Registro de Salida',
@@ -323,7 +340,7 @@ export const gameWorlds = {
       color: '#607D8B',
       bgColor: '#ECEFF1',
       daily: true,
-      order: 8,
+      order: 9,
       sections: 1
     }
   ]

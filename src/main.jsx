@@ -49,6 +49,15 @@ import PQR from './components/sst/pqr';
 import Hallazgos from './components/sst/hallazgos';
 import GameFlow     from './components/game/GameFlow';
 import LevelWrapper from './components/game/LevelWrapper';
+import AtsSelector           from './components/gruaman/AtsSelector';
+import AtsOperacionTorregrua from './components/gruaman/ats/AtsOperacionTorregrua';
+import AtsMandoInalam        from './components/gruaman/ats/AtsMandoInalam';
+import AtsMontajeTorregrua   from './components/gruaman/ats/AtsMontajeTorregrua';
+import AtsMontajeElevador    from './components/gruaman/ats/AtsMontajeElevador';
+import AtsDesmontajeTorregrua from './components/gruaman/ats/AtsDesmontajeTorregrua';
+import AtsTelescopaje        from './components/gruaman/ats/AtsTelescopaje';
+import AtsMantenimiento      from './components/gruaman/ats/AtsMantenimiento';
+import AtsElevador           from './components/gruaman/ats/AtsElevador';
 
 // Función para obtener usuario y obra de localStorage
 function getUsuarioObra() {
@@ -932,6 +941,17 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/game/story-intro"   element={<GameFlow key="story"  step="story"  />} />
             <Route path="/game/world-map"     element={<GameFlow key="map"    step="map"    />} />
             <Route path="/game/level/:worldId" element={<LevelWrapper />} />
+
+            {/* ─── Rutas ATS ─── */}
+            <Route path="/ats-selector"                    element={<AtsSelector />} />
+            <Route path="/ats/operacion-torregrua"         element={<AtsOperacionTorregrua />} />
+            <Route path="/ats/mando-inalam"                element={<AtsMandoInalam />} />
+            <Route path="/ats/montaje-torregrua"           element={<AtsMontajeTorregrua />} />
+            <Route path="/ats/montaje-elevador"            element={<AtsMontajeElevador />} />
+            <Route path="/ats/desmontaje-torregrua"        element={<AtsDesmontajeTorregrua />} />
+            <Route path="/ats/telescopaje"                 element={<AtsTelescopaje />} />
+            <Route path="/ats/mantenimiento"               element={<AtsMantenimiento />} />
+            <Route path="/ats/elevador"                    element={<AtsElevador />} />
 
             <Route path="/" element={<App />} />
             <Route path="/cedula" element={<CedulaIngreso />} />
