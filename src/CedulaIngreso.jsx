@@ -24,6 +24,15 @@ function useIsMobile() {
   return isMobile;
 }
 
+function empresaFromId(id) {
+  const n = Number(id);
+  if (n === 1) return "GyE";
+  if (n === 2) return "AIC";
+  if (n === 4) return "SST";
+  if (n === 5) return "Lideres";
+  return "";
+}
+
 function CedulaIngreso({ onUsuarioEncontrado }) {
   const handleUsuarioAutenticado = (usuario, empresa_id) => {
     localStorage.setItem("nombre_trabajador", usuario.nombre || "");
@@ -90,7 +99,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           const nombre = usuario.nombre || usuario.nombres || usuario.nombre_trabajador || "";
           const numeroId = usuario.numero_identificacion || usuario.cedula || usuario.id || cedula;
           const cargo = usuario.cargo || usuario.cargo_trabajador || usuario.puesto || "";
-          const empresaName = usuario.empresa || (usuario.empresa_id === 1 ? "GyE" : usuario.empresa_id === 2 ? "AIC" : usuario.empresa_id === 4 ? "SST" : usuario.empresa_id === 5 ? "Lideres" : "") || "";
+          const empresaName = empresaFromId(usuario.empresa_id) || usuario.empresa || "";
           const obra = usuario.obra || usuario.nombre_proyecto || usuario.nombre_obra || "";
 
           localStorage.setItem("nombre_trabajador", nombre);
@@ -209,7 +218,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         // Mantener callback existente (SST → redirige directo, otros → BienvenidaSeleccion)
         handleUsuarioAutenticado({
           nombre: usuario.nombre,
-          empresa: usuario.empresa_id === 1 ? "GyE" : usuario.empresa_id === 2 ? "AIC" : usuario.empresa_id === 4 ? "SST" : usuario.empresa_id === 5 ? "Lideres" : "",
+          empresa: empresaFromId(usuario.empresa_id),
           numero_identificacion: usuario.numero_identificacion
         }, usuario.empresa_id);
       } else {
@@ -272,10 +281,10 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
       // Continuar con el callback original (SST → redirige directo)
       handleUsuarioAutenticado({
         nombre: pendingUsuario.nombre,
-        empresa: pendingUsuario.empresa_id === 1 ? "GyE" : pendingUsuario.empresa_id === 2 ? "AIC" : pendingUsuario.empresa_id === 5 ? "Lideres" : "",
+        empresa: empresaFromId(pendingUsuario.empresa_id),
         numero_identificacion: pendingUsuario.numero_identificacion
       }, pendingUsuario.empresa_id);
-      
+
       setPendingUsuario(null);
     } catch (e) {
       console.error('[CedulaIngreso] Error registrando nueva llave:', e);
@@ -317,7 +326,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           setPendingUsuario(null);
           handleUsuarioAutenticado({
             nombre: pendingUsuario.nombre,
-            empresa: pendingUsuario.empresa_id === 1 ? "GyE" : pendingUsuario.empresa_id === 2 ? "AIC" : pendingUsuario.empresa_id === 5 ? "Lideres" : "",
+            empresa: empresaFromId(pendingUsuario.empresa_id),
             numero_identificacion: numeroId
           }, pendingUsuario.empresa_id);
         } else {
@@ -337,7 +346,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           setPendingUsuario(null);
           handleUsuarioAutenticado({
             nombre: pendingUsuario.nombre,
-            empresa: pendingUsuario.empresa_id === 1 ? "GyE" : pendingUsuario.empresa_id === 2 ? "AIC" : pendingUsuario.empresa_id === 5 ? "Lideres" : "",
+            empresa: empresaFromId(pendingUsuario.empresa_id),
             numero_identificacion: numeroId
           }, pendingUsuario.empresa_id);
         } else {
