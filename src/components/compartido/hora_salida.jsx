@@ -5,6 +5,9 @@ import "../../styles/permiso_trabajo.css";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
+/**
+ * @returns {{ nombre: string, cedula: string, cargo: string, empresa: string, obra: string }}
+ */
 function getDatosTrabajador() {
   return {
     nombre: localStorage.getItem("nombre_trabajador") || "",
@@ -15,6 +18,7 @@ function getDatosTrabajador() {
   };
 }
 
+/** @returns {string} HH:MM:SS string in America/Bogota timezone */
 function getHoraColombia() {
   return new Date().toLocaleTimeString("es-CO", {
     hour: "2-digit",
@@ -25,15 +29,17 @@ function getHoraColombia() {
   });
 }
 
+/**
+ * HoraSalida — registra la hora de salida del trabajador y envía mediante POST a /horas_jornada/salida.
+ * El nombre del cliente se obtiene de /obras pero no es obligatorio para guardar exitosamente.
+ */
 export default function HoraSalida() {
   const navigate = useNavigate();
   const [datos] = useState(getDatosTrabajador());
   const [horaSalida, setHoraSalida] = useState("");
   const [guardado, setGuardado] = useState(false);
   const [error, setError] = useState("");
-  // Genera la fecha actual en la zona horaria Colombia (America/Bogota) como "YYYY-MM-DD".
-  // Usar toLocaleDateString con timeZone evita que dispositivos configurados en UTC
-  // devuelvan el día siguiente cuando son las 7pm en Colombia (= 00:00 UTC siguiente día).
+  // toLocaleDateString("en-CA") with timeZone avoids UTC+0 devices returning the next day
   const makeFechaColombia = () => {
     return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
   };
@@ -46,7 +52,6 @@ export default function HoraSalida() {
     cargo: datos.cargo,
   });
 
-  // Cargar datos del cliente/constructora
   useEffect(() => {
     const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
@@ -87,9 +92,7 @@ export default function HoraSalida() {
   const handleGuardar = async () => {
     setError("");
 
-    // El backend /salida solo requiere nombre_operador, fecha_servicio y hora_salida.
-    // No bloquear por cliente ausente: puede no cargarse si la red falla, pero la
-    // salida igual debe poder registrarse con los datos del operador y la fecha.
+    // cliente is not required by /salida — do not block if /obras fetch failed
     if (
       !generales.proyecto ||
       !generales.fecha ||
@@ -100,7 +103,6 @@ export default function HoraSalida() {
       return;
     }
 
-    // El endpoint /salida solo usa nombre_operador, fecha_servicio y hora_salida.
     const payload = {
       nombre_operador: generales.operador,
       fecha_servicio: generales.fecha,
@@ -124,8 +126,6 @@ export default function HoraSalida() {
         setTimeout(() => navigate(-1), 500);
       } else {
         setError((data && data.error) || `Error al guardar. Código: ${resp.status}`);
-        console.error("Payload enviado:", payload);
-        console.error("Respuesta backend:", data);
       }
     } catch (e) {
       setError("Error de red al guardar");
@@ -144,7 +144,6 @@ export default function HoraSalida() {
           <div><b>Cargo:</b> {generales.cargo}</div>
         </div>
       </div>
-      {/* Registro de hora de salida */}
       <div className="card-section" style={{ marginBottom: 24 }}>
         <h2 className="card-title">Registro de hora de salida</h2>
         <div style={{ marginBottom: 16 }}>

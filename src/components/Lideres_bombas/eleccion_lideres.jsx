@@ -7,10 +7,11 @@ import HoraIngreso from "../compartido/horada_ingreso";
 import HoraSalida from "../compartido/hora_salida";
 import { markWorldComplete } from '../../db/gameProgress';
 
-// Usa variable de entorno para la base de la API (por si se usa en este archivo en el futuro)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
-// Utiliza localStorage para persistir el estado de los botones usados
+/**
+ * @param {string} usuario
+ * @returns {Object} Map of worldId → boolean
+ */
 function getUsadosFromStorage(usuario) {
   try {
     const data = localStorage.getItem(`lideres_usados_${usuario}`);
@@ -30,19 +31,21 @@ function setUsadosToStorage(usados, usuario) {
 
 function limpiarUsados(usuario) {
   localStorage.removeItem(`lideres_usados_${usuario}`);
-  // eliminar la marca de fecha para forzar recreación al guardar de nuevo
   try { localStorage.removeItem(`lideres_usados_date_${usuario}`); } catch {}
 }
 
-// Helper para obtener la fecha actual en formato YYYY-MM-DD (zona horaria Colombia)
+/** @returns {string} YYYY-MM-DD date in America/Bogota timezone */
 function getTodayDateStr() {
   return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 }
 
+/**
+ * BienvenidaLideres — selector de misiones para el rol Líderes (supervisores).
+ * Rastrea el uso diario de misiones por usuario y se reinicia a medianoche.
+ */
 function BienvenidaLideres() {
   const navigate = useNavigate();
 
-  // ── Detección de completado de misión del juego ──
   useEffect(() => {
     const worldId = localStorage.getItem('game_mode');
     if (worldId) {
@@ -55,12 +58,10 @@ function BienvenidaLideres() {
 
   const nombre = localStorage.getItem("nombre_trabajador") || "";
 
-  // El progreso es por usuario
   const usuario = nombre || "anonimo";
   const [usados, setUsados] = useState(() => getUsadosFromStorage(usuario));
   const [usuarioActual, setUsuarioActual] = useState(usuario);
 
-  // Reinicia el progreso cada vez que se detecta un nuevo ingreso (usuario o empresa cambia)
   useEffect(() => {
     const nuevoUsuario = localStorage.getItem("nombre_trabajador") || "anonimo";
     const nuevaEmpresa = localStorage.getItem("empresa") || "";
@@ -74,24 +75,20 @@ function BienvenidaLideres() {
   }, [localStorage.getItem("nombre_trabajador"), localStorage.getItem("empresa")]);
 
   useEffect(() => {
-    // Guardar usados y anotar la fecha para saber si tocar reiniciar al día siguiente
     setUsadosToStorage(usados, usuarioActual);
     try { localStorage.setItem(`lideres_usados_date_${usuarioActual}`, getTodayDateStr()); } catch {}
   }, [usados, usuarioActual]);
 
-  // Efecto: reinicio diario a medianoche (y comprobación inicial)
   useEffect(() => {
     const dateKey = `lideres_usados_date_${usuarioActual}`;
     const today = getTodayDateStr();
     const storedDate = localStorage.getItem(dateKey);
     if (storedDate !== today) {
-      // si la fecha guardada no es hoy, reiniciar usados ahora
       limpiarUsados(usuarioActual);
       setUsados(getUsadosFromStorage(usuarioActual));
       try { localStorage.setItem(dateKey, today); } catch {}
     }
 
-    // programar reinicio justo a la próxima medianoche
     const now = new Date();
     const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
     const msUntilMidnight = nextMidnight.getTime() - now.getTime();
@@ -117,7 +114,6 @@ function BienvenidaLideres() {
   const getButtonClass = (usado) =>
     usado ? "button button-green" : "button";
 
-  // Barra de progreso
   const total = 4; // 4 formularios: hora_ingreso, checklist, inventariosobra, hora_salida
   const completados = Object.values(usados).filter(Boolean).length;
   const porcentaje = Math.round((completados / total) * 100);

@@ -3,10 +3,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
-// Usa variable de entorno para la base de la API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-// Mapeo de item DB → rol: "operario" | "auxiliar" | "ambos"
+/** Mapea cada campo de BD al rol del trabajador que debe completarlo: "operario" | "auxiliar" | "ambos" */
 const ITEM_ROLES = {
   // Card RADIO/BOTIQUÍN/KIT/ARNÉS/ESLINGA - ambos
   radio_marca_serial_estado: "ambos", radio_estado: "ambos", verificacion_botiquin: "ambos",
@@ -87,7 +86,7 @@ const ITEM_FIELDS = [
   "numero_piso_fundiendo", "cantidad_puntos_anclaje", "ultima_fecha_medicion_espesores", "vertical_tallo_recta"
 ];
 
-// Campos que se guardan en datos - tipo para input
+/** Campos almacenados en el estado datos en lugar de estadoItems */
 const CAMPOS_EN_DATOS = {
   radio_marca_serial_estado: "text", arnes_marca_serial_fecha_estado: "text", eslinga_marca_serial_fecha_estado: "text",
   combustible_pimpinas: "number", ultima_fecha_lavado_tanque: "date", punto_engrase_tapado: "text",
@@ -97,7 +96,7 @@ const CAMPOS_EN_DATOS = {
   ultima_fecha_medicion_espesores: "date"
 };
 
-// Especificación de campos con opciones custom (no BUENO/REGULAR/MALO)
+/** Campos que usan conjuntos de opciones personalizados en lugar del grupo de radio BUENO/REGULAR/MALO por defecto */
 const FIELD_OPTIONS = {
   radio_estado: ["BUENO", "MALO"], verificacion_botiquin: ["BUENO", "MALO"], kit_antiderrames: ["BUENO", "MALO"],
   aceite_hidrolavadora: ["BUENO", "EMULSIONADO"], sensor_motor_aspas: ["SI", "NO"],
@@ -200,7 +199,7 @@ const FIELD_TO_TEXT = {
   vertical_tallo_recta: "Revise que la vertical o tallo se encuentre recta."
 };
 
-// Estructura por secciones (usa arrays explícitos para evitar desalineación)
+/** Secciones del checklist con arrays de campos explícitos para garantizar alineación con las columnas de BD */
 const SECCIONES = [
   { titulo: "RADIO, BOTIQUÍN, KIT ANTIDERRAMES, ARNÉS Y ESLINGA", fields: ITEM_FIELDS.slice(0, 6) },
   { titulo: "CHASIS", fields: ITEM_FIELDS.slice(6, 25) },
@@ -257,6 +256,11 @@ function campoVisibleParaCargo(field, cargo) {
   return rol === cargo;
 }
 
+/**
+ * Checklist — formulario de inspección pre-operacional para bomba de concreto estacionaria (CIFA / TURBOSOL).
+ * Filtra los campos visibles según el cargo del trabajador (operario vs. auxiliar) leído desde localStorage.
+ * Persiste las respuestas semanalmente y envía mediante POST a /bomberman/checklist al guardar.
+ */
 function Checklist() {
   const navigate = useNavigate();
   const [camposFaltantes, setCamposFaltantes] = useState([]);
@@ -519,8 +523,7 @@ function Checklist() {
       navigate(-1);
     } catch (err) {
       const msg = err?.response?.data?.message ?? err?.response?.data ?? err?.message ?? err;
-      console.error("Error al enviar el checklist:", msg);
-      alert("Error al guardar el checklist. Verifique la consola del navegador para más detalles.");
+      alert(`Error al guardar el checklist: ${msg}`);
     } finally {
       setEnviando(false);
     }

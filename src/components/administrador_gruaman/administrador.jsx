@@ -4,16 +4,18 @@ import PermisoTrabajoAdmin from "./permiso_trabajo_admin";
 import ChequeoAlturasAdmin from "./chequeo_alturas_admin";
 import ChequeoTorreGruasAdmin from "./chequeo_torregruas_admin";
 import ChequeoElevadorAdmin from "./chequeo_elevador_admin";
-import AdminsObras from "./admins_obras"; // importar el componente
+import AdminsObras from "./admins_obras";
 import HorasExtraGruamanAdmin from "./horas_extra_gruaman";
 import { useNavigate } from "react-router-dom";
 
-// Usa variable de entorno para la base de la API (por si se usa en este archivo en el futuro)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-// Panel administrador visual tipo menú, similar a eleccion.jsx pero sin barra de progreso ni lógica de botones
+/**
+ * AdministradorGruaman — panel de administración para Gruaman.
+ * Punto de entrada para revisar registros diarios y gestionar obras/horas extras.
+ * Los subpaneles (permiso_trabajo, chequeo_alturas, etc.) se alternan en la misma vista.
+ */
 function AdministradorGruaman() {
-  // Estado para registros, carga y búsqueda
   const [registros, set_registros] = useState([]);
   const [loading, set_loading] = useState(true);
   const [showPermisoTrabajoAdmin, setShowPermisoTrabajoAdmin] = useState(false);
@@ -24,7 +26,6 @@ function AdministradorGruaman() {
   const navigate = useNavigate();
 
 
-  // Renderizado del panel administrador
   return (
     <div className="form-container">
       <div className="card-section">

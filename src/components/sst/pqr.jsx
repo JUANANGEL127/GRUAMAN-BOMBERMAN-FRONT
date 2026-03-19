@@ -2,16 +2,21 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../../App.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-// Listas desplegables (se llenarán en el futuro)
 const DIRECTORES = [];
 const AREAS = [];
 
+/** @returns {string} Fecha en formato YYYY-MM-DD en la zona horaria America/Bogota */
 function getTodayStr() {
   return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 }
 
+/**
+ * PQR — formulario de peticiones, quejas y reclamos para el rol SST.
+ * Envía mediante POST a /sst/pqr al guardar. DIRECTORES y AREAS son marcadores de posición
+ * pendientes de datos del backend.
+ */
 function PQR() {
   const [obras, setObras] = useState([]);
   const [form, setForm] = useState({
@@ -27,7 +32,6 @@ function PQR() {
   const [exito, setExito] = useState(false);
   const [error, setError] = useState("");
 
-  // Cargar obras activas
   useEffect(() => {
     axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
@@ -46,7 +50,6 @@ function PQR() {
     e.preventDefault();
     setError("");
 
-    // Validación básica
     const requeridos = ["nombre_cliente", "nombre_proyecto", "nombre_director", "area", "pqr"];
     const faltantes = requeridos.filter(k => !form[k]?.trim());
     if (faltantes.length) {

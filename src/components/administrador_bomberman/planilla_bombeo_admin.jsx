@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css"
 
-// Usa variable de entorno para la base de la API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 function toYMD(date) {
   if (!date) return '';
@@ -106,7 +105,6 @@ function PlanillaBombeoAdmin() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -117,7 +115,6 @@ function PlanillaBombeoAdmin() {
       try {
         const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
         if (Array.isArray(res.data.datos)) {
-          // Filtrar empresa_id 2 o 5
           setNombresOperarios(res.data.datos.filter(d => {
             const id = Number(d.empresa_id);
             return id === 2 || id === 5;

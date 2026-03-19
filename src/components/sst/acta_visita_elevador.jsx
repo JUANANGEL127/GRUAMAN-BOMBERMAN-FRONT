@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-// Datos generales del encabezado
+/** Campos de encabezado generales del formulario */
 const generales = [
   { label: "Constructora", name: "constructora" },
   { label: "Nombre del Responsable SST en obra", name: "responsable_sst" },
@@ -9,7 +9,7 @@ const generales = [
   { label: "Responsable de la visita por parte de G&E", name: "responsable_visita" },
 ];
 
-// Condiciones agrupadas por sección
+/** Condiciones de inspección agrupadas por sección */
 const condiciones = [
   { grupo: "RIESGO LOCATIVO", items: [
     "El equipo cuenta con área de trabajo delimitada, demarcación y señalización del área.",
@@ -55,9 +55,12 @@ const condiciones = [
 
 const opciones = ["S", "R", "NA"];
 
-// Componente principal Acta de Visita Elevador
+/**
+ * ActaVisitaElevador — formulario de acta de visita SST para inspecciones de elevador de carga.
+ * Registra calificaciones de condición de seguridad (S/R/NA) por sección, además de firmas.
+ * Envía mediante POST a /sst/acta_visita_elevador al guardar.
+ */
 function ActaVisitaElevador() {
-  // Estado para datos generales, estado de cada ítem y observaciones
   const [datos, setDatos] = useState(
     generales.reduce((acc, campo) => {
       acc[campo.name] = "";
@@ -77,15 +80,12 @@ function ActaVisitaElevador() {
     }, {})
   );
 
-  // Estado para firmas y ejecución
   const [firmaRecibo, setFirmaRecibo] = useState({ firma: "", nombre: "", cargo: "" });
   const [ejecutadoPor, setEjecutadoPor] = useState({ tecnico: "", coordinador: "" });
 
-  // Estado para envío y mensaje de resultado
   const [enviando, setEnviando] = useState(false);
   const [mensajeEnvio, setMensajeEnvio] = useState("");
 
-  // Guardar datos en backend
   const handleGuardar = async () => {
     setEnviando(true);
     setMensajeEnvio("");
@@ -113,7 +113,6 @@ function ActaVisitaElevador() {
     setEnviando(false);
   };
 
-  // Renderizado del formulario
   return (
     <div className="checklist-container">
       <h2 style={{ color: "#1976d2", marginBottom: 16 }}>ACTA DE VISITA DE SEGURIDAD Y SALUD EN EL TRABAJO (ELEVADOR DE CARGA)</h2>

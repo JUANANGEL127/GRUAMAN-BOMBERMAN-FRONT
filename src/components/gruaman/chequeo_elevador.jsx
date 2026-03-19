@@ -3,16 +3,13 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
-// Usa variable de entorno para la base de la API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 // Mapeo de las preguntas (items) a los nombres de las columnas de la DB
 const MAPEO_DB = {
-  // CONDICIONES DE SEGURIDAD
   "Cuenta con el Equipo de Protección Personal (guantes, casco con barbuquejo, tapaoídos, gafas con filtro UV, calzado de seguridad; la ropa de dotación).": "epp_completo_y_en_buen_estado",
   "Cuenta con el Equipo de Protección Contra Caídas (arnés de cuerpo completo, arrestador de caídas, mosquetones, eslinga en 'Y' con absorbedor, eslinga de posicionamiento, línea de vida, mecanismos de anclaje).": "epcc_completo_y_en_buen_estado",
 
-  // EQUIPO DE ELEVACIÓN
   "Se ha verificado la estructura del equipo y se encuentra en buen estado?": "estructura_equipo_buen_estado",
   "El equipo presenta fugas de aceites, hidráulico o de alguna otra sustancia?": "equipo_sin_fugas_fluido",
   "El tablero de mando del equipo está en buenas condiciones?": "tablero_mando_buen_estado",
@@ -31,13 +28,11 @@ const MAPEO_DB = {
   "El equipo cuenta con sistema de velocidad calibrado, dispositivo de reducción y piñones en buen estado y la cremallera de subida lubricada?": "sistema_velocidad_calibrado_y_engranes_buen_estado",
   "Los limitantes (superior e inferior) se encuentran calibrados y se garantiza el correcto funcionamiento?": "limitantes_superior_inferior_calibrados",
 
-  // DISPOSITIVOS DE SEGURIDAD
   "El área del equipo se encuentra debidamente señalizada y demarcada?": "area_equipo_senalizada_y_demarcada",
   "El equipo de elevación cuenta con la parada de emergencia?": "equipo_con_parada_emergencia",
   "El equipo tiene la placa de identificación donde se muestra la carga máxima?": "placa_identificacion_con_carga_maxima",
   "Se garantiza el correcto funcionamiento del sistema de sobrecarga?": "sistema_sobrecarga_funcional",
 
-  // PROCESO DE DESINFECCIÓN DE CABINA
   "La cabina ha sido previamente desinfectada antes de iniciar labores de operación de torre grúa (limpieza para la prevención del virus COVID-19)?": "cabina_desinfectada_previamente",
 };
 
@@ -52,7 +47,6 @@ function isSunday() {
   return new Date().getDay() === 0;
 }
 
-// Secciones a nivel de módulo para evitar recreación en cada render
 const secciones = [
   {
     titulo: "CONDICIONES DE SEGURIDAD",
@@ -100,27 +94,29 @@ const secciones = [
   },
 ];
 
+/**
+ * ChequeoElevador — lista de verificación pre-operacional del elevador de carga para Gruaman.
+ * Persiste las respuestas semanalmente en localStorage; las limpia los domingos.
+ * Envía mediante POST a /gruaman/chequeo_elevador al guardar.
+ */
 function ChequeoElevador() {
   const navigate = useNavigate();
 
-  // 🔑 DATOS GENERALES: Renombrados
   const [generales, setGenerales] = useState({
-    nombre_cliente: "", // Antes: cliente_constructora
-    nombre_proyecto: "", // Antes: proyecto_constructora
+    nombre_cliente: "",
+    nombre_proyecto: "",
     fecha_servicio: "",
     nombre_operador: "",
-    cargo: "", // Antes se mapeaba a cargo_operador, ahora es cargo
-    observaciones: "", // Se mapea a observaciones_generales
+    cargo: "",
+    observaciones: "",
   });
 
-  // Estados
-  const [respuestas, setRespuestas] = useState({});
+    const [respuestas, setRespuestas] = useState({});
   const [errores, setErrores] = useState([]);
   const [mostrarFlecha, setMostrarFlecha] = useState(false);
   const submitRef = useRef(null);
   const itemRefs = useRef({});
 
-  // La función makeKey ahora usará el mapeo a la columna de la DB (sin cambios)
   const makeKey = (itemText) => MAPEO_DB[itemText] || itemText; 
 
   useEffect(() => {
@@ -134,7 +130,6 @@ function ChequeoElevador() {
     setRespuestas(initial);
   }, []); // eslint-disable-line
 
-  // --- NUEVO: Manejo de respuestas precargadas por semana ---
   useEffect(() => {
     const weekKey = getCurrentWeekKey();
     const saved = localStorage.getItem("chequeo_elevador_respuestas");
@@ -173,7 +168,6 @@ function ChequeoElevador() {
       });
     }
   }, []);
-  // --- FIN NUEVO ---
 
   useEffect(() => {
     const init = async () => {
@@ -196,15 +190,13 @@ function ChequeoElevador() {
         );
         constructora = obra_obj ? obra_obj.constructora || obra_obj.empresa || "" : "";
       } catch (err) {
-        console.error("Error obteniendo obras:", err?.response?.data || err.message);
       }
 
       const cargo = localStorage.getItem("cargo_trabajador") || "";
 
-      // 🔑 ESTADO INICIAL: Renombrado de claves
-      setGenerales({
-        nombre_cliente: constructora, // Antes: cliente_constructora
-        nombre_proyecto: proyecto, // Antes: proyecto_constructora
+          setGenerales({
+        nombre_cliente: constructora,
+        nombre_proyecto: proyecto,
         fecha_servicio: fechaHoy,
         nombre_operador: nombre_operador,
         cargo: cargo,
@@ -277,32 +269,22 @@ function ChequeoElevador() {
       return;
     }
 
-    // --- NUEVO: Guardar respuestas en localStorage por semana ---
     const weekKey = getCurrentWeekKey();
     localStorage.setItem(
       "chequeo_elevador_respuestas",
-      JSON.stringify({
-        weekKey,
-        respuestas,
-        generales,
-      })
+      JSON.stringify({ weekKey, respuestas, generales })
     );
-    // --- FIN NUEVO ---
 
-    // 🔑 CONSTRUCCIÓN DEL PAYLOAD: Renombrado de claves
-    const payload = {
-      // DATOS GENERALES
-      nombre_cliente: generales.nombre_cliente, // Antes: cliente_constructora
-      nombre_proyecto: generales.nombre_proyecto, // Antes: proyecto_constructora
-      fecha_servicio: generales.fecha_servicio, // Se mantiene
+      const payload = {
+      nombre_cliente: generales.nombre_cliente,
+      nombre_proyecto: generales.nombre_proyecto,
+      fecha_servicio: generales.fecha_servicio,
       nombre_operador: generales.nombre_operador,
-      cargo: generales.cargo, // Antes: cargo_operador
+      cargo: generales.cargo,
 
-      // RESPUESTAS
       ...respuestas,
 
-      // OBSERVACIONES
-      observaciones_generales: generales.observaciones, // Se mantiene el mapeo
+      observaciones_generales: generales.observaciones,
     };
 
     try {
@@ -310,7 +292,6 @@ function ChequeoElevador() {
       alert("Chequeo de elevador enviado correctamente.");
       navigate(-1); // vuelve al componente anterior
     } catch (err) {
-      console.error("Error enviando chequeo de elevador:", err?.response?.data || err.message, payload);
       alert("Error al enviar el chequeo. Revisa la consola para más detalles.");
     }
   };
@@ -324,8 +305,7 @@ function ChequeoElevador() {
         </h3>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
           {[
-            // 🔑 RENDERIZADO: Cambiando los nombres de los campos y etiquetas
-            { name: "nombre_cliente", label: "Cliente / Constructora" },
+                      { name: "nombre_cliente", label: "Cliente / Constructora" },
             { name: "nombre_proyecto", label: "Proyecto / Constructora" },
             { name: "fecha_servicio", label: "Fecha" },
             { name: "nombre_operador", label: "Trabajador autorizado" },

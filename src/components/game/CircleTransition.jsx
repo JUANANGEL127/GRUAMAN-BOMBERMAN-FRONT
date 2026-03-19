@@ -27,8 +27,6 @@ function CircleTransition({ direction = 'in', color = '#0a0a0a', duration = 550,
   }, [onDone]);
 
   useEffect(() => {
-    // Micro-delay para que el browser pinte el estado inicial
-    // antes de arrancar la transición CSS
     const t1 = setTimeout(() => setActive(true), 20);
     const t2 = setTimeout(() => onDoneRef.current?.(), duration);
 

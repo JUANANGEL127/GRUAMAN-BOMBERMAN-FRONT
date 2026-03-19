@@ -1,19 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
 
-const MAX_WAIT_MS = 6000; // si en 6s no arranca, saltar
+const MAX_WAIT_MS = 6000;
 
 /**
- * IntroVideo
- * Props:
- *   onVideoEnd      fn()           — el video terminó normalmente
- *   onSlowDetected  fn() optional  — el video no cargó en 6s o dio error (posible red lenta)
+ * Reproductor de video introductorio a pantalla completa con omisión automática
+ * en conexiones lentas.
+ *
+ * Reproduce /intro.mp4 al montar. Si el video no comienza dentro de MAX_WAIT_MS,
+ * falla o se detiene, llama a onSlowDetected para que el componente padre ofrezca
+ * el modo lite. Una transición de fundido de 400 ms precede a cada desmontaje.
+ *
+ * @param {Object} props
+ * @param {Function} props.onVideoEnd - Se llama cuando el video termina de forma natural o es omitido.
+ * @param {Function} [props.onSlowDetected] - Se llama cuando se infiere una conexión lenta.
  */
 function IntroVideo({ onVideoEnd, onSlowDetected }) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [fadeOut, setFadeOut]     = useState(false);
   const escapedRef                = useRef(false);
 
-  // slow=true → timeout/error;  slow=false → terminó normalmente
   const escape = (slow = false) => {
     if (escapedRef.current) return;
     escapedRef.current = true;
@@ -25,7 +30,6 @@ function IntroVideo({ onVideoEnd, onSlowDetected }) {
     }, 400);
   };
 
-  // Red demasiado lenta o sin video → saltar y avisar
   useEffect(() => {
     const timer = setTimeout(() => escape(true), MAX_WAIT_MS);
     return () => clearTimeout(timer);

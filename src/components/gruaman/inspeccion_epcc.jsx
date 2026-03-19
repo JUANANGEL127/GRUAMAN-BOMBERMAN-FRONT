@@ -3,8 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
-// Usa variable de entorno para la base de la API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 const preguntas = [
 	{
@@ -56,6 +55,16 @@ function isSunday() {
 	return new Date().getDay() === 0;
 }
 
+/**
+ * InspeccionEPCC — formulario semanal de inspección EPCC (equipos de protección contra caídas) para Gruaman.
+ * Cubre condiciones de salud, EPP, EPCC, herramientas manuales y herramientas mecanizadas.
+ * Persiste las respuestas semanalmente en localStorage; las limpia los domingos.
+ * Envía mediante POST a /gruaman/inspeccion_epcc al guardar.
+ *
+ * @param {Object}   props
+ * @param {Object}   [props.value={}]   Respuestas pre-cargadas.
+ * @param {Function} [props.onChange]   Se llama con las respuestas actualizadas en cada cambio.
+ */
 function InspeccionEPCC({ value = {}, onChange }) {
 	const [respuestas, setRespuestas] = useState(value);
 	const [generales, setGenerales] = useState({
@@ -70,7 +79,6 @@ function InspeccionEPCC({ value = {}, onChange }) {
 
 	const navigate = useNavigate();
 
-	// --- NUEVO: Manejo de respuestas precargadas por semana ---
 	useEffect(() => {
 		const weekKey = getCurrentWeekKey();
 		const saved = localStorage.getItem("inspeccion_epcc_respuestas");
@@ -106,9 +114,7 @@ function InspeccionEPCC({ value = {}, onChange }) {
 				cargo: "",
 			});
 		}
-		// ...existing code...
 	}, []);
-	// --- FIN NUEVO ---
 
 	useEffect(() => {
 		const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
@@ -206,12 +212,9 @@ function InspeccionEPCC({ value = {}, onChange }) {
 		e.preventDefault();
 		const payload = mapRespuestasToPayload();
 
-		// Validación de campos obligatorios
 		const erroresTemp = {};
 		let primerError = null;
 
-		// "nombre_cliente" se omite: puede quedar vacío si la red falla al cargar /obras,
-		// el backend no lo requiere estrictamente para registrar la inspección.
 		[
 			"nombre_proyecto",
 			"fecha_servicio",
@@ -244,8 +247,7 @@ function InspeccionEPCC({ value = {}, onChange }) {
 			return;
 		}
 
-		// --- NUEVO: Guardar respuestas en localStorage por semana ---
-		const weekKey = getCurrentWeekKey();
+			const weekKey = getCurrentWeekKey();
 		localStorage.setItem(
 			"inspeccion_epcc_respuestas",
 			JSON.stringify({
@@ -254,8 +256,7 @@ function InspeccionEPCC({ value = {}, onChange }) {
 				generales,
 			})
 		);
-		// --- FIN NUEVO ---
-
+	
 		try {
 			await axios.post(`${API_BASE_URL}/gruaman/inspeccion_epcc`, payload);
 			alert("Lista de inspección enviada correctamente.");
@@ -264,7 +265,6 @@ function InspeccionEPCC({ value = {}, onChange }) {
 			navigate(-1);
 		} catch (err) {
 			alert("Error al enviar la lista de chequeo.");
-			console.error(err);
 		}
 	};
 

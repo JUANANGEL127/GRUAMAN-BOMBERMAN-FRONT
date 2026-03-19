@@ -4,10 +4,8 @@ import AdminObrasBomberman from "./admin_obras_bomberman";
 import HorasExtraGruamanAdmin from "../administrador_gruaman/horas_extra_gruaman"; // Importa el componente de horas extra gruaman
 import RegistrosDiariosAdmin from "../administrador/RegistrosDiariosAdmin";
 
-// Usa variable de entorno para la base de la API (por si se usa en este archivo en el futuro)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-// Panel administrador visual tipo menú, similar a eleccion.jsx pero sin barra de progreso ni lógica de botones
 function AdministradorBomberman() {
   const navigate = useNavigate();
 

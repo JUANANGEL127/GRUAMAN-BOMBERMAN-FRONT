@@ -2,18 +2,14 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
-// Usa variable de entorno para la base de la API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-// Helper para formato fecha YYYY-MM-DD
 function toYMD(date) {
   if (!date) return '';
-  // Si el valor es tipo string y ya está en formato YYYY-MM-DD, lo retornamos tal cual
   if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return date;
   }
   const d = new Date(date);
-  // Ajuste para compensar la zona horaria y evitar desfase de un día
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -52,6 +48,7 @@ function PermisoTrabajoAdmin() {
     constructora: "",
     fecha_inicio: "",
     fecha_fin: "",
+    empresa_id: "",
     limit: 20,
     offset: 0
   });
@@ -66,13 +63,13 @@ function PermisoTrabajoAdmin() {
   const [listaConstructoras, setListaConstructoras] = useState([]);
   const [openId, setOpenId] = useState(null);
 
-  // Obtener lista de nombres de operarios al montar el componente
   useEffect(() => {
     async function fetchNombres() {
       try {
-        const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
+        const params = filters.empresa_id ? { empresa_id: filters.empresa_id } : {};
+        const res = await axios.get(`${API_BASE_URL}/datos_basicos`, { params });
         if (Array.isArray(res.data.datos)) {
-          setNombresOperarios(res.data.datos.filter(d => Number(d.empresa_id) === 1).map(d => d.nombre));
+          setNombresOperarios(res.data.datos.map(d => d.nombre));
         } else {
           setNombresOperarios([]);
         }
@@ -81,15 +78,13 @@ function PermisoTrabajoAdmin() {
       }
     }
     fetchNombres();
-  }, []);
+  }, [filters.empresa_id]);
 
-  // Obtener lista de obras y constructoras al montar el componente
   useEffect(() => {
     axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
         const obras = res.data.obras || [];
         setListaObras(obras);
-        // Extraer constructoras únicas
         const constructoras = Array.from(new Set(obras.map(o => o.constructora).filter(Boolean)));
         setListaConstructoras(constructoras);
       })
@@ -116,7 +111,12 @@ function PermisoTrabajoAdmin() {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+    if (name === "empresa_id") {
+      setFilters((prev) => ({ ...prev, empresa_id: value, nombre: "", offset: 0 }));
+      setNombreInput("");
+    } else {
+      setFilters((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   async function handleBuscar() {
@@ -129,15 +129,14 @@ function PermisoTrabajoAdmin() {
         constructora: filters.constructora || '',
         fecha_inicio: toYMD(filters.fecha_inicio),
         fecha_fin: toYMD(filters.fecha_fin),
+        empresa_id: filters.empresa_id || '',
         limit: filters.limit || 20,
         offset: filters.offset || 0
       };
-      console.log("Datos enviados en búsqueda:", body);
       const res = await axios.post(`${API_BASE_URL}/permiso_trabajo_admin/buscar`, body);
       setResultados(res.data?.rows || []);
       setTotal(res.data?.count || 0);
     } catch (e) {
-      console.error(e);
       setResultados([]);
       setTotal(0);
     } finally {
@@ -155,10 +154,10 @@ function PermisoTrabajoAdmin() {
         constructora: filters.constructora || '',
         fecha_inicio: toYMD(filters.fecha_inicio),
         fecha_fin: toYMD(filters.fecha_fin),
+        empresa_id: filters.empresa_id || '',
         formato: tipo,
         limit: 50000
       };
-      console.log("Datos enviados en descarga:", body);
       const res = await axios.post(`${API_BASE_URL}/permiso_trabajo_admin/descargar`, body, { responseType: 'blob' });
       const blob = new Blob([res.data], { type: tipo === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/zip' });
       const url = window.URL.createObjectURL(blob);
@@ -170,7 +169,6 @@ function PermisoTrabajoAdmin() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -201,6 +199,22 @@ function PermisoTrabajoAdmin() {
         Ingresa uno o más parámetros para filtrar los resultados:
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+          <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>Cargo</label>
+          <select
+            className="permiso-trabajo-input"
+            name="empresa_id"
+            value={filters.empresa_id}
+            onChange={handleFilterChange}
+            style={{ width: "97%", marginBottom: 6 }}
+            disabled={loading}
+          >
+            <option value="">Todas</option>
+            <option value="1">Gruaman</option>
+            <option value="3">Tecnicos</option>
+            <option value="4">SST</option>
+          </select>
+        </div>
         <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
           <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>Nombre</label>
           <input

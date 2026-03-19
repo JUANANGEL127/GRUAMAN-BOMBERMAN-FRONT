@@ -50,7 +50,6 @@ function TimerChallenge({ duration, onExpire }) {
     return () => clearTimeout(t);
   }, [remaining]);
 
-  // Progreso del arco: lleno al inicio, vacío al expirar
   const progress         = expired ? 0 : remaining / duration;
   const strokeDashoffset = CIRCUMFERENCE * (1 - progress);
   const color            = expired ? '#94a3b8' : getColor(remaining, duration);
@@ -67,16 +66,13 @@ function TimerChallenge({ duration, onExpire }) {
       aria-label={expired ? 'Tiempo agotado' : `${formatTime(remaining)} restantes`}
       aria-live="off"
     >
-      {/* Anillo SVG */}
       <svg className="tc-svg" viewBox="0 0 90 90" aria-hidden="true">
-        {/* Track (fondo) */}
         <circle
           cx="45" cy="45" r={RADIUS}
           fill="none"
           stroke="rgba(255,255,255,0.15)"
           strokeWidth="6"
         />
-        {/* Arco de progreso */}
         <circle
           cx="45" cy="45" r={RADIUS}
           fill="none"
@@ -92,7 +88,6 @@ function TimerChallenge({ duration, onExpire }) {
         />
       </svg>
 
-      {/* Texto central */}
       <div className="tc-inner" style={{ color }}>
         {expired ? (
           <span className="tc-done" aria-hidden="true">✓</span>

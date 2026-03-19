@@ -6,25 +6,25 @@
  */
 
 export const TIMER_CONFIG = {
-  // EPP — revisión rápida de equipo (1.5 min)
+  // EPP — revisión rápida de equipos de protección personal (1.5 min)
   'epp': {
     duration:       90,
     bonusThreshold: 60,
   },
 
-  // Sistema anticaídas (2 min)
+  // Sistema de restricción y protección contra caídas (2 min)
   'srpdc': {
     duration:       120,
     bonusThreshold: 90,
   },
 
-  // Revisión pre-operacional bomba/grúa (3 min)
+  // Revisión pre-operacional de bomba y grúa (3 min)
   'revision': {
     duration:       180,
     bonusThreshold: 120,
   },
 
-  // Sistemas operativos torregrúa (2.5 min)
+  // Sistemas operativos de la torregrúa (2.5 min)
   'sistemas': {
     duration:       150,
     bonusThreshold: 100,

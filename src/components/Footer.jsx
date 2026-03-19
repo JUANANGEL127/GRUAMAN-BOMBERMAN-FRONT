@@ -1,6 +1,8 @@
 import React from "react";
 
-// Componente Footer con logo de la empresa
+/**
+ * Pie de página de la aplicación que muestra el logotipo de la empresa GYE.
+ */
 function Footer() {
   return (
     <footer

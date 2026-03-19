@@ -37,19 +37,16 @@ function StoryIntro({ character = 'bomberman', obraName = 'la obra', onComplete 
 
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
-  // Limpia todos los timers pendientes
   const clearAll = () => {
     clearInterval(typeIntervalRef.current);
     clearTimeout(autoTimerRef.current);
   };
 
-  // Saltar toda la intro
   const handleSkip = () => {
     clearAll();
     onCompleteRef.current?.();
   };
 
-  // Typewriter para el diálogo actual
   useEffect(() => {
     clearAll();
     setDisplayedText('');
@@ -66,7 +63,6 @@ function StoryIntro({ character = 'bomberman', obraName = 'la obra', onComplete 
         clearInterval(typeIntervalRef.current);
         setIsTyping(false);
 
-        // Auto-avanzar al siguiente diálogo o terminar
         autoTimerRef.current = setTimeout(() => {
           if (dialogIndex < dialogs.length - 1) {
             setDialogIndex(prev => prev + 1);
@@ -86,10 +82,8 @@ function StoryIntro({ character = 'bomberman', obraName = 'la obra', onComplete 
   return (
     <div className="si-overlay">
 
-      {/* Fondo con estrellas */}
       <div className="si-bg" />
 
-      {/* Botón saltar — estilo PS5 */}
       <div className="si-skip-wrap">
         <span className="si-skip-label">Saltar intro</span>
         <button className="si-skip" onClick={handleSkip} aria-label="Saltar introducción">
@@ -97,7 +91,6 @@ function StoryIntro({ character = 'bomberman', obraName = 'la obra', onComplete 
         </button>
       </div>
 
-      {/* Personaje — esquina inferior izquierda */}
       <div className="si-character">
         {!imgError ? (
           <img
@@ -113,7 +106,6 @@ function StoryIntro({ character = 'bomberman', obraName = 'la obra', onComplete 
         )}
       </div>
 
-      {/* Bocadillo de diálogo */}
       <div className="si-bubble-wrap">
         <div className="si-bubble">
           <p className="si-text">
@@ -121,11 +113,9 @@ function StoryIntro({ character = 'bomberman', obraName = 'la obra', onComplete 
             {isTyping && <span className="si-cursor" aria-hidden="true" />}
           </p>
         </div>
-        {/* Cola del bocadillo apuntando al personaje (abajo-izquierda) */}
         <div className="si-tail" aria-hidden="true" />
       </div>
 
-      {/* Indicador de progreso */}
       <div className="si-dots" role="status" aria-label={`Diálogo ${dialogIndex + 1} de ${dialogs.length}`}>
         {dialogs.map((_, i) => (
           <span

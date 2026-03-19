@@ -3,7 +3,6 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
-// Usa variable de entorno para la base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
 const preguntas = [
@@ -73,6 +72,15 @@ function isSunday() {
 	return new Date().getDay() === 0;
 }
 
+/**
+ * ChequeoAlturas — lista de verificación de seguridad para trabajo en alturas (28 ítems).
+ * Persiste las respuestas semanalmente en localStorage; las limpia los domingos.
+ * Envía el payload completo mediante POST a /compartido/chequeo_alturas.
+ *
+ * @param {Object}   props
+ * @param {Object}   [props.value={}]    Respuestas pre-cargadas indexadas por número de pregunta.
+ * @param {Function} [props.onChange]    Se llama con el mapa de respuestas actualizado en cada cambio.
+ */
 function ChequeoAlturas({ value = {}, onChange }) {
 	const [respuestas, setRespuestas] = useState(value);
 	const [generales, setGenerales] = useState({
@@ -86,7 +94,6 @@ function ChequeoAlturas({ value = {}, onChange }) {
 	const guardarBtnRef = useRef(null);
 	const navigate = useNavigate();
 
-	// --- NUEVO: Manejo de respuestas precargadas por semana ---
 	useEffect(() => {
 		const weekKey = getCurrentWeekKey();
 		const saved = localStorage.getItem("chequeo_alturas_respuestas");
@@ -122,9 +129,7 @@ function ChequeoAlturas({ value = {}, onChange }) {
 				cargo: "",
 			});
 		}
-		// ...existing code...
 	}, []);
-	// --- FIN NUEVO ---
 
 	useEffect(() => {
 		const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
@@ -132,7 +137,6 @@ function ChequeoAlturas({ value = {}, onChange }) {
 		const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 		const cargo = localStorage.getItem("cargo_trabajador") || "";
 
-		// Obtener cliente/constructora como en permiso_trabajo.jsx
 		axios.get(`${API_BASE_URL}/obras`)
 			.then(res => {
 				let obras = [];
@@ -189,7 +193,6 @@ function ChequeoAlturas({ value = {}, onChange }) {
 
 	let preguntaIdx = 0;
 
-	// Mapeo de respuestas a campos de la tabla
 	const mapRespuestasToPayload = () => {
 		return {
 			nombre_cliente: generales.cliente,
@@ -247,9 +250,7 @@ function ChequeoAlturas({ value = {}, onChange }) {
 		const erroresTemp = {};
 		let primerError = null;
 
-		// Validación de datos generales
-		// "cliente" se omite: puede quedar vacío si la red falla al cargar /obras,
-		// el backend no lo requiere para registrar el chequeo.
+		// cliente omitted from required fields — backend accepts empty value if /obras fetch fails
 		["proyecto", "fecha", "operador", "cargo"].forEach((campo) => {
 			if (!generales[campo]) {
 				erroresTemp[campo] = true;
@@ -278,26 +279,18 @@ function ChequeoAlturas({ value = {}, onChange }) {
 		}
 
 		try {
-			// --- NUEVO: Guardar respuestas en localStorage por semana ---
 			const weekKey = getCurrentWeekKey();
 			localStorage.setItem(
 				"chequeo_alturas_respuestas",
-				JSON.stringify({
-					weekKey,
-					respuestas,
-					generales,
-				})
+				JSON.stringify({ weekKey, respuestas, generales })
 			);
-			// --- FIN NUEVO ---
-
 			await axios.post(`${API_BASE_URL}/compartido/chequeo_alturas`, payload);
 			alert("Lista de chequeo enviada correctamente.");
 			if (onChange) onChange({});
 			setRespuestas({});
 			navigate(-1);
-		} catch (err) {
+		} catch {
 			alert("Error al enviar la lista de chequeo.");
-			console.error(err);
 		}
 	};
 

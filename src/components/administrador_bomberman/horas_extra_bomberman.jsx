@@ -160,7 +160,6 @@ function horasExtraBomberman() {
       link.remove();
       window.URL.revokeObjectURL(blobUrl);
     } catch (e) {
-      console.error(e);
     } finally {
       setLoading(false);
     }

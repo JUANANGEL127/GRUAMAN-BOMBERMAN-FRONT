@@ -2,8 +2,14 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
+/**
+ * Normaliza un valor de fecha a una cadena YYYY-MM-DD.
+ * Las cadenas ya en ese formato se retornan sin cambios para evitar desfases UTC.
+ * @param {string|Date} date
+ * @returns {string}
+ */
 function toYMD(date) {
   if (!date) return '';
   if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
@@ -14,6 +20,11 @@ function toYMD(date) {
   return `${y}-${m}-${day}`;
 }
 
+/**
+ * RegistrosDiariosAdmin — visor y descargador de registros diarios multi-empresa.
+ * Busca trabajadores en todas las empresas e inicia descargas de Excel/PDF como blobs
+ * a través de los endpoints de reportes del backend.
+ */
 function RegistrosDiariosAdmin() {
   const [activeBar, setActiveBar] = useState("");
   const [filters, setFilters] = useState({
@@ -51,16 +62,13 @@ function RegistrosDiariosAdmin() {
         offset: filters.offset || 0
       };
 
-      console.log('[Buscar] Enviando solicitud:', body);
       
       const res = await axios.post(`${API_BASE_URL}/api/buscar`, body);
       
-      console.log('[Buscar] Respuesta recibida:', res.data);
       
       setResultados(res.data?.rows || []);
       setTotal(res.data?.count || 0);
     } catch (e) {
-      console.error('[Buscar] Error completo:', e);
       setResultados([]);
       setTotal(0);
       if (e.response?.status === 404) {
@@ -85,7 +93,6 @@ function RegistrosDiariosAdmin() {
         limit: 50000
       };
       
-      console.log('[Descarga] Enviando solicitud:', body);
       
       const res = await axios.post(
         `${API_BASE_URL}/api/descargar`,
@@ -95,25 +102,16 @@ function RegistrosDiariosAdmin() {
         }
       );
 
-      console.log('[Descarga] Respuesta recibida:', {
-        status: res.status,
-        contentType: res.headers['content-type'],
-        contentLength: res.headers['content-length'],
-        dataSize: res.data?.byteLength
-      });
 
       const contentType = res.headers['content-type'] || '';
       
-      // Detectar si es error JSON
       if (contentType.includes('application/json')) {
         const text = new TextDecoder().decode(res.data);
-        console.log('[Descarga] Respuesta JSON detectada:', text);
         const errorData = JSON.parse(text);
         alert(`Error del servidor: ${errorData.message || errorData.error || 'Error desconocido'}`);
         return;
       }
 
-      // Determinar nombre del archivo
       let filename = 'registros_diarios.xlsx';
       
       const disposition = res.headers['content-disposition'];
@@ -124,16 +122,11 @@ function RegistrosDiariosAdmin() {
         }
       }
 
-      console.log('[Descarga] Nombre de archivo determinado:', filename);
 
       const blob = new Blob([res.data], { 
         type: contentType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
       });
       
-      console.log('[Descarga] Blob creado:', {
-        size: blob.size,
-        type: blob.type
-      });
       
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -144,20 +137,13 @@ function RegistrosDiariosAdmin() {
       link.remove();
       window.URL.revokeObjectURL(url);
       
-      console.log('[Descarga] Descarga iniciada exitosamente');
     } catch (e) {
-      console.error('[Descarga] Error completo:', e);
       if (e.response) {
-        console.error('[Descarga] Response status:', e.response.status);
-        console.error('[Descarga] Response headers:', e.response.headers);
         
-        // Intentar leer el error si es JSON
         if (e.response.data) {
           try {
             const text = new TextDecoder().decode(e.response.data);
-            console.error('[Descarga] Response data:', text);
           } catch (decodeError) {
-            console.error('[Descarga] No se pudo decodificar la respuesta');
           }
         }
       }
@@ -179,15 +165,12 @@ function RegistrosDiariosAdmin() {
       try {
         const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
         if (Array.isArray(res.data.datos)) {
-          // Obtener todos los nombres únicos de trabajadores de todas las empresas
           const nombres = res.data.datos.map(t => t.nombre).filter(Boolean);
           setNombresTrabajadores([...new Set(nombres)].sort());
-          console.log('[Init] Trabajadores cargados:', nombres.length);
         } else {
           setNombresTrabajadores([]);
         }
       } catch (e) {
-        console.error('[Init] Error al cargar trabajadores:', e);
         setNombresTrabajadores([]);
       }
     }

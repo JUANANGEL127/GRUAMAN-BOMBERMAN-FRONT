@@ -3,8 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
-// Usa variable de entorno para la base de la API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 const preguntas = [
 	{
@@ -57,6 +56,15 @@ function isSunday() {
 	return new Date().getDay() === 0;
 }
 
+/**
+ * ChequeoTorreGruas — lista de verificación pre-operacional de torregrúa para Gruaman.
+ * Persiste las respuestas semanalmente en localStorage; las limpia los domingos.
+ * Envía mediante POST a /gruaman/chequeo_torregruas al guardar.
+ *
+ * @param {Object}   props
+ * @param {Object}   [props.value={}]   Respuestas pre-cargadas indexadas por número de pregunta.
+ * @param {Function} [props.onChange]   Se llama con las respuestas actualizadas en cada cambio.
+ */
 function ChequeoTorreGruas({ value = {}, onChange }) {
 	const [respuestas, setRespuestas] = useState(value);
 	const [generales, setGenerales] = useState({
@@ -70,7 +78,6 @@ function ChequeoTorreGruas({ value = {}, onChange }) {
 	const guardarBtnRef = useRef(null);
 	const navigate = useNavigate();
 
-	// --- NUEVO: Manejo de respuestas precargadas por semana ---
 	useEffect(() => {
 		const weekKey = getCurrentWeekKey();
 		const saved = localStorage.getItem("chequeo_torregruas_respuestas");
@@ -106,9 +113,7 @@ function ChequeoTorreGruas({ value = {}, onChange }) {
 				cargo: "",
 			});
 		}
-		// ...existing code...
 	}, []);
-	// --- FIN NUEVO ---
 
 	useEffect(() => {
 		const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
@@ -212,9 +217,6 @@ function ChequeoTorreGruas({ value = {}, onChange }) {
 		const erroresTemp = {};
 		let primerError = null;
 
-		// Validación de datos generales
-		// "cliente" se omite: puede quedar vacío si la red falla al cargar /obras,
-		// el backend no lo requiere estrictamente para registrar el chequeo.
 		["proyecto", "fecha", "operador", "cargo"].forEach((campo) => {
 			if (!generales[campo]) {
 				erroresTemp[campo] = true;
@@ -243,8 +245,7 @@ function ChequeoTorreGruas({ value = {}, onChange }) {
 		}
 
 		try {
-			// --- NUEVO: Guardar respuestas en localStorage por semana ---
-			const weekKey = getCurrentWeekKey();
+					const weekKey = getCurrentWeekKey();
 			localStorage.setItem(
 				"chequeo_torregruas_respuestas",
 				JSON.stringify({
@@ -253,8 +254,7 @@ function ChequeoTorreGruas({ value = {}, onChange }) {
 					generales,
 				})
 			);
-			// --- FIN NUEVO ---
-
+		
 			await axios.post(`${API_BASE_URL}/gruaman/chequeo_torregruas`, payload);
 			alert("Lista de chequeo enviada correctamente.");
 			if (onChange) onChange({});
@@ -262,7 +262,6 @@ function ChequeoTorreGruas({ value = {}, onChange }) {
 			navigate(-1);
 		} catch (err) {
 			alert("Error al enviar la lista de chequeo.");
-			console.error(err);
 		}
 	};
 

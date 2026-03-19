@@ -18,21 +18,17 @@ const TUTORIAL_KEY = 'game_tutorial_seen';
 export default function WorldMap() {
   const navigate = useNavigate();
 
-  // ── Datos del usuario ──
   const character     = localStorage.getItem('selectedCharacter') || 'bomberman';
   const userName      = localStorage.getItem('nombre_trabajador')  || 'Héroe';
   const characterName = getCharacterName(character);
   const isCrane       = character === 'gruaman';
 
-  // ── Mundos del personaje ──
   const worlds      = getWorldsByCharacter(character);
   const dailyWorlds = worlds.filter(w => w.daily !== false);
 
   const [completedIds, setCompletedIds] = useState(() => getCompletedWorlds());
   const completedCount = dailyWorlds.filter(w => completedIds.includes(w.id)).length;
 
-  // ── Detectar completado al volver de un formulario ──
-  // Los formularios que usan navigate(-1) vuelven aquí; game_mode indica qué mundo completaron.
   useEffect(() => {
     const worldId = localStorage.getItem('game_mode');
     if (worldId) {
@@ -43,15 +39,11 @@ export default function WorldMap() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Layout en zigzag ──
   const ZIGZAG = ['right', 'left', 'center'];
-  // Centro X de cada posición como % del ancho del track (para SVG de conectores)
   const POS_X  = { right: '83%', left: '13%', center: '50%' };
 
-  // ── Avatar fallback ──
   const [imgError, setImgError] = useState(false);
 
-  // ── Tutorial ──
   const [showTutorial, setShowTutorial] = useState(
     () => !localStorage.getItem(TUTORIAL_KEY)
   );
@@ -59,20 +51,17 @@ export default function WorldMap() {
 
   const dismissTutorial = () => {
     setShowTutorial(false);
-    try { localStorage.setItem(TUTORIAL_KEY, '1'); } catch { /* quota */ }
+    try { localStorage.setItem(TUTORIAL_KEY, '1'); } catch { /* quota exceeded */ }
     clearTimeout(tutorialTimerRef.current);
   };
 
-  // Auto-dismiss después de 6 segundos
   useEffect(() => {
     if (!showTutorial) return;
     tutorialTimerRef.current = setTimeout(dismissTutorial, 6000);
     return () => clearTimeout(tutorialTimerRef.current);
-  // dismissTutorial es estable (solo llama setState + localStorage)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showTutorial]);
 
-  // ── Navegación con CircleTransition ──
   const [covering,    setCovering]    = useState(false);
   const [destination, setDestination] = useState(null);
 
@@ -85,7 +74,6 @@ export default function WorldMap() {
     if (destination) navigate(destination);
   };
 
-  // ── Progreso ──
   const progressPct = dailyWorlds.length > 0
     ? (completedCount / dailyWorlds.length) * 100
     : 0;
@@ -93,16 +81,13 @@ export default function WorldMap() {
   return (
     <div className="wm-root">
 
-      {/* ─── Nubes decorativas ─── */}
       <div className="wm-clouds" aria-hidden="true">
         <span className="wm-cloud wm-cloud--1">☁️</span>
         <span className="wm-cloud wm-cloud--2">☁️</span>
         <span className="wm-cloud wm-cloud--3">☁️</span>
       </div>
 
-      {/* ─── Header ─── */}
       <header className="wm-header">
-        {/* Avatar */}
         <div className="wm-avatar-wrap">
           {!imgError ? (
             <img
@@ -118,7 +103,6 @@ export default function WorldMap() {
           )}
         </div>
 
-        {/* Nombre + personaje */}
         <div className="wm-user-info">
           <span className="wm-user-name">{userName}</span>
           <span className={`wm-char-name wm-char-name--${character}`}>
@@ -126,7 +110,6 @@ export default function WorldMap() {
           </span>
         </div>
 
-        {/* Progreso del día */}
         <div className="wm-progress-wrap">
           <span className="wm-progress-label">
             {completedCount}/{dailyWorlds.length} misiones
@@ -146,7 +129,6 @@ export default function WorldMap() {
         </div>
       </header>
 
-      {/* ─── Tutorial ─── */}
       {showTutorial && (
         <div className="wm-tutorial" role="status">
           <button
@@ -162,12 +144,10 @@ export default function WorldMap() {
           <p className="wm-tutorial-text">
             Empieza la misión por aquí 👇
           </p>
-          {/* Cola apuntando hacia abajo al primer nodo */}
           <div className="wm-tutorial-tail" aria-hidden="true" />
         </div>
       )}
 
-      {/* ─── Scroll vertical de mundos en zigzag ─── */}
       <div className="wm-scroll">
         <div className="wm-track">
 
@@ -185,7 +165,6 @@ export default function WorldMap() {
                 />
               </div>,
 
-              /* Conector diagonal SVG (no después del último) */
               index < worlds.length - 1 && (
                 <svg
                   key={`conn-${world.id}`}
@@ -207,7 +186,6 @@ export default function WorldMap() {
             ];
           }).filter(Boolean)}
 
-          {/* Bandera de meta */}
           <div className={`wm-finish wm-finish--${ZIGZAG[worlds.length % ZIGZAG.length]}`} aria-label="Meta final">
             <span className="wm-finish-flag">🏁</span>
           </div>
@@ -215,7 +193,6 @@ export default function WorldMap() {
         </div>
       </div>
 
-      {/* ─── Footer ─── */}
       <footer className="wm-footer">
         <button
           className="wm-salir"
@@ -225,7 +202,6 @@ export default function WorldMap() {
         </button>
       </footer>
 
-      {/* ─── Transición de salida ─── */}
       {covering && (
         <CircleTransition direction="out" onDone={handleCoverDone} />
       )}

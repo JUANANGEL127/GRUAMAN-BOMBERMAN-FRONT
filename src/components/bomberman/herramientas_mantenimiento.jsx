@@ -24,6 +24,11 @@ const herramientas = [
   { desc: 'LLAVE EXPANSIVA 15"',        base: 'llave_expansiva_15' },
 ];
 
+/**
+ * HerramientasMantenimiento — formulario de inventario de herramientas de mantenimiento para Bomberman.
+ * Registra la cantidad (buena/mala) y observación por herramienta, y envía mediante POST a
+ * /bomberman/herramientas_mantenimiento. Usa la lista de /bombas en caché como respaldo sin conexión.
+ */
 function HerramientasMantenimiento() {
   const [generales, setGenerales] = useState({
     cliente: "",
@@ -38,7 +43,6 @@ function HerramientasMantenimiento() {
   const guardarBtnRef = useRef(null);
   const navigate = useNavigate();
 
-  // Cargar lista de bombas y cachear para el modo juego
   useEffect(() => {
     axios.get(`${API_BASE_URL}/bombas`)
       .then(res => {
@@ -47,7 +51,7 @@ function HerramientasMantenimiento() {
         try { localStorage.setItem('cached_bombas', JSON.stringify(bombas)); } catch {}
       })
       .catch(() => {
-        // Intentar usar caché si la red falla
+        // fall back to cached list if network is unavailable
         try {
           const cached = localStorage.getItem('cached_bombas');
           if (cached) set_lista_bombas(JSON.parse(cached));

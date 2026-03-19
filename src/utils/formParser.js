@@ -330,10 +330,10 @@ function buildChecklistOptions(field) {
 function ynChecklist(val, field) {
   const opts = CHECKLIST_FIELD_OPTIONS[field];
   if (!opts) {
-    // Standard BUENO/REGULAR/MALO
+    // Sin opciones personalizadas: mapeo estándar BUENO/REGULAR/MALO
     return val === 'yes' ? 'BUENO' : val === 'na' ? 'REGULAR' : 'MALO';
   }
-  // 2-option fields: yes=opts[0] (good), no=opts[1] (bad), na=opts[0] (default good)
+  // Campo de 2 opciones: yes=opts[0] (bueno), no=opts[1] (malo), na=opts[0] (bueno por defecto)
   return val === 'yes' ? opts[0] : val === 'no' ? opts[1] : opts[0];
 }
 
@@ -1711,7 +1711,7 @@ function buildChequeoTorregruas(answers) {
 
 function buildChequeoElevador(answers) {
   const ctx = getGameContext();
-  // All answer keys are already the DB column names — just convert yes/no/na to SI/NO/NA
+  // Las claves de respuesta ya son los nombres de columna en BD — solo se convierten yes/no/na a SI/NO/NA
   const respuestas = {};
   Object.keys(answers).forEach(k => {
     respuestas[k] = yn(answers[k]);

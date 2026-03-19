@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-// Datos generales del encabezado
+/** Campos de encabezado generales del formulario */
 const camposGenerales = [
   { label: "Cliente", name: "cliente" },
   { label: "Obra", name: "obra" },
@@ -14,9 +14,8 @@ const camposGenerales = [
   { label: "Número de servicios desde su ingreso a obra", name: "num_servicios" },
 ];
 
-// Items del checklist de mantenimiento grúa
+/** Ítems de la lista de verificación para mantenimiento de torregrúa */
 const items = [
-  // ...estructura de datos, sin comentarios...
   { grupo: "Base Grúa", nombre: "Voltaje de Alimentación Obra", tipo: "voltaje", obs: "" },
   { grupo: "Base Grúa", nombre: "Voltaje salida Autotransformador", tipo: "voltaje", obs: "" },
   { grupo: "Base Grúa", nombre: "Estado de contactos y ajuste de terminales", tipo: "brm", obs: "" },
@@ -77,9 +76,12 @@ const items = [
   { grupo: "Accesorios", nombre: "Elementos de Izaje", tipo: "brm", obs: "" },
 ];
 
-// Componente principal Checklist Mantenimiento Grúa
+/**
+ * ChecklistMentinimiento — lista de verificación de mantenimiento técnico para torregrúa.
+ * Los ítems están agrupados por área funcional y se presentan en una tabla con opciones SI/NO/NA.
+ * Envía mediante POST a /tecnicos/checklist_mantenimiento_grua al guardar.
+ */
 function ChecklistMentinimiento() {
-  // Estado para datos generales, estado de cada ítem y observaciones
   const [generales, setGenerales] = useState(
     camposGenerales.reduce((acc, campo) => {
       acc[campo.name] = "";
@@ -103,22 +105,18 @@ function ChecklistMentinimiento() {
   const [enviando, setEnviando] = useState(false);
   const [mensajeEnvio, setMensajeEnvio] = useState("");
 
-  // Manejar cambios en los campos generales
   const handleGeneralChange = (e) => {
     setGenerales({ ...generales, [e.target.name]: e.target.value });
   };
 
-  // Manejar cambios en los radios o inputs de cada ítem
   const handleItemChange = (idx, valor) => {
     setEstadoItems({ ...estadoItems, [idx]: valor });
   };
 
-  // Manejar cambios en las observaciones
   const handleObsChange = (idx, valor) => {
     setObservaciones({ ...observaciones, [idx]: valor });
   };
 
-  // Guardar datos en backend
   const handleGuardar = async () => {
     setEnviando(true);
     setMensajeEnvio("");
@@ -146,7 +144,6 @@ function ChecklistMentinimiento() {
     setEnviando(false);
   };
 
-  // Agrupar por grupo para mostrar en la tabla
   const grupos = [];
   let lastGrupo = "";
   items.forEach((item, idx) => {
@@ -158,7 +155,6 @@ function ChecklistMentinimiento() {
     }
   });
 
-  // Renderizado del formulario
   return (
     <div className="checklist-container">
       <h2 style={{ color: "#1976d2", marginBottom: 16 }}>CHEK LIST MANTENIMIENTO GRUAS</h2>

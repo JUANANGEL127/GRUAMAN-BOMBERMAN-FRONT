@@ -25,6 +25,12 @@ function normalizaFlag(val) {
   return val;
 }
 
+const EMPRESAS = [
+  { id: 1, label: "Gruaman" },
+  { id: 3, label: "Tecnicos" },
+  { id: 4, label: "SST" }
+];
+
 function horasExtraGruaman() {
   const [activeBar, setActiveBar] = useState("");
   const [filters, setFilters] = useState({
@@ -32,6 +38,7 @@ function horasExtraGruaman() {
     cedula: "",
     obra: "",
     constructora: "",
+    empresa_id: 1,
     fecha_inicio: "",
     fecha_fin: "",
     limit: 50,
@@ -67,11 +74,12 @@ function horasExtraGruaman() {
     setLoading(true);
     setErrorMessage("");
     try {
+      const empresaId = Number(filters.empresa_id) || 1;
       const body = {
         nombre: filters.nombre || "",
         obra: filters.obra || "",
         constructora: filters.constructora || "",
-        empresa_id: 1,
+        empresa_id: empresaId,
         fecha_inicio: toYMD(filters.fecha_inicio),
         fecha_fin: toYMD(filters.fecha_fin),
         limit: filters.limit || 20,
@@ -85,7 +93,7 @@ function horasExtraGruaman() {
         });
         data = res.data || {};
         const filteredRows = Array.isArray(data.rows)
-          ? data.rows.filter(r => (Number(r.empresa_id) === 1 || (r.raw && Number(r.raw.empresa_id) === 1)))
+          ? data.rows.filter(r => (Number(r.empresa_id) === empresaId || (r.raw && Number(r.raw.empresa_id) === empresaId)))
           : [];
         setResultados(filteredRows);
         setTotal(filteredRows.length);
@@ -122,7 +130,7 @@ function horasExtraGruaman() {
         nombre: filters.nombre || "",
         obra: filters.obra || "",
         constructora: filters.constructora || "",
-        empresa_id: 1,
+        empresa_id: Number(filters.empresa_id) || 1,
         fecha_inicio: toYMD(filters.fecha_inicio),
         fecha_fin: toYMD(filters.fecha_fin),
         formato: tipo,
@@ -156,18 +164,19 @@ function horasExtraGruaman() {
       link.remove();
       window.URL.revokeObjectURL(blobUrl);
     } catch (e) {
-      console.error(e);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    const empresaId = Number(filters.empresa_id) || 1;
+
     async function fetchNombres() {
       try {
         const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
         if (Array.isArray(res.data.datos)) {
-          const datosEmpresa = res.data.datos.filter(d => Number(d.empresa_id) === 1);
+          const datosEmpresa = res.data.datos.filter(d => Number(d.empresa_id) === empresaId);
           setNombresOperarios(datosEmpresa.map(d => d.nombre));
         } else {
           setNombresOperarios([]);
@@ -181,7 +190,7 @@ function horasExtraGruaman() {
     axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
         const obrasAll = res.data.obras || [];
-        const obras = obrasAll.filter(o => Number(o.empresa_id) === 1);
+        const obras = obrasAll.filter(o => Number(o.empresa_id) === empresaId);
         setListaObras(obras);
         const constructoras = Array.from(new Set(obras.map(o => o.constructora).filter(Boolean)));
         setListaConstructoras(constructoras);
@@ -190,7 +199,7 @@ function horasExtraGruaman() {
         setListaObras([]);
         setListaConstructoras([]);
       });
-  }, []);
+  }, [filters.empresa_id]);
 
   useEffect(() => {
     if (activeBar === "ver" && hasSearched) {
@@ -205,6 +214,36 @@ function horasExtraGruaman() {
         Ingresa uno o más parámetros para filtrar los resultados:
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+          <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>Cargo</label>
+          <select
+            className="permiso-trabajo-input"
+            name="empresa_id"
+            value={filters.empresa_id}
+            onChange={(e) => {
+              const newEmpresaId = Number(e.target.value);
+              setResultados([]);
+              setTotal(0);
+              setResumenPorMes([]);
+              setPeriodo({});
+              setHasSearched(false);
+              setOpenId(null);
+              setFilters(prev => ({
+                ...prev,
+                empresa_id: newEmpresaId,
+                nombre: "",
+                obra: "",
+                constructora: "",
+                offset: 0
+              }));
+            }}
+            style={{ width: "93%", marginBottom: 6 }}
+          >
+            {EMPRESAS.map(emp => (
+              <option key={emp.id} value={emp.id}>{emp.label}</option>
+            ))}
+          </select>
+        </div>
         <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
           <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>Nombre</label>
           <input

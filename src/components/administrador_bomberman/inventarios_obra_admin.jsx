@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 function toYMD(date) {
   if (!date) return '';
@@ -99,7 +99,6 @@ function InventariosObraAdmin() {
         limit: 50000
       };
       
-      console.log('Enviando solicitud de descarga...');
       
       const res = await axios.post(
         `${API_BASE_URL}/inventarios_obra_admin/descargar`,
@@ -109,16 +108,9 @@ function InventariosObraAdmin() {
         }
       );
 
-      console.log('Respuesta recibida:', {
-        status: res.status,
-        contentType: res.headers['content-type'],
-        contentLength: res.headers['content-length'],
-        dataSize: res.data?.byteLength
-      });
 
       const contentType = res.headers['content-type'] || '';
       
-      // Detectar si es error JSON
       if (contentType.includes('application/json')) {
         const text = new TextDecoder().decode(res.data);
         const errorData = JSON.parse(text);
@@ -126,7 +118,6 @@ function InventariosObraAdmin() {
         return;
       }
 
-      // Determinar la extensión correcta basada en el Content-Type
       let filename;
       if (contentType.includes('application/zip')) {
         filename = tipo === 'excel' ? 'inventarios_obra_excels.zip' : 'inventarios_obra_pdfs.zip';
@@ -135,11 +126,10 @@ function InventariosObraAdmin() {
       } else if (contentType.includes('spreadsheet') || contentType.includes('excel')) {
         filename = 'inventario_obra.xlsx';
       } else {
-        // Fallback basado en el tipo solicitado
         filename = tipo === 'excel' ? 'inventarios_obra.xlsx' : 'inventarios_obra.zip';
       }
       
-      // Intentar obtener nombre del header Content-Disposition (tiene prioridad)
+      // Content-Disposition header takes priority for filename resolution
       const disposition = res.headers['content-disposition'];
       if (disposition && disposition.includes('filename=')) {
         const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
@@ -148,16 +138,11 @@ function InventariosObraAdmin() {
         }
       }
 
-      console.log('Creando descarga con filename:', filename);
 
       const blob = new Blob([res.data], { 
         type: contentType || 'application/octet-stream' 
       });
       
-      console.log('Blob creado:', {
-        size: blob.size,
-        type: blob.type
-      });
       
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -168,10 +153,7 @@ function InventariosObraAdmin() {
       link.remove();
       window.URL.revokeObjectURL(url);
       
-      console.log('Descarga iniciada exitosamente');
     } catch (e) {
-      console.error('Error completo:', e);
-      console.error('Response data:', e.response?.data);
       alert(`Error al descargar: ${e.response?.data?.message || e.message || 'Error interno del servidor'}`);
     } finally {
       setLoading(false);

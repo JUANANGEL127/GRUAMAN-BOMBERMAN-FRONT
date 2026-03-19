@@ -21,7 +21,6 @@ function TypewriterQuestion({ text = '', speed = 50, onDone }) {
 
   useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
 
-  // Igual que StoryIntro líneas 53-82
   useEffect(() => {
     clearInterval(intervalRef.current);
     setDisplayedText('');

@@ -4,28 +4,29 @@ import PlanillaDeBombeo from "./planillabombeo";
 import Checklist from "./checklist";
 import InventariosObra from "./inventariosobra";
 import Administrador from "../administrador_gruaman/administrador";
-import AdministradorBomberman from "../administrador_bomberman/administrador_bomberman"; // importar el componente
+import AdministradorBomberman from "../administrador_bomberman/administrador_bomberman";
 import "../../App.css";
 import PermisoTrabajo from "../compartido/permiso_trabajo";
 import ChequeoAlturas from "../compartido/chequeo_alturas";
-import inspeccionEpccBomberman from "./inspeccion_epcc_bomberman"; // importación del nuevo componente
+import inspeccionEpccBomberman from "./inspeccion_epcc_bomberman";
 import HerramientasMantenimiento from "./herramientas_mantenimiento";
 import KitLimpieza from "./kit_limpieza";
 import HoraIngreso from "../compartido/horada_ingreso";
 import HoraSalida from "../compartido/hora_salida";
 import { markWorldComplete } from '../../db/gameProgress';
 
-// Usa variable de entorno para la base de la API (por si se usa en este archivo en el futuro)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
-// Utiliza localStorage para persistir el estado de los botones usados
+/**
+ * @param {string} usuario
+ * @returns {Object} Map of worldId → boolean
+ */
 function getUsadosFromStorage(usuario) {
   try {
     const data = localStorage.getItem(`aic_usados_${usuario}`);
     if (data) return JSON.parse(data);
   } catch {}
   return {
-    hora_ingreso: false, // nuevo
+    hora_ingreso: false,
     permiso_trabajo: false,
     planillabombeo: false,
     checklist: false,
@@ -34,7 +35,7 @@ function getUsadosFromStorage(usuario) {
     inventariosobra: false,
     chequeo_alturas: false,
     inspeccion_epcc_bomberman: false,
-    hora_salida: false // nuevo
+    hora_salida: false
   };
 }
 
@@ -44,28 +45,30 @@ function setUsadosToStorage(usados, usuario) {
 
 function limpiarUsados(usuario) {
   localStorage.removeItem(`aic_usados_${usuario}`);
-  // eliminar la marca de fecha para forzar recreación al guardar de nuevo
   try { localStorage.removeItem(`aic_usados_date_${usuario}`); } catch {}
 }
 
-// Helper para obtener la fecha actual en formato YYYY-MM-DD (zona horaria Colombia)
+/** @returns {string} YYYY-MM-DD date string in America/Bogota timezone */
 function getTodayDateStr() {
   return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 }
 
-// --- NUEVO: Helpers para control mensual de inventario de obra (zona horaria Colombia) ---
+/** @returns {string} Current month key as 'YYYY-MM' in America/Bogota timezone */
 function getCurrentMonthKey() {
-  // Formato "YYYY-MM" usando los primeros 7 caracteres de la fecha Colombia
   return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" }).slice(0, 7);
 }
 function isFirstDayOfMonth() {
   return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" }).slice(8, 10) === "01";
 }
 
+/**
+ * BienvenidaAIC — pantalla de selección de misiones para Bomberman.
+ * Rastrea qué misiones han sido usadas hoy y se reinicia a medianoche.
+ * Inventarios de obra se reinicia mensualmente. Redirige a los componentes de formulario individuales.
+ */
 function BienvenidaAIC() {
   const navigate = useNavigate();
 
-  // ── Detección de completado de misión del juego ──
   useEffect(() => {
     const worldId = localStorage.getItem('game_mode');
     if (worldId) {
@@ -83,12 +86,10 @@ function BienvenidaAIC() {
   else if (empresa === "AIC") empresaNombre = "BomberMan";
   else empresaNombre = "";
 
-  // El progreso es por usuario
   const usuario = nombre || "anonimo";
   const [usados, setUsados] = useState(() => getUsadosFromStorage(usuario));
   const [usuarioActual, setUsuarioActual] = useState(usuario);
 
-  // Reinicia el progreso cada vez que se detecta un nuevo ingreso (usuario o empresa cambia)
   useEffect(() => {
     const nuevoUsuario = localStorage.getItem("nombre_trabajador") || "anonimo";
     const nuevaEmpresa = localStorage.getItem("empresa") || "";
@@ -102,24 +103,20 @@ function BienvenidaAIC() {
   }, [localStorage.getItem("nombre_trabajador"), localStorage.getItem("empresa")]);
 
   useEffect(() => {
-    // Guardar usados y anotar la fecha para saber si tocar reiniciar al día siguiente
     setUsadosToStorage(usados, usuarioActual);
     try { localStorage.setItem(`aic_usados_date_${usuarioActual}`, getTodayDateStr()); } catch {}
   }, [usados, usuarioActual]);
 
-  // Efecto: reinicio diario a medianoche (y comprobación inicial)
   useEffect(() => {
     const dateKey = `aic_usados_date_${usuarioActual}`;
     const today = getTodayDateStr();
     const storedDate = localStorage.getItem(dateKey);
     if (storedDate !== today) {
-      // si la fecha guardada no es hoy, reiniciar usados ahora
       limpiarUsados(usuarioActual);
       setUsados(getUsadosFromStorage(usuarioActual));
       try { localStorage.setItem(dateKey, today); } catch {}
     }
 
-    // programar reinicio justo a la próxima medianoche
     const now = new Date();
     const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
     const msUntilMidnight = nextMidnight.getTime() - now.getTime();
@@ -145,9 +142,7 @@ function BienvenidaAIC() {
   const getButtonClass = (usado) =>
     usado ? "button button-green" : "button";
 
-  // --- NUEVO: Control mensual para inventariosobra ---
   useEffect(() => {
-    // Solo para el botón de inventariosobra
     const monthKey = getCurrentMonthKey();
     const saved = localStorage.getItem("bomberman_inventariosobra_respuestas");
     let shouldClear = false;
@@ -162,7 +157,6 @@ function BienvenidaAIC() {
       }
     }
     if (shouldClear) {
-      // Limpiar progreso solo para inventariosobra
       setUsados(prev => {
         if (!prev.inventariosobra) return prev;
         const nuevos = { ...prev, inventariosobra: false };
@@ -172,9 +166,7 @@ function BienvenidaAIC() {
     }
     // eslint-disable-next-line
   }, []);
-  // --- FIN NUEVO ---
-
-  // Barra de progreso (ajustar para contar inventariosobra solo si está vigente este mes)
+  // progress bar (ajustar para contar inventariosobra solo si está vigente este mes)
   const monthKey = getCurrentMonthKey();
   const savedInv = localStorage.getItem("bomberman_inventariosobra_respuestas");
   let inventarioObraVigente = false;

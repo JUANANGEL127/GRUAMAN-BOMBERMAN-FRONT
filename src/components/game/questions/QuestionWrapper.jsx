@@ -35,17 +35,13 @@ function QuestionWrapper({ questions = [], onComplete, sectionName = '', timerCo
   const [phase,           setPhase]           = useState('enter');
   const [celebrationType, setCelebrationType] = useState('positive');
 
-  // Refs para evitar closures stale
   const answersRef      = useRef({});
   const currentIdxRef   = useRef(0);
   const onCompleteRef   = useRef(onComplete);
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
-  // ─── Mantener ref sincronizada con el índice actual ───
   useEffect(() => { currentIdxRef.current = currentIndex; }, [currentIndex]);
 
-  // ─── Animación de entrada en cada cambio de pregunta ───
-  // Se ejecuta también en el montaje inicial (currentIndex=0)
   useEffect(() => {
     setPhase('enter');
     const t = setTimeout(
@@ -55,29 +51,19 @@ function QuestionWrapper({ questions = [], onComplete, sectionName = '', timerCo
     return () => clearTimeout(t);
   }, [currentIndex]);
 
-  // ─── Respuesta recibida ───
   const handleAnswer = useCallback((questionId, value, extraAnswers = {}) => {
-    // Acumular respuesta (+ observaciones u otros campos extra)
     answersRef.current = { ...answersRef.current, [questionId]: value, ...extraAnswers };
 
-    // Tipo de celebración según valor
     setCelebrationType(
       value === 'yes' ? 'positive'
       : value === 'no' ? 'negative'
       : 'neutral'
     );
 
-    // 1. Flip out
     setPhase('exit');
-
-    // 2. Después del flip-out → mostrar celebración
     setTimeout(() => setPhase('celebrating'), FLIP_DURATION);
   }, []);
 
-  // ─── Celebración terminó ───
-  // IMPORTANTE: NO llamar onComplete dentro de un setState updater,
-  // porque eso dispara setState en el padre (LevelWrapper) durante
-  // el ciclo de render del hijo → warning "Cannot update during render".
   const handleCelebrationDone = useCallback(() => {
     const next = currentIdxRef.current + 1;
     if (next >= questions.length) {
@@ -96,7 +82,6 @@ function QuestionWrapper({ questions = [], onComplete, sectionName = '', timerCo
   return (
     <div className="qw-root" aria-label={sectionName || 'Preguntas'}>
 
-      {/* ─── Timer circular (esquina superior derecha) ─── */}
       {timerConfig && (
         <div className="qw-timer-slot">
           <TimerChallenge
@@ -106,7 +91,6 @@ function QuestionWrapper({ questions = [], onComplete, sectionName = '', timerCo
         </div>
       )}
 
-      {/* ─── Barra de progreso ─── */}
       <div
         className="qw-progress-wrap"
         role="progressbar"
@@ -125,7 +109,6 @@ function QuestionWrapper({ questions = [], onComplete, sectionName = '', timerCo
         </span>
       </div>
 
-      {/* ─── Escena 3D ─── */}
       <div className="qw-scene">
         <div
           className={[
@@ -135,7 +118,6 @@ function QuestionWrapper({ questions = [], onComplete, sectionName = '', timerCo
           ].filter(Boolean).join(' ')}
         >
 
-          {/* YesNo */}
           {(current.type === 'yesno' || !current.type) && (
             <YesNoQuestion
               key={current.id}
@@ -144,7 +126,6 @@ function QuestionWrapper({ questions = [], onComplete, sectionName = '', timerCo
             />
           )}
 
-          {/* MultiSelect */}
           {current.type === 'multiselect' && (
             <MultiSelectQuestion
               key={current.id}
@@ -153,7 +134,6 @@ function QuestionWrapper({ questions = [], onComplete, sectionName = '', timerCo
             />
           )}
 
-          {/* TimeRegister */}
           {current.type === 'time' && (
             <TimeRegister
               key={current.id}
@@ -162,7 +142,6 @@ function QuestionWrapper({ questions = [], onComplete, sectionName = '', timerCo
             />
           )}
 
-          {/* TextInput — texto libre, número o fecha */}
           {(current.type === 'text' || current.type === 'number' || current.type === 'date') && (
             <TextInputQuestion
               key={current.id}
@@ -171,7 +150,6 @@ function QuestionWrapper({ questions = [], onComplete, sectionName = '', timerCo
             />
           )}
 
-          {/* InventoryItem — 3 campos: cantidad buena, cantidad mala, estado */}
           {current.type === 'inventory-item' && (
             <InventoryItemQuestion
               key={current.id}
@@ -180,7 +158,6 @@ function QuestionWrapper({ questions = [], onComplete, sectionName = '', timerCo
             />
           )}
 
-          {/* Fallback para tipos no implementados */}
           {current.type && !['yesno', 'multiselect', 'time', 'text', 'number', 'date', 'inventory-item'].includes(current.type) && (
             <div className="qw-fallback">
               <p className="qw-fallback-text">{current.question}</p>
@@ -196,7 +173,6 @@ function QuestionWrapper({ questions = [], onComplete, sectionName = '', timerCo
         </div>
       </div>
 
-      {/* ─── Celebración (DESPUÉS del flip-out) ─── */}
       <MicroCelebration
         show={phase === 'celebrating'}
         type={celebrationType}

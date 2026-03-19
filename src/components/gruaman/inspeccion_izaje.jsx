@@ -3,8 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
-// Usa variable de entorno para la base de la API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 const secciones = [
 	{
@@ -113,6 +112,16 @@ function isSunday() {
 	return new Date().getDay() === 0;
 }
 
+/**
+ * InspeccionIzaje — formulario de inspección de equipos de izaje para Gruaman.
+ * Inspecciona baldes de concreto, baldes de escombros, canastas de materiales y aparejos.
+ * Persiste las respuestas semanalmente en localStorage; las limpia los domingos.
+ * Envía mediante POST a /gruaman/inspeccion_izaje al guardar.
+ *
+ * @param {Object}   props
+ * @param {Object}   [props.value={}]   Respuestas pre-cargadas.
+ * @param {Function} [props.onChange]   Se llama con las respuestas actualizadas en cada cambio.
+ */
 function InspeccionIzaje({ value = {}, onChange }) {
 	const [respuestas, setRespuestas] = useState(value);
 	const [generales, setGenerales] = useState({
@@ -128,7 +137,6 @@ function InspeccionIzaje({ value = {}, onChange }) {
 	const guardarBtnRef = useRef(null);
 	const navigate = useNavigate();
 
-	// --- NUEVO: Manejo de respuestas precargadas por semana ---
 	useEffect(() => {
 		const weekKey = getCurrentWeekKey();
 		const saved = localStorage.getItem("inspeccion_izaje_respuestas");
@@ -168,9 +176,7 @@ function InspeccionIzaje({ value = {}, onChange }) {
 				cargo: "",
 			});
 		}
-		// ...existing code...
 	}, []);
-	// --- FIN NUEVO ---
 
 	useEffect(() => {
 		const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
@@ -234,7 +240,6 @@ function InspeccionIzaje({ value = {}, onChange }) {
 		}
 	};
 
-	// Nuevo mapeo para la estructura de la base de datos
 	const mapRespuestasToPayload = () => ({
 		// Datos generales
 		nombre_cliente: generales.cliente_constructora,
@@ -316,7 +321,6 @@ function InspeccionIzaje({ value = {}, onChange }) {
 
 		// Validación de datos generales obligatorios
 		// "cliente_constructora" se omite: puede quedar vacío si la red falla al cargar /obras,
-		// el backend no lo requiere estrictamente para registrar la inspección.
 		[
 			"proyecto_constructora",
 			"fecha_final",
@@ -358,8 +362,7 @@ function InspeccionIzaje({ value = {}, onChange }) {
 				delete payload.grillete_identificacion_legible;
 			}
 			await axios.post(`${API_BASE_URL}/gruaman/inspeccion_izaje`, payload);
-			// --- NUEVO: Guardar respuestas en localStorage solo tras éxito del servidor ---
-			const weekKey = getCurrentWeekKey();
+					const weekKey = getCurrentWeekKey();
 			localStorage.setItem(
 				"inspeccion_izaje_respuestas",
 				JSON.stringify({
@@ -368,13 +371,11 @@ function InspeccionIzaje({ value = {}, onChange }) {
 					generales,
 				})
 			);
-			// --- FIN NUEVO ---
-			alert("Lista de inspección enviada correctamente.");
+					alert("Lista de inspección enviada correctamente.");
 			if (onChange) onChange({});
 			setRespuestas({});
 			navigate(-1);
 		} catch (err) {
-			console.error("Error al enviar la lista de chequeo:", err?.response?.data || err.message);
 			if (err?.response?.data?.faltantes?.includes('grillete_identificacion_legible')) {
 				alert("El campo 'grillete_identificacion_legible' fue eliminado y no es necesario. Contacta al administrador para actualizar el backend.");
 			} else {

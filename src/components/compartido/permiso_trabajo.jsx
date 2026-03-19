@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 function getCurrentWeekKey() {
   const now = new Date();
@@ -17,6 +17,14 @@ function isSunday() {
   return new Date().getDay() === 0;
 }
 
+/**
+ * PermisoTrabajo — formulario de permiso de trabajo con múltiples secciones.
+ * Gestiona datos generales, tareas, herramientas, trabajadores, EPP/SRPDC, equipos de acceso,
+ * medidas de prevención y sección de cierre. Persiste las respuestas semanalmente en localStorage.
+ *
+ * @param {Object}   props
+ * @param {Function} [props.onFinish]  Se llama tras un POST exitoso a /compartido/permiso_trabajo.
+ */
 function PermisoTrabajo(props) {
   const [generales, setGenerales] = useState({
     cliente: "",
@@ -184,21 +192,17 @@ function PermisoTrabajo(props) {
 
   const navigate = useNavigate();
 
-  // ─── ÚNICO useEffect: evita race condition entre los dos anteriores ──────────
   useEffect(() => {
     const nombre_proyecto =
       localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
 
-    // Leer operador directamente de localStorage — fuente de verdad única
     const nombre_operador =
       localStorage.getItem("nombre_trabajador") ||
       localStorage.getItem("operador") ||
       "";
 
-    // Fecha local YYYY-MM-DD en zona horaria Colombia para evitar desfases por UTC
     const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 
-    // ── Manejo de datos guardados por semana ────────────────────────────────
     const weekKey = getCurrentWeekKey();
     const saved = localStorage.getItem("permiso_trabajo_respuestas");
     let datosGuardados = null;
@@ -219,7 +223,6 @@ function PermisoTrabajo(props) {
     }
 
     if (datosGuardados) {
-      // Precargar todo desde localStorage, pero SIEMPRE pisar operador con el actual
       setTareas(datosGuardados.tareas || tareasInicial);
       setDescripcion(datosGuardados.descripcion || "");
       setHerramientas(datosGuardados.herramientas || "");
@@ -278,17 +281,14 @@ function PermisoTrabajo(props) {
         ascensor_personas: "", acceso_cuerdas: "", otro: "",
       });
 
-      // Firmas: precargar cargo/coordinador, pero SIEMPRE usar operador actual
       setFirmas({
         ...(datosGuardados.firmas || {}),
         trabajador_autorizado: nombre_operador,
       });
     } else {
-      // Sin datos guardados: solo setear el operador
       setFirmas((prev) => ({ ...prev, trabajador_autorizado: nombre_operador }));
     }
 
-    // ── Llamada API: siempre pisa cliente/proyecto/fecha/operador ──────────
     axios
       .get(`${API_BASE_URL}/obras`)
       .then((res) => {
@@ -314,7 +314,6 @@ function PermisoTrabajo(props) {
       });
     // eslint-disable-next-line
   }, []);
-  // ─── FIN useEffect ────────────────────────────────────────────────────────
 
   const handleGeneralChange = (e) => {
     setGenerales({ ...generales, [e.target.name]: e.target.value });
@@ -378,15 +377,13 @@ function PermisoTrabajo(props) {
   };
 
   const handleGuardar = async () => {
-    // Leer operador directamente de localStorage como fuente de verdad segura
     const nombre_operador_actual =
       localStorage.getItem("nombre_trabajador") ||
       localStorage.getItem("operador") ||
       firmas.trabajador_autorizado ||
       "";
 
-    // "cliente" se omite de la validación: puede quedar vacío si la red falla
-    // al cargar /obras. El backend acepta nombre_cliente vacío.
+    // cliente omitted from required fields — backend accepts empty value if /obras fails
     if (!generales.proyecto) {
       alert("Completa los datos generales: proyecto.");
       return;
@@ -457,12 +454,9 @@ function PermisoTrabajo(props) {
       nombre_coordinador: cierreLabor.coordinador_nombre,
     };
 
-    console.log("Payload enviado a backend:", payload);
-
     try {
       await axios.post(`${API_BASE_URL}/compartido/permiso_trabajo`, payload);
 
-      // Guardar en localStorage DESPUÉS del await, con el operador seguro
       const weekKey = getCurrentWeekKey();
       localStorage.setItem(
         "permiso_trabajo_respuestas",
@@ -499,7 +493,6 @@ function PermisoTrabajo(props) {
         err.message ||
         "Error al guardar el permiso de trabajo.";
       alert("Error al guardar el permiso de trabajo: " + msg);
-      console.error(err);
     }
   };
 

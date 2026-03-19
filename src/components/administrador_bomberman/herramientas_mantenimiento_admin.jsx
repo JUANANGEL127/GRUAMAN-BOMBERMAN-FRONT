@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 const ITEMS_LABELS = {
   copa_bristol_10mm:       'COPA BRISTOL DE 10 MM',
@@ -107,7 +107,6 @@ function HerramientasMantenimientoAdmin() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      console.error(e);
     } finally {
       setLoading(false);
     }

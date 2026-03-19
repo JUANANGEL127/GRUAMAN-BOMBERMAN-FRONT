@@ -3,10 +3,14 @@ import axios from "axios";
 import { registerWebAuthn, authenticateWebAuthn, WebAuthnError, checkWebAuthnSupport } from "./components/webauthn";
 import { subscribeUser } from "./pushNotifications";
 
-// Usa variable de entorno para la base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
-// Hook para detectar mobile (max-width: 599px)
+/**
+ * Se suscribe a cambios en el ancho del viewport y retorna true cuando
+ * este es menor a 600 px.
+ *
+ * @returns {boolean}
+ */
 function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState(
     typeof window !== "undefined" ? window.innerWidth < 600 : true
@@ -24,15 +28,40 @@ function useIsMobile() {
   return isMobile;
 }
 
+/**
+ * Convierte un empresa_id numérico a su identificador de unidad de negocio en cadena.
+ *
+ * @param {number|string} id - empresa_id proveniente de la respuesta de la API.
+ * @returns {'GyE'|'AIC'|'SST'|'Lideres'|''}
+ */
 function empresaFromId(id) {
   const n = Number(id);
   if (n === 1) return "GyE";
   if (n === 2) return "AIC";
+  if (n === 3) return "Tecnicos";
   if (n === 4) return "SST";
   if (n === 5) return "Lideres";
   return "";
 }
 
+/**
+ * Pantalla de ingreso por cédula con autenticación biométrica (WebAuthn) y
+ * fallback por PIN.
+ *
+ * Flujo de autenticación:
+ * 1. El trabajador ingresa su número de identificación.
+ * 2. El componente consulta /datos_basicos y valida que el trabajador esté activo.
+ * 3. Si el dispositivo soporta WebAuthn y el trabajador no tiene credencial registrada,
+ *    registra una nueva. Si ya existe, autentica con ella.
+ * 4. En dispositivos sin soporte WebAuthn se usa el flujo basado en PIN.
+ * 5. Al tener éxito, invoca onUsuarioEncontrado con el objeto de trabajador normalizado.
+ *
+ * También provee un modal de login de administrador que redirige al panel
+ * correspondiente según el rol retornado por /admin/login.
+ *
+ * @param {Object} props
+ * @param {Function} props.onUsuarioEncontrado - Se llama con el objeto del trabajador autenticado.
+ */
 function CedulaIngreso({ onUsuarioEncontrado }) {
   const handleUsuarioAutenticado = (usuario, empresa_id) => {
     localStorage.setItem("nombre_trabajador", usuario.nombre || "");
@@ -49,18 +78,12 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
   const [adminError, setAdminError] = useState("");
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminShowPass, setAdminShowPass] = useState(false);
-  
-  // Estado para el modal de registro de nueva llave de acceso
   const [showRegistrarLlaveModal, setShowRegistrarLlaveModal] = useState(false);
   const [registrarLlaveLoading, setRegistrarLlaveLoading] = useState(false);
   const [pendingUsuario, setPendingUsuario] = useState(null);
-
-  // Estado para el modal de diagnóstico (cuando el dispositivo no soporta biometría)
-  const [diagnostico, setDiagnostico] = useState(null); // { titulo, pasos: [] }
-
-  // Estados para el flujo de PIN (fallback para dispositivos sin Google Services)
+  const [diagnostico, setDiagnostico] = useState(null);
   const [showPinModal, setShowPinModal] = useState(false);
-  const [pinModo, setPinModo] = useState('verificar'); // 'crear' | 'verificar'
+  const [pinModo, setPinModo] = useState('verificar');
   const [pinInput, setPinInput] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
   const [pinError, setPinError] = useState('');
@@ -94,7 +117,6 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
       }) || null;
 
       if (usuario) {
-        // Normalizar valores y guardar en localStorage para toda la app
         try {
           const nombre = usuario.nombre || usuario.nombres || usuario.nombre_trabajador || "";
           const numeroId = usuario.numero_identificacion || usuario.cedula || usuario.id || cedula;
@@ -112,11 +134,10 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
             localStorage.setItem("obra", obra);
             localStorage.setItem("nombre_proyecto", obra);
           }
-        } catch (e) {
-          console.error("Error guardando datos en localStorage:", e);
+        } catch {
+          // localStorage not available
         }
 
-        // Verificar si el usuario tiene PIN habilitado (fallback para dispositivos sin biometría)
         try {
           const pinRes = await axios.get(`${API_BASE_URL}/auth/pin/status?numero_identificacion=${encodeURIComponent(cedula)}`);
           const pinStatus = pinRes.data;
@@ -129,30 +150,22 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
             setShowPinModal(true);
             return;
           }
-        } catch (e) {
-          // Si no se puede verificar el estado PIN, continuar con el flujo biométrico
+        } catch {
+          // PIN status unavailable — proceed with biometric flow
         }
 
-        // Solicitar permiso de notificaciones push al guardar usuario
         if ("Notification" in window && "serviceWorker" in navigator) {
           try {
             const permission = await Notification.requestPermission();
             if (permission === "granted") {
               const numeroId = usuario.numero_identificacion || usuario.cedula || usuario.id || cedula;
-              try {
-                await subscribeUser(numeroId);
-              } catch (pushErr) {
-                setError("No se pudo registrar la suscripción a notificaciones push.");
-                console.error("Error al suscribir usuario a notificaciones push:", pushErr);
-              }
+              await subscribeUser(numeroId).catch(() => {});
             }
-          } catch (e) {
-            console.error("Error solicitando permiso de notificaciones:", e);
+          } catch {
+            // Push subscription not critical — continue
           }
         }
 
-        // --- INICIO INTEGRACIÓN WEBAUTHN ---
-        // 1. Verificar soporte del dispositivo antes de intentar
         const soportaBiometria = await checkWebAuthnSupport();
         if (!soportaBiometria) {
           setDiagnostico({
@@ -168,21 +181,18 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           return;
         }
 
-        // 2. Verificar si el usuario ya tiene credencial biométrica registrada
         let biometriaRegistrada = false;
         try {
           const res = await axios.post(`${API_BASE_URL}/webauthn/hasCredential`, { numero_identificacion: cedula });
           biometriaRegistrada = !!(res.data && res.data.hasCredential);
-        } catch (e) {
+        } catch {
           biometriaRegistrada = false;
         }
 
         if (!biometriaRegistrada) {
-          // Primera vez: registrar credencial biométrica
           try {
             await registerWebAuthn({ numero_identificacion: cedula, nombre: usuario.nombre });
           } catch (e) {
-            console.log('[CedulaIngreso] Error de registro WebAuthn:', e);
             if (e instanceof WebAuthnError && e.code === 'USER_CANCELLED') {
               setError("Cancelaste el registro de huella. Inténtalo de nuevo.");
             } else {
@@ -191,19 +201,15 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
             return;
           }
         } else {
-          // Autenticación biométrica en cada acceso
           try {
             await authenticateWebAuthn({ numero_identificacion: cedula });
           } catch (e) {
-            console.log('[CedulaIngreso] Error de autenticación WebAuthn:', e);
-
             if (e instanceof WebAuthnError && e.code === 'USER_CANCELLED') {
               setError("Cancelaste la autenticación. Inténtalo de nuevo.");
               return;
             }
 
             if (e instanceof WebAuthnError && e.code === 'NO_CREDENTIALS') {
-              // Credencial registrada en otro dispositivo — ofrecer registrar en este
               setPendingUsuario(usuario);
               setShowRegistrarLlaveModal(true);
               return;
@@ -213,9 +219,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
             return;
           }
         }
-        // --- FIN INTEGRACIÓN WEBAUTHN ---
 
-        // Mantener callback existente (SST → redirige directo, otros → BienvenidaSeleccion)
         handleUsuarioAutenticado({
           nombre: usuario.nombre,
           empresa: empresaFromId(usuario.empresa_id),
@@ -224,12 +228,15 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
       } else {
         setError("No haces parte de nuestros super héroes o tu usuario está inactivo.");
       }
-    } catch (err) {
-      console.error("Error obteniendo datos básicos:", err);
+    } catch {
       setError("No haces parte de nuestros super héroes.");
     }
   };
 
+  /**
+   * Envía las credenciales de administrador a /admin/login y redirige al panel
+   * de administración correspondiente si el inicio de sesión es exitoso.
+   */
   const handleAdminLogin = async () => {
     setAdminError("");
     setAdminLoading(true);
@@ -244,7 +251,6 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         setAdminError("");
         setShowAdminModal(false);
         localStorage.setItem("admin_rol", data.rol);
-        // Redireccionar según el rol usando las rutas correctas
         if (data.rol === "gruaman") {
           window.location.href = "/administrador";
         } else if (data.rol === "bomberman") {
@@ -255,39 +261,33 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
       } else {
         setAdminError(data.error || "Contraseña incorrecta.");
       }
-    } catch (err) {
+    } catch {
       setAdminError("Error de conexión.");
     } finally {
       setAdminLoading(false);
     }
   };
 
-  // Función para registrar nueva llave de acceso en este dispositivo
+  /**
+   * Registra una nueva credencial WebAuthn para el trabajador pendiente en este dispositivo.
+   * Se utiliza cuando la credencial del trabajador está almacenada en otro dispositivo.
+   */
   const handleRegistrarNuevaLlave = async () => {
     if (!pendingUsuario) return;
-    
     setRegistrarLlaveLoading(true);
     setError("");
-    
     try {
       const numeroId = pendingUsuario.numero_identificacion || pendingUsuario.cedula || pendingUsuario.id || cedula;
       const nombre = pendingUsuario.nombre || pendingUsuario.nombres || pendingUsuario.nombre_trabajador || "";
-      
       await registerWebAuthn({ numero_identificacion: numeroId, nombre });
-      
-      // Registro exitoso, cerrar modal y continuar con el flujo
       setShowRegistrarLlaveModal(false);
-      
-      // Continuar con el callback original (SST → redirige directo)
       handleUsuarioAutenticado({
         nombre: pendingUsuario.nombre,
         empresa: empresaFromId(pendingUsuario.empresa_id),
         numero_identificacion: pendingUsuario.numero_identificacion
       }, pendingUsuario.empresa_id);
-
       setPendingUsuario(null);
-    } catch (e) {
-      console.error('[CedulaIngreso] Error registrando nueva llave:', e);
+    } catch {
       setError("No se pudo registrar la nueva llave de acceso en este dispositivo.");
       setShowRegistrarLlaveModal(false);
       setPendingUsuario(null);
@@ -302,7 +302,10 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
     setError("Debes registrar una llave de acceso para continuar.");
   };
 
-  // Maneja el envío del PIN (creación o verificación)
+  /**
+   * Gestiona el envío del PIN tanto en modo creación ('crear') como en verificación ('verificar').
+   * Al tener éxito, llama a handleUsuarioAutenticado y limpia el estado pendiente.
+   */
   const handlePinSubmit = async () => {
     if (!pendingUsuario) return;
     const numeroId = pendingUsuario.numero_identificacion || cedula;
@@ -366,7 +369,6 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
 
   return (
     <div className="form-container" style={{ position: "relative", minHeight: "100vh" }}>
-      {/* Panel principal: solo visible en mobile */}
       {isMobile && (
         <div
           className="card-section"
@@ -400,7 +402,6 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         </div>
       )}
 
-      {/* Botón de ingreso administrador en la misma posición que Instalar App */}
       <button
         className="button"
         style={{
@@ -428,7 +429,6 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
       >
         Ingreso administrador
       </button>
-      {/* Modal de administrador con efecto liquid glass */}
       {showAdminModal && (
         <div
           style={{
@@ -581,7 +581,6 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         </div>
       )}
       
-      {/* Modal para registrar nueva llave de acceso */}
       {showRegistrarLlaveModal && (
         <div
           style={{
@@ -610,7 +609,6 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
               fontFamily: "inherit"
             }}
           >
-            {/* Icono de llave/huella */}
             <div style={{ marginBottom: 16 }}>
               <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#1976d2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto" }}>
                 <path d="M12 11c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z" />
@@ -678,7 +676,6 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         </div>
       )}
       
-      {/* Modal de PIN (crear o verificar) */}
       {showPinModal && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
@@ -774,7 +771,6 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         </div>
       )}
 
-      {/* Modal de diagnóstico: dispositivo sin soporte biométrico */}
       {diagnostico && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
@@ -823,7 +819,6 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         </div>
       )}
 
-      {/* Mostrar la animación solo en mobile */}
       {isMobile && !isLite && (
         <img
           src={gifIndex === 0 ? "/gruaman1.1.gif" : "/bomberman1.1.gif"}

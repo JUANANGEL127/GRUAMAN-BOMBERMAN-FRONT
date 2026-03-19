@@ -15,7 +15,6 @@ function TextInputQuestion({ question, onAnswer }) {
   const [submitted,  setSubmitted]  = useState(false);
   const inputRef = useRef(null);
 
-  // Enfocar el input cuando aparezca
   useEffect(() => {
     if (typingDone && inputRef.current) {
       inputRef.current.focus();

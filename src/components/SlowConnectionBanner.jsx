@@ -1,10 +1,13 @@
 /**
- * SlowConnectionBanner — aparece cuando se detecta conexión lenta.
- * Ofrece al usuario activar el modo lite (sin animaciones, sin video, sin game).
+ * Banner tipo bottom-sheet que aparece cuando se detecta una conexión lenta.
  *
- * Props:
- *   onUseLite  fn  — el usuario elige modo lite
- *   onDismiss  fn  — el usuario ignora y sigue en modo normal
+ * Se desliza hacia arriba con una animación CSS y permite al usuario elegir
+ * entre activar el modo lite (sin animaciones, sin juego, acceso directo a los
+ * formularios) o descartar la sugerencia.
+ *
+ * @param {Object} props
+ * @param {Function} props.onUseLite - Se llama cuando el usuario selecciona el modo lite.
+ * @param {Function} props.onDismiss - Se llama cuando el usuario descarta el banner.
  */
 function SlowConnectionBanner({ onUseLite, onDismiss }) {
   return (
@@ -33,7 +36,6 @@ function SlowConnectionBanner({ onUseLite, onDismiss }) {
         flexDirection: 'column',
         gap: 10,
       }}>
-        {/* Título */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: '1.3rem' }}>⚡</span>
           <span style={{
@@ -46,7 +48,6 @@ function SlowConnectionBanner({ onUseLite, onDismiss }) {
           </span>
         </div>
 
-        {/* Descripción */}
         <p style={{
           margin: 0,
           color: 'rgba(255,255,255,0.75)',
@@ -56,7 +57,6 @@ function SlowConnectionBanner({ onUseLite, onDismiss }) {
           La versión lite carga más rápido: sin animaciones, sin video, acceso directo a los formularios.
         </p>
 
-        {/* Botones */}
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button
             onClick={onDismiss}

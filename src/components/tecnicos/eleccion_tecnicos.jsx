@@ -1,53 +1,45 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import "../../App.css";
-import PQR from "./pqr";
-import Hallazgos from "./hallazgos";
+import HoradaIngreso from "../compartido/horada_ingreso";
+import HoraSalida from "../compartido/hora_salida";
+import PermisoTrabajo from "../compartido/permiso_trabajo";
 
-/**
- * @param {string} usuario
- * @returns {Object} Map of worldId → boolean
- */
 function getUsadosFromStorage(usuario) {
   try {
-    const data = localStorage.getItem(`sst_usados_${usuario}`);
+    const data = localStorage.getItem(`tecnicos_usados_${usuario}`);
     if (data) return JSON.parse(data);
   } catch {}
-  return { pqr: false, hallazgos: false, hora_ingreso: false, hora_salida: false };
+  return { hora_ingreso: false, hora_salida: false, permiso_trabajo: false };
 }
 
 function setUsadosToStorage(usados, usuario) {
-  localStorage.setItem(`sst_usados_${usuario}`, JSON.stringify(usados));
+  localStorage.setItem(`tecnicos_usados_${usuario}`, JSON.stringify(usados));
 }
 
 function limpiarUsados(usuario) {
-  localStorage.removeItem(`sst_usados_${usuario}`);
-  localStorage.removeItem(`sst_usados_fecha_${usuario}`);
+  localStorage.removeItem(`tecnicos_usados_${usuario}`);
+  localStorage.removeItem(`tecnicos_usados_fecha_${usuario}`);
 }
 
-/** @returns {string} YYYY-MM-DD date in America/Bogota timezone */
 function getTodayDateStr() {
   return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 }
 
-/**
- * BienvenidaSST — selector de misiones para el rol SST (seguridad y salud en el trabajo).
- * Rastrea el uso diario por usuario y se reinicia a medianoche.
- */
-function BienvenidaSST() {
+function BienvenidaTecnicos() {
   const navigate = useNavigate();
   const nombre = localStorage.getItem("nombre_trabajador") || "";
   const usuario = nombre || "anonimo";
   const [usados, setUsados] = useState(() => getUsadosFromStorage(usuario));
-  const [usuarioActual, setUsuarioActual] = useState(usuario);
+  const [usuarioActual] = useState(usuario);
 
   useEffect(() => {
     const fechaHoy = getTodayDateStr();
-    const fechaGuardada = localStorage.getItem(`sst_usados_fecha_${usuarioActual}`);
+    const fechaGuardada = localStorage.getItem(`tecnicos_usados_fecha_${usuarioActual}`);
     if (fechaGuardada !== fechaHoy) {
       limpiarUsados(usuarioActual);
       setUsados(getUsadosFromStorage(usuarioActual));
-      localStorage.setItem(`sst_usados_fecha_${usuarioActual}`, fechaHoy);
+      localStorage.setItem(`tecnicos_usados_fecha_${usuarioActual}`, fechaHoy);
     }
     const now = new Date();
     const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1, 0);
@@ -55,7 +47,7 @@ function BienvenidaSST() {
     const timer = setTimeout(() => {
       limpiarUsados(usuarioActual);
       setUsados(getUsadosFromStorage(usuarioActual));
-      localStorage.setItem(`sst_usados_fecha_${usuarioActual}`, getTodayDateStr());
+      localStorage.setItem(`tecnicos_usados_fecha_${usuarioActual}`, getTodayDateStr());
     }, msUntilMidnight);
     return () => clearTimeout(timer);
     // eslint-disable-next-line
@@ -63,7 +55,7 @@ function BienvenidaSST() {
 
   useEffect(() => {
     setUsadosToStorage(usados, usuarioActual);
-    localStorage.setItem(`sst_usados_fecha_${usuarioActual}`, getTodayDateStr());
+    localStorage.setItem(`tecnicos_usados_fecha_${usuarioActual}`, getTodayDateStr());
   }, [usados, usuarioActual]);
 
   const handleNavigate = (ruta, key) => {
@@ -90,30 +82,23 @@ function BienvenidaSST() {
           <button
             className={getButtonClass(usados.hora_ingreso)}
             style={{ maxWidth: 320 }}
-            onClick={() => handleNavigate("/hora_ingreso", "hora_ingreso")}
+            onClick={() => handleNavigate("/eleccion_tecnicos/hora_ingreso", "hora_ingreso")}
           >
             Hora de Ingreso
           </button>
           <button
             className={getButtonClass(usados.hora_salida)}
             style={{ maxWidth: 320 }}
-            onClick={() => handleNavigate("/hora_salida", "hora_salida")}
+            onClick={() => handleNavigate("/eleccion_tecnicos/hora_salida", "hora_salida")}
           >
             Hora de Salida
           </button>
           <button
-            className={getButtonClass(usados.pqr)}
+            className={getButtonClass(usados.permiso_trabajo)}
             style={{ maxWidth: 320 }}
-            onClick={() => handleNavigate("/pqr", "pqr")}
+            onClick={() => handleNavigate("/eleccion_tecnicos/permiso_trabajo", "permiso_trabajo")}
           >
-            PQR
-          </button>
-          <button
-            className={getButtonClass(usados.hallazgos)}
-            style={{ maxWidth: 320 }}
-            onClick={() => handleNavigate("/hallazgos", "hallazgos")}
-          >
-            Hallazgos
+            Permiso de Trabajo
           </button>
         </div>
       </div>
@@ -121,17 +106,15 @@ function BienvenidaSST() {
   );
 }
 
-/**
- * EleccionSST — contenedor de rutas para el rol SST (BienvenidaSST + sub-rutas).
- */
-function EleccionSST() {
+function EleccionTecnicos() {
   return (
     <Routes>
-      <Route path="/" element={<BienvenidaSST />} />
-      <Route path="/pqr" element={<PQR />} />
-      <Route path="/hallazgos" element={<Hallazgos />} />
+      <Route path="/" element={<BienvenidaTecnicos />} />
+      <Route path="/hora_ingreso" element={<HoradaIngreso />} />
+      <Route path="/hora_salida" element={<HoraSalida />} />
+      <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />
     </Routes>
   );
 }
 
-export default EleccionSST;
+export default EleccionTecnicos;

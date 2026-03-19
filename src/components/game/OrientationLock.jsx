@@ -29,20 +29,17 @@ function OrientationLock({ children }) {
   const [landscape, setLandscape] = useState(checkLandscape);
   const lockAttempted = useRef(false);
 
-  // Intentar bloquear en landscape (solo una vez al montar)
   useEffect(() => {
     if (lockAttempted.current) return;
     lockAttempted.current = true;
 
     if (screen.orientation?.lock) {
       screen.orientation.lock('landscape').catch(() => {
-        // No soportado o denegado por el SO
-        // El componente maneja la orientación manualmente
+        // No soportado o denegado por el SO — el overlay manual lo gestiona
       });
     }
   }, []);
 
-  // Escuchar cambios de orientación
   useEffect(() => {
     const update = () => setLandscape(checkLandscape());
 
@@ -62,15 +59,12 @@ function OrientationLock({ children }) {
     };
   }, []);
 
-  // Modo portrait → overlay de bloqueo estricto (no dismissible)
   if (!landscape) {
     return (
       <div className="ol-block" role="alert" aria-live="polite">
 
-        {/* Fondo puntillado */}
         <div className="ol-bg-dots" />
 
-        {/* Animación de teléfono */}
         <div className="ol-phone-wrap">
           <div className="ol-phone-portrait">
             <PhoneSVG />
@@ -90,7 +84,6 @@ function OrientationLock({ children }) {
           </div>
         </div>
 
-        {/* Texto */}
         <div className="ol-text">
           <h2 className="ol-title">Modo horizontal requerido</h2>
           <p className="ol-subtitle">
@@ -98,12 +91,10 @@ function OrientationLock({ children }) {
           </p>
         </div>
 
-        {/* Barra decorativa pulsante */}
         <div className="ol-pulse-bar">
           <span /><span /><span /><span /><span />
         </div>
 
-        {/* Borde inferior de acento */}
         <div className="ol-accent-line" />
       </div>
     );
@@ -112,7 +103,10 @@ function OrientationLock({ children }) {
   return <>{children}</>;
 }
 
-/* SVG de teléfono reutilizable */
+/**
+ * Silueta SVG genérica de teléfono utilizada en orientaciones vertical y horizontal.
+ * @param {{ landscape?: boolean }} props
+ */
 function PhoneSVG({ landscape = false }) {
   return (
     <svg
@@ -124,7 +118,7 @@ function PhoneSVG({ landscape = false }) {
       <rect x="3" y="3" width="54" height="94" rx="9" stroke="currentColor" strokeWidth="3.5" fill="rgba(255,255,255,0.04)" />
       <circle cx="30" cy="88" r="4" fill="currentColor" opacity="0.5" />
       <rect x="18" y="9" width="24" height="3" rx="1.5" fill="currentColor" opacity="0.35" />
-      {/* Pantalla */}
+      {/* Área de pantalla */}
       <rect x="9" y="18" width="42" height="62" rx="3" fill="rgba(255,255,255,0.06)" />
     </svg>
   );

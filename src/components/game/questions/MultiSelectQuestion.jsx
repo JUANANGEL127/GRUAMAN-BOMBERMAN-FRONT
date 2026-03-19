@@ -54,12 +54,10 @@ function MultiSelectQuestion({ question, onAnswer }) {
   return (
     <div className="msq-root">
 
-      {/* Ícono */}
       {question.icon && (
         <div className="msq-icon" aria-hidden="true">{question.icon}</div>
       )}
 
-      {/* Bocadillo */}
       <div className="msq-bubble-wrap">
         <div className="msq-bubble">
           <TypewriterQuestion
@@ -70,7 +68,6 @@ function MultiSelectQuestion({ question, onAnswer }) {
         <div className="msq-tail" aria-hidden="true" />
       </div>
 
-      {/* Grid de cards */}
       <div
         className={`msq-grid${typingDone ? ' msq-grid--visible' : ''}`}
         role="group"
@@ -89,10 +86,8 @@ function MultiSelectQuestion({ question, onAnswer }) {
               aria-pressed={isSelected}
               aria-label={opt.label}
             >
-              {/* Inner con transform-style: preserve-3d */}
               <div className="msq-card-inner">
 
-                {/* Cara frontal */}
                 <div className="msq-card-front">
                   {opt.icon && (
                     <span className="msq-card-opt-icon" aria-hidden="true">
@@ -102,7 +97,6 @@ function MultiSelectQuestion({ question, onAnswer }) {
                   <span className="msq-card-label">{opt.label}</span>
                 </div>
 
-                {/* Cara trasera (seleccionada) */}
                 <div className="msq-card-back">
                   <span className="msq-card-check" aria-hidden="true">✓</span>
                   <span className="msq-card-label">{opt.label}</span>
@@ -114,7 +108,6 @@ function MultiSelectQuestion({ question, onAnswer }) {
         })}
       </div>
 
-      {/* Footer: contador + confirmar */}
       {typingDone && (
         <div className="msq-footer">
           <span className="msq-count" aria-live="polite">

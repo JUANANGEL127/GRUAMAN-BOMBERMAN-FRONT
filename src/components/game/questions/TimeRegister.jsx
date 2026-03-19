@@ -29,7 +29,7 @@ function formatDisplayTime(date) {
 
 function TimeRegister({ question, onAnswer }) {
   // Captura una sola vez al montar (lazy initializer)
-  const [capturedTime] = useState(() => new Date());
+  const [capturedTime] = useState(() => new Date()); // frozen at mount time
   const [confirmed,   setConfirmed]   = useState(false);
   const [typingDone,  setTypingDone]  = useState(false);
 
@@ -44,12 +44,10 @@ function TimeRegister({ question, onAnswer }) {
   return (
     <div className="tr-root">
 
-      {/* Ícono */}
       {question.icon && (
         <div className="tr-icon" aria-hidden="true">{question.icon}</div>
       )}
 
-      {/* Bocadillo */}
       <div className="tr-bubble-wrap">
         <div className="tr-bubble">
           <TypewriterQuestion
@@ -60,7 +58,6 @@ function TimeRegister({ question, onAnswer }) {
         <div className="tr-tail" aria-hidden="true" />
       </div>
 
-      {/* Reloj — aparece cuando termina el typewriter */}
       <div className={`tr-clock-wrap${typingDone ? ' tr-clock-wrap--visible' : ''}`}>
         <div className="tr-clock" aria-label={`Hora registrada: ${displayTime}`}>
           <span className="tr-clock-icon" aria-hidden="true">🕐</span>

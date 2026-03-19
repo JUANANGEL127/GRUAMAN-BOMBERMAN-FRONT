@@ -5,6 +5,11 @@ import "../../styles/permiso_trabajo.css";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
+/**
+ * HoradaIngreso — formulario legado para el registro de hora de ingreso a la jornada.
+ * Resuelve el proyecto y cliente desde /obras y persiste el registro mediante POST a /horas_jornada/ingreso.
+ * La hora se captura una sola vez a demanda (toque manual) en lugar de hacerlo al montar.
+ */
 export default function HoradaIngreso() {
   const navigate = useNavigate();
   const [generales, setGenerales] = useState({
@@ -18,12 +23,9 @@ export default function HoradaIngreso() {
   const [guardado, setGuardado] = useState(false);
   const [error, setError] = useState("");
 
-  // Cargar datos generales igual que chequeo_alturas.jsx
   useEffect(() => {
     const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
-    // Generar la fecha en America/Bogota (YYYY-MM-DD) para evitar desfases por UTC.
-    // toLocaleDateString("en-CA") produce "YYYY-MM-DD" directamente con la TZ forzada.
     const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
     const cargo = localStorage.getItem("cargo_trabajador") || "";
 
@@ -66,8 +68,7 @@ export default function HoradaIngreso() {
 
   const handleGuardar = async () => {
     setError("");
-    // Validación de campos obligatorios (cargo y cliente no son obligatorios:
-    // cliente puede quedar vacío si la red falla al cargar /obras).
+    // cliente can be empty if /obras fails to load — backend accepts it
     if (
       !generales.proyecto ||
       !generales.fecha ||
@@ -97,7 +98,6 @@ export default function HoradaIngreso() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      // Mostrar el body de error si status >= 400
       let data = {};
       try {
         data = await resp.json();
@@ -109,9 +109,6 @@ export default function HoradaIngreso() {
         setTimeout(() => navigate(-1), 500);
       } else {
         setError((data && data.error) || `Error al guardar. Código: ${resp.status}`);
-        // Para depuración, imprime el payload y la respuesta del backend
-        console.error("Payload enviado:", payload);
-        console.error("Respuesta backend:", data);
       }
     } catch (e) {
       setError("Error de red al guardar");

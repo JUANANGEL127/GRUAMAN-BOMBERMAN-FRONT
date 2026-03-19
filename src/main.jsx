@@ -45,6 +45,7 @@ import HorasExtraGruamanAdmin from "./components/administrador_gruaman/horas_ext
 import EleccionLideres from "./components/Lideres_bombas/eleccion_lideres";
 import RegistrosDiariosAdmin from './components/administrador/RegistrosDiariosAdmin';
 import EleccionSST from './components/sst/eleccion_sst';
+import EleccionTecnicos from './components/tecnicos/eleccion_tecnicos';
 import PQR from './components/sst/pqr';
 import Hallazgos from './components/sst/hallazgos';
 import GameFlow     from './components/game/GameFlow';
@@ -59,12 +60,16 @@ import AtsTelescopaje        from './components/gruaman/ats/AtsTelescopaje';
 import AtsMantenimiento      from './components/gruaman/ats/AtsMantenimiento';
 import AtsElevador           from './components/gruaman/ats/AtsElevador';
 
-// Función para obtener usuario y obra de localStorage
+/**
+ * Resuelve el nombre del trabajador y la obra activa desde localStorage,
+ * admitiendo tanto cadenas simples como objetos serializados en JSON.
+ *
+ * @returns {{ usuario: string, obra: string }}
+ */
 function getUsuarioObra() {
   let usuario = "";
   let obra = "";
 
-  // Usuario: primero intenta con nombre_trabajador, luego usuario
   const nombreTrabajador = localStorage.getItem("nombre_trabajador");
   if (nombreTrabajador && nombreTrabajador.trim()) {
     usuario = nombreTrabajador;
@@ -86,7 +91,6 @@ function getUsuarioObra() {
     }
   }
 
-  // Obra: primero intenta con obra, luego nombre_proyecto
   const obraStorage = localStorage.getItem("obra");
   if (obraStorage && obraStorage.trim()) {
     obra = obraStorage;
@@ -111,10 +115,14 @@ function getUsuarioObra() {
   return { usuario, obra };
 }
 
-// Usa variable de entorno para la base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
-// Hook para detectar mobile (max-width: 599px)
+/**
+ * Se suscribe a cambios en el ancho del viewport y retorna true cuando
+ * este es menor a 600 px (punto de quiebre para móviles).
+ *
+ * @returns {boolean}
+ */
 function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState(
     typeof window !== "undefined" ? window.innerWidth < 600 : true
@@ -132,9 +140,16 @@ function useIsMobile() {
   return isMobile;
 }
 
-// Componente del botón SOS flotante
+/**
+ * Botón flotante de emergencia visible únicamente en móvil.
+ *
+ * Presenta un modal con opciones de llamada y WhatsApp. La opción de WhatsApp
+ * enruta al usuario según su rol (Bomberman / Gruaman) y, para Bomberman,
+ * permite seleccionar el grupo regional. Copia un mensaje SOS preformateado
+ * al portapapeles antes de abrir la URL del grupo de WhatsApp.
+ */
 function SOSButton() {
-  const isMobile = useIsMobile(); // <-- ocultar en tablet/desktop
+  const isMobile = useIsMobile();
   if (!isMobile) return null;
 
   const [enviando, setEnviando] = React.useState(false);
@@ -143,7 +158,6 @@ function SOSButton() {
   const [showRegionModal, setShowRegionModal] = React.useState(false);
   const [showRoleModal, setShowRoleModal] = React.useState(false);
 
-  // Utilidad para obtener usuario y obra de localStorage
   function getUsuarioObra() {
     let usuario = "";
     let obra = "";
@@ -190,26 +204,22 @@ function SOSButton() {
     return { usuario, obra };
   }
 
-  // Handler para mostrar opciones SOS
   const handleSOS = () => {
     setShowModal(true);
     setMensaje("");
   };
 
-  // Handler para llamar
   const handleLlamar = () => {
     setShowModal(false);
     window.location.href = "tel:573183485318";
   };
 
-  // Handler para WhatsApp: abrir selector de rol (bomberman / gruaman)
   const handleWhatsApp = () => {
     setShowModal(false);
     setShowRoleModal(true);
     setMensaje("");
   };
 
-  // Manejar selección de rol: si es bomberman abrir regiones, si es gruaman redirigir
   const handleRole = (role) => {
     setShowRoleModal(false);
     if (role === "bomberman") {
@@ -217,12 +227,15 @@ function SOSButton() {
       return;
     }
     if (role === "gruaman") {
-      // Grupo Gruaman (anteriormente usado) con mode param
       handleRegion('https://chat.whatsapp.com/F9SaM1zAVuw5EoS7SKQ6rK?mode=gi_c');
     }
   };
 
-  // Redirigir según región, copiando el mensaje
+  /**
+   * Copia el mensaje de incidente al portapapeles y abre la URL del grupo
+   * regional de WhatsApp.
+   * @param {string} regionUrl - Enlace profundo al grupo de WhatsApp de destino.
+   */
   const handleRegion = (regionUrl) => {
     setShowRegionModal(false);
     const { usuario, obra } = getUsuarioObra();
@@ -466,9 +479,16 @@ function SOSButton() {
   );
 }
 
-// Componente del botón STP flotante
+/**
+ * Botón flotante de paro de obra (STP) visible únicamente en móvil.
+ *
+ * Replica el patrón de SOSButton pero para paros no críticos. Ofrece llamada
+ * (con sub-selección Bomberman / Gruaman) y reporte por WhatsApp con
+ * enrutamiento por rol y región. Copia un mensaje STP preformateado al
+ * portapapeles antes de abrir la URL del grupo.
+ */
 function STPButton() {
-  const isMobile = useIsMobile(); // <-- ocultar en tablet/desktop
+  const isMobile = useIsMobile();
   if (!isMobile) return null;
 
   const [showModal, setShowModal] = React.useState(false);
@@ -477,7 +497,6 @@ function STPButton() {
   const [showRegionModalSTP, setShowRegionModalSTP] = React.useState(false);
   const [showRoleModalSTP, setShowRoleModalSTP] = React.useState(false);
 
-  // Utilidad para obtener usuario y obra de localStorage
   function getUsuarioObra() {
     let usuario = "";
     let obra = "";
@@ -524,20 +543,17 @@ function STPButton() {
     return { usuario, obra };
   }
 
-  // Handler para mostrar opciones STP
   const handleSTP = () => {
     setShowModal(true);
     setMensaje("");
   };
 
-  // Handler para WhatsApp grupo STP: abrir selector de rol
   const handleWhatsApp = () => {
     setShowModal(false);
     setShowRoleModalSTP(true);
     setMensaje("");
   };
 
-  // Manejar selección de rol en STP
   const handleRoleSTP = (role) => {
     setShowRoleModalSTP(false);
     if (role === "bomberman") {
@@ -545,12 +561,15 @@ function STPButton() {
       return;
     }
     if (role === "gruaman") {
-      // Redirigir a grupo Gruaman con mensaje STP
       handleRegionSTP('https://chat.whatsapp.com/F9SaM1zAVuw5EoS7SKQ6rK?mode=gi_c');
     }
   };
 
-  // Redirigir según región para STP, copiando el mensaje correspondiente
+  /**
+   * Copia el mensaje de paro de obra al portapapeles y abre la URL del grupo
+   * regional de WhatsApp.
+   * @param {string} regionUrl - Enlace profundo al grupo de WhatsApp de destino.
+   */
   const handleRegionSTP = (regionUrl) => {
     setShowRegionModalSTP(false);
     const { usuario, obra } = getUsuarioObra();
@@ -568,19 +587,16 @@ function STPButton() {
     setTimeout(() => setMensaje(""), 3000);
   };
 
-  // Handler para mostrar opciones de llamada
   const handleLlamar = () => {
     setShowModal(false);
     setShowCallModal(true);
   };
 
-  // Handler para llamar a Bomberman
   const handleLlamarBomberman = () => {
     setShowCallModal(false);
     window.location.href = "tel:573174319739";
   };
 
-  // Handler para llamar a Gruaman
   const handleLlamarGruaman = () => {
     setShowCallModal(false);
     window.location.href = "tel:3134998161";
@@ -870,34 +886,20 @@ function STPButton() {
   );
 }
 
-// Registro del Service Worker para notificaciones push
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
       .then(registration => {
-        console.log('Service Worker registrado', registration);
-        // Forzar actualización del SW
         registration.update();
-        
-        // Detectar cuando hay una nueva versión disponible
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
-          console.log('[SW] Nueva versión encontrada, instalando...');
-          
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'activated') {
-              console.log('[SW] Nueva versión activada');
-            }
-          });
+          newWorker.addEventListener('statechange', () => {});
         });
       })
-      .catch(err => {
-        console.error('Error registrando Service Worker', err);
-      });
+      .catch(() => {});
   });
 }
 
-// Renderizado principal y rutas de la aplicación
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
@@ -925,7 +927,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             userSelect: "none",
           }}
         />
-        {/* ─── Nubes globales sobre fondo.jpeg (páginas no-game) ─── */}
         <div className="global-clouds" aria-hidden="true">
           <span className="global-cloud global-cloud--1">☁️</span>
           <span className="global-cloud global-cloud--2">☁️</span>
@@ -936,13 +937,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <STPButton />
         <div style={{ position: "relative", zIndex: 1 }}>
           <Routes>
-            {/* ─── Rutas del juego ─── */}
             <Route path="/game/rotate-screen" element={<GameFlow key="rotate" step="rotate" />} />
             <Route path="/game/story-intro"   element={<GameFlow key="story"  step="story"  />} />
             <Route path="/game/world-map"     element={<GameFlow key="map"    step="map"    />} />
             <Route path="/game/level/:worldId" element={<LevelWrapper />} />
 
-            {/* ─── Rutas ATS ─── */}
             <Route path="/ats-selector"                    element={<AtsSelector />} />
             <Route path="/ats/operacion-torregrua"         element={<AtsOperacionTorregrua />} />
             <Route path="/ats/mando-inalam"                element={<AtsMandoInalam />} />
@@ -995,6 +994,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/eleccion_lideres/*" element={<EleccionLideres />} />
             <Route path="/registros_diarios_admin" element={<RegistrosDiariosAdmin />} />
             <Route path="/eleccion_sst/*" element={<EleccionSST />} />
+            <Route path="/eleccion_tecnicos/*" element={<EleccionTecnicos />} />
             <Route path="/pqr" element={<PQR />} />
             <Route path="/hallazgos" element={<Hallazgos />} />
           </Routes>
@@ -1005,5 +1005,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   </React.StrictMode>
 );
 
-// No hay registro manual de service worker aquí, ¡perfecto!
 

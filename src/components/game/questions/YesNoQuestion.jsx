@@ -64,14 +64,12 @@ function YesNoQuestion({ question, onAnswer }) {
   return (
     <div className="ynq-root">
 
-      {/* Ícono de la pregunta */}
       {question.icon && (
         <div className="ynq-icon" aria-hidden="true">
           {question.icon}
         </div>
       )}
 
-      {/* Bocadillo con typewriter */}
       <div className="ynq-bubble-wrap">
         <div className="ynq-bubble">
           <TypewriterQuestion
@@ -82,7 +80,6 @@ function YesNoQuestion({ question, onAnswer }) {
         <div className="ynq-tail" aria-hidden="true" />
       </div>
 
-      {/* Botones — aparecen con bounceIn cuando termina el typewriter */}
       <div className={`ynq-buttons${typingDone ? ' ynq-buttons--visible' : ''}${options.length > 3 ? ' ynq-buttons--many' : ''}`}>
         {options.map(opt => (
           <button
@@ -99,7 +96,6 @@ function YesNoQuestion({ question, onAnswer }) {
         ))}
       </div>
 
-      {/* Campo de observaciones — aparece al seleccionar respuesta negativa */}
       {showObs && (
         <div className="ynq-obs-wrap" role="region" aria-label="Observaciones">
           <label className="ynq-obs-label" htmlFor={`obs-${question.id}`}>

@@ -3,8 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
-// Usa variable de entorno para la base de la API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 const accesorios = [
   { desc: "BOLA DE LIMPIEZA PARA TUBERIA DE 5.5\" CIFA" },
@@ -94,7 +93,7 @@ const itemsTuberia = [
   { item: "", desc: "BOTIQUIN" }
 ];
 
-// Map for DB columns for accesorios (buena/mala)
+/** DB column mapping for accessories section (buena/mala quantity pairs) */
 const accesoriosDBMap = [
   { base: "bola_limpieza_tuberia_55_cifa", buena: "bola_limpieza_tuberia_55_cifa_buena", mala: "bola_limpieza_tuberia_55_cifa_mala" },
   { base: "jostick", buena: "jostick_buena", mala: "jostick_mala" },
@@ -119,7 +118,7 @@ const accesoriosDBMap = [
   ,{ base: "soportes_metalicos", buena: "soportes_metalicos_buena", mala: "soportes_metalicos_mala" }
 ];
 
-// Map for DB columns for accesorios tuberia (buena/mala)
+/** DB column mapping for tube accessories section */
 const accesoriosTuberiaDBMap = [
   { base: "llave_11", buena: "llave_11_buena", mala: "llave_11_mala" },
   { base: "llave_10", buena: "llave_10_buena", mala: "llave_10_mala" },
@@ -141,8 +140,7 @@ const accesoriosTuberiaDBMap = [
   { base: "cunete_grasa_5_galones", buena: "cunete_grasa_5_galones_buena", mala: "cunete_grasa_5_galones_mala" }
 ];
 
-// Map for DB columns for items tuberia (buena/mala)
-// Las primeras 4 son bombas y solo tienen campo de seriales (sin buena/mala)
+/** DB column mapping for tube items; first 4 entries are pumps with a serial field only */
 const itemsTuberiaDBMap = [
   { item: "P506", seriales: "bomba_pc506_seriales" },
   { item: "PC607", seriales: "bomba_pc607_seriales" },
@@ -186,6 +184,11 @@ const itemsTuberiaDBMap = [
   { item: "", buena: "botiquin_buena", mala: "botiquin_mala" }
 ];
 
+/**
+ * InventariosObra — formulario de inventario mensual de equipos y tuberías para Bomberman.
+ * Registra cantidades (buena/mala) para accesorios, accesorios de tubería e ítems de tubería.
+ * Envía mediante POST a /bomberman/inventariosobra. La lógica de reinicio mensual se gestiona en eleccionaic.jsx.
+ */
 function inventariosobra() {
   const [generales, setGenerales] = useState({
     cliente: "",
@@ -275,15 +278,12 @@ function inventariosobra() {
       observaciones_generales: observaciones
     };
 
-    console.log("Payload enviado a backend:", payload);
-
     try {
       await axios.post(`${API_BASE_URL}/bomberman/inventariosobra`, payload);
       window.alert("Inventario guardado correctamente en backend.");
       navigate(-1);
     } catch (err) {
-      console.error("Error al guardar inventario:", err?.response?.data || err, payload);
-      window.alert("Error al guardar inventario. Revisa la consola para detalles.");
+      window.alert(`Error al guardar inventario: ${err?.response?.data?.message || err.message}`);
     }
   };
 

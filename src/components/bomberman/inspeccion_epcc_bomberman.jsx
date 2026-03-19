@@ -3,8 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
-// Usa variable de entorno para la base de la API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 const datosGeneralesFields = [
   { name: "nombre", label: "Nombre" },
@@ -145,8 +144,13 @@ function isSunday() {
   return new Date().getDay() === 0;
 }
 
+/**
+ * InspeccionEpccBomberman — formulario semanal de inspección EPCC (equipos de protección contra caídas).
+ * Cubre condiciones de salud, EPP, EPCC, herramientas manuales y herramientas mecanizadas.
+ * Persiste las respuestas semanalmente en localStorage; las limpia los domingos.
+ * Envía mediante POST a /bomberman/inspeccion_epcc_bomberman.
+ */
 function inspeccion_epcc_bomberman() {
-  // 🔑 Cambiado: cliente -> nombre_cliente, proyecto -> nombre_proyecto
   const [datosGenerales, setDatosGenerales] = useState({
     nombre_cliente: "",
     nombre_proyecto: "",
@@ -172,8 +176,6 @@ function inspeccion_epcc_bomberman() {
         if (Array.isArray(res.data.obras)) obras = res.data.obras;
         const obra = obras.find(o => o.nombre_obra === nombre_proyecto);
         const constructora = obra ? obra.constructora : "";
-        
-        // 🔑 Cambiado: cliente -> nombre_cliente, proyecto -> nombre_proyecto
         setDatosGenerales({
           nombre_cliente: constructora,
           nombre_proyecto: nombre_proyecto,
@@ -183,7 +185,6 @@ function inspeccion_epcc_bomberman() {
         });
       })
       .catch(() => {
-        // 🔑 Cambiado: cliente -> nombre_cliente, proyecto -> nombre_proyecto
         setDatosGenerales({
           nombre_cliente: "",
           nombre_proyecto: nombre_proyecto,
@@ -194,7 +195,6 @@ function inspeccion_epcc_bomberman() {
       });
   }, []);
 
-  // Precarga semanal de respuestas
   useEffect(() => {
     const weekKey = getCurrentWeekKey();
     const saved = localStorage.getItem("bomberman_inspeccion_epcc_respuestas");
@@ -269,9 +269,7 @@ function inspeccion_epcc_bomberman() {
     const erroresTemp = {};
     let primerError = null;
 
-    // Datos generales
-    // "nombre_cliente" se omite: puede quedar vacío si la red falla al cargar /obras,
-    // el backend no lo requiere estrictamente para registrar la inspección.
+    // nombre_cliente omitted — backend accepts empty value if /obras fetch fails
     ["nombre_proyecto", "fecha", "nombre_operador", "cargo"].forEach(field => {
       if (!datosGenerales[field] || datosGenerales[field].toString().trim() === "") {
         erroresTemp[field] = true;
@@ -279,7 +277,6 @@ function inspeccion_epcc_bomberman() {
       }
     });
 
-    // Secciones
     let idxCampo = 0;
     secciones.forEach((seccion, seccionIdx) => {
       seccion.items.forEach((item, itemIdx) => {
@@ -312,8 +309,6 @@ function inspeccion_epcc_bomberman() {
         idxCampo++;
       });
     });
-
-    // 🔑 Renombrado de las claves del payload para coincidir con los nuevos requisitos
     return {
       nombre_cliente: datosGenerales.nombre_cliente, // Antes: cliente_constructora
       nombre_proyecto: datosGenerales.nombre_proyecto, // Antes: proyecto_constructora
@@ -331,7 +326,6 @@ function inspeccion_epcc_bomberman() {
 
     const payload = buildPayload();
 
-    // Guardar respuestas en localStorage por semana
     const weekKey = getCurrentWeekKey();
     localStorage.setItem(
       "bomberman_inspeccion_epcc_respuestas",
@@ -351,8 +345,7 @@ function inspeccion_epcc_bomberman() {
       setMostrarFlechaGuardar(false);
       navigate(-1);
     } catch (err) {
-      window.alert("Error al guardar inspección. Revisa la consola para detalles.");
-      console.error("Error al guardar inspección:", err?.response?.data || err, payload);
+      window.alert(`Error al guardar inspección: ${err?.response?.data?.message || err.message}`);
     }
   };
 
@@ -365,24 +358,24 @@ function inspeccion_epcc_bomberman() {
             <label className="label">Cliente / Constructora</label>
             <input
               type="text"
-              name="nombre_cliente" // 🔑 Cambiado: cliente -> nombre_cliente
-              value={datosGenerales.nombre_cliente} // 🔑 Cambiado
+              name="nombre_cliente"
+              value={datosGenerales.nombre_cliente}
               readOnly
               className="permiso-trabajo-input"
               style={{ width: "100%" }}
-              id="nombre_cliente" // 🔑 Cambiado
+              id="nombre_cliente"
             />
           </div>
           <div style={{ width: "93%" }}>
             <label className="label">Proyecto / Constructora</label>
             <input
               type="text"
-              name="nombre_proyecto" // 🔑 Cambiado: proyecto -> nombre_proyecto
-              value={datosGenerales.nombre_proyecto} // 🔑 Cambiado
+              name="nombre_proyecto"
+              value={datosGenerales.nombre_proyecto}
               readOnly
               className="permiso-trabajo-input"
               style={{ width: "100%" }}
-              id="nombre_proyecto" // 🔑 Cambiado
+              id="nombre_proyecto"
             />
           </div>
           <div style={{ width: "93%" }}>

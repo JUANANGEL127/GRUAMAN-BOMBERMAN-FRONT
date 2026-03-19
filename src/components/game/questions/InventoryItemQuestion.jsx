@@ -34,7 +34,6 @@ export default function InventoryItemQuestion({ question, onAnswer }) {
 
       <div style={{ display: 'flex', gap: 12, marginBottom: 20, justifyContent: 'center', flexWrap: 'wrap' }}>
 
-        {/* Cantidad Buena */}
         <div style={{ textAlign: 'center' }}>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 6, color: '#27ae60', textTransform: 'uppercase', letterSpacing: 0.5 }}>
             Buena
@@ -59,7 +58,6 @@ export default function InventoryItemQuestion({ question, onAnswer }) {
           />
         </div>
 
-        {/* Cantidad Mala */}
         <div style={{ textAlign: 'center' }}>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 6, color: '#e74c3c', textTransform: 'uppercase', letterSpacing: 0.5 }}>
             Mala
@@ -84,7 +82,6 @@ export default function InventoryItemQuestion({ question, onAnswer }) {
           />
         </div>
 
-        {/* Estado */}
         <div style={{ textAlign: 'center' }}>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 6, color: '#1976d2', textTransform: 'uppercase', letterSpacing: 0.5 }}>
             Estado

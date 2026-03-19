@@ -25,7 +25,6 @@ const CONFETTI_COLORS = [
   '#0ea5e9', '#d946ef',
 ];
 
-// Posiciones horizontales pre-calculadas para distribuir bien los confetis
 const PARTICLE_X = [8, 17, 26, 35, 44, 50, 56, 65, 74, 83, 92];
 
 function MicroCelebration({ show, type = 'positive', onDone }) {
@@ -40,7 +39,6 @@ function MicroCelebration({ show, type = 'positive', onDone }) {
 
   if (!show) return null;
 
-  /* ── Negativo: shake + aviso ── */
   if (type === 'negative') {
     return (
       <div className="mc-overlay mc-overlay--negative" aria-live="polite">
@@ -50,7 +48,6 @@ function MicroCelebration({ show, type = 'positive', onDone }) {
     );
   }
 
-  /* ── Neutral: check simple ── */
   if (type === 'neutral') {
     return (
       <div className="mc-overlay mc-overlay--neutral" aria-live="polite">
@@ -59,7 +56,6 @@ function MicroCelebration({ show, type = 'positive', onDone }) {
     );
   }
 
-  /* ── Positivo: confetti + check verde ── */
   return (
     <div className="mc-overlay mc-overlay--positive" aria-live="polite" aria-label="¡Correcto!">
       {PARTICLE_X.map((xPct, i) => (

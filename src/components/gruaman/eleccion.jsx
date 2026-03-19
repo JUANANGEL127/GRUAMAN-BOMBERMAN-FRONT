@@ -12,10 +12,10 @@ import HoraIngreso from "../compartido/horada_ingreso";
 import HoraSalida from "../compartido/hora_salida";
 import { markWorldComplete } from '../../db/gameProgress';
 
-// Usa variable de entorno para la base de la API (por si se usa en este archivo en el futuro)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
-
-// Utiliza localStorage para persistir el estado de los botones usados por usuario
+/**
+ * @param {string} usuario
+ * @returns {Object} Map of worldId → boolean
+ */
 function getUsadosFromStorage(usuario) {
   try {
     const data = localStorage.getItem(`gruaman_usados_${usuario}`);
@@ -42,7 +42,7 @@ function limpiarUsados(usuario) {
   localStorage.removeItem(`gruaman_usados_fecha_${usuario}`);
 }
 
-// Helper para obtener la fecha actual en formato YYYY-MM-DD (zona horaria Colombia)
+/** @returns {string} YYYY-MM-DD date in America/Bogota timezone */
 function getTodayDateStr() {
   return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 }
@@ -58,13 +58,15 @@ const ATS_LIST = [
   { worldId: 'ats-elevador',             label: 'Elevador de Carga',                           icon: '⬆️' },
 ];
 
+/**
+ * Bienvenida — pantalla de selección de misiones para Gruaman.
+ * Rastrea el uso diario de misiones por usuario; se reinicia a medianoche.
+ * Incluye un submenú ATS para formularios de tareas especializadas.
+ */
 function Bienvenida() {
   const navigate = useNavigate();
   const [atsOpen, setAtsOpen] = useState(false);
 
-  // ── Detección de completado de misión del juego ──
-  // Cuando un formulario se guarda exitosamente navega aquí.
-  // Si 'game_mode' está activo → marcar mundo completo y volver al mapa.
   useEffect(() => {
     const worldId = localStorage.getItem('game_mode');
     if (worldId) {
@@ -80,7 +82,6 @@ function Bienvenida() {
   const [usados, setUsados] = useState(() => getUsadosFromStorage(usuario));
   const [usuarioActual, setUsuarioActual] = useState(usuario);
 
-  // Reinicio automático cada día a las 12:00am
   useEffect(() => {
     const fechaHoy = getTodayDateStr();
     const fechaGuardada = localStorage.getItem(`gruaman_usados_fecha_${usuarioActual}`);
@@ -89,7 +90,6 @@ function Bienvenida() {
       setUsados(getUsadosFromStorage(usuarioActual));
       localStorage.setItem(`gruaman_usados_fecha_${usuarioActual}`, fechaHoy);
     }
-    // Programar reinicio para la próxima medianoche
     const now = new Date();
     const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1, 0);
     const msUntilMidnight = nextMidnight.getTime() - now.getTime();
@@ -102,7 +102,6 @@ function Bienvenida() {
     // eslint-disable-next-line
   }, [usuarioActual]);
 
-  // Si cambia el usuario (por ejemplo, cierre de sesión), reinicia el progreso
   useEffect(() => {
     const nuevoUsuario = localStorage.getItem("nombre_trabajador") || "anonimo";
     if (nuevoUsuario !== usuarioActual) {
@@ -115,7 +114,6 @@ function Bienvenida() {
 
   useEffect(() => {
     setUsadosToStorage(usados, usuarioActual);
-    // Guardar la fecha del último uso
     localStorage.setItem(`gruaman_usados_fecha_${usuarioActual}`, getTodayDateStr());
   }, [usados, usuarioActual]);
 
@@ -191,7 +189,7 @@ function Bienvenida() {
             Hora de Ingreso
           </button>
           <p className="label" style={{ marginBottom: 20,fontSize:20 }}>
-            Diario
+            Diarios
           </p>
           <button
             className={getButtonClass(usados.permiso_trabajo)}
@@ -201,7 +199,7 @@ function Bienvenida() {
             Permiso de Trabajo
           </button>
           <p className="label" style={{ marginBottom: 20,fontSize:20 }}>
-            Mensual
+            Mensuales
           </p>
           <button
             className={getButtonClass(usados.chequeo_alturas)}

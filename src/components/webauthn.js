@@ -1,41 +1,55 @@
-// WebAuthn integration for registration and authentication (biometría)
-// Usa variable de entorno para la base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-// Verifica si el dispositivo soporta biometría via WebAuthn antes de intentar
+/**
+ * Retorna true si el dispositivo expone un autenticador de plataforma con
+ * verificación de usuario (huella dactilar, Face ID, etc.) a través de la API WebAuthn.
+ *
+ * @returns {Promise<boolean>}
+ */
 export async function checkWebAuthnSupport() {
   if (!window.PublicKeyCredential) return false;
   try {
     return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-  } catch (e) {
+  } catch {
     return false;
   }
 }
-// Adapt endpoints to your backend domain if needed
 
-// Helper: base64/base64url to Uint8Array
+/**
+ * Convierte una cadena en base64 o base64url a un Uint8Array.
+ *
+ * @param {string} base64 - Cadena codificada en base64 o base64url.
+ * @returns {Uint8Array}
+ * @throws {Error} Si la entrada no puede decodificarse.
+ */
 function base64ToUint8Array(base64) {
-  // Convierte base64-url a base64 estándar
   let b64 = base64.replace(/-/g, '+').replace(/_/g, '/');
-  // Añade padding si falta
   while (b64.length % 4) b64 += '=';
-  try {
-    return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-  } catch (e) {
-    console.error('[WebAuthn] Error decodificando base64/base64url:', base64, e);
-    throw e;
-  }
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 }
 
-// Helper: ArrayBuffer to base64
+/**
+ * Convierte un ArrayBuffer a una cadena en base64.
+ *
+ * @param {ArrayBuffer} buffer
+ * @returns {string}
+ */
 function arrayBufferToBase64(buffer) {
   return btoa(String.fromCharCode(...new Uint8Array(buffer)));
 }
 
-// 1. Registro de credencial biométrica
+/**
+ * Registra una nueva credencial WebAuthn (passkey) para el trabajador indicado.
+ *
+ * Obtiene las opciones de registro desde /webauthn/register/options, invoca
+ * navigator.credentials.create() y verifica la attestation con
+ * /webauthn/register/verify.
+ *
+ * @param {{ numero_identificacion: string, nombre: string }} params
+ * @returns {Promise<object>} Respuesta de verificación del backend.
+ * @throws {WebAuthnError} En caso de cancelación o error a nivel de dispositivo.
+ */
 export async function registerWebAuthn({ numero_identificacion, nombre }) {
-  // a) Solicita opciones de registro al backend
-  console.log('[WebAuthn] Iniciando registro biométrico:', { numero_identificacion, nombre });
   let options;
   try {
     const res = await fetch(`${API_BASE_URL}/webauthn/register/options`, {
@@ -44,20 +58,15 @@ export async function registerWebAuthn({ numero_identificacion, nombre }) {
       body: JSON.stringify({ numero_identificacion, nombre })
     });
     options = await res.json();
-    console.log('[WebAuthn] Opciones recibidas del backend:', options);
   } catch (e) {
-    console.error('[WebAuthn] Error obteniendo opciones de registro:', e);
     throw e;
   }
 
   try {
-    // b) Prepara los datos para navigator.credentials.create
     if (!options.challenge) {
-      console.error('[WebAuthn] El campo challenge no existe o es undefined:', options.challenge);
       throw new Error('El campo challenge no existe en las opciones de registro');
     }
     if (!options.user || !options.user.id) {
-      console.error('[WebAuthn] El campo user.id no existe o es undefined:', options.user);
       throw new Error('El campo user.id no existe en las opciones de registro');
     }
     options.challenge = base64ToUint8Array(options.challenge);
@@ -68,13 +77,9 @@ export async function registerWebAuthn({ numero_identificacion, nombre }) {
         id: base64ToUint8Array(c.id)
       }));
     }
-    console.log('[WebAuthn] Opciones procesadas para navigator.credentials.create:', options);
 
-    // c) Crea la credencial biométrica
     const credential = await navigator.credentials.create({ publicKey: options });
-    console.log('[WebAuthn] Credencial creada:', credential);
 
-    // d) Prepara la respuesta para el backend
     const attestationResponse = {
       id: credential.id,
       rawId: arrayBufferToBase64(credential.rawId),
@@ -84,33 +89,36 @@ export async function registerWebAuthn({ numero_identificacion, nombre }) {
       },
       type: credential.type
     };
-    console.log('[WebAuthn] Attestation response preparada:', attestationResponse);
 
-    // e) Envía la respuesta al backend para guardar la credencial
     const verifyRes = await fetch(`${API_BASE_URL}/webauthn/register/verify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ numero_identificacion, attestationResponse })
     });
-    const verifyJson = await verifyRes.json();
-    console.log('[WebAuthn] Respuesta del backend al guardar credencial:', verifyJson);
-    return verifyJson;
+    return await verifyRes.json();
   } catch (e) {
-    console.error('[WebAuthn] Error durante el registro biométrico:', e);
     throw e;
   }
 }
 
-// Clase de error personalizada para WebAuthn
-// Códigos posibles:
-//   NOT_SUPPORTED   → el dispositivo no soporta biometría via web (sin Google Services, sin authenticator)
-//   USER_CANCELLED  → el usuario canceló el prompt de huella/face
-//   NO_CREDENTIALS  → el usuario tiene credencial en BD pero no en este dispositivo (cambió de celular, etc.)
-//   INVALID_STATE   → estado inválido de autenticación
-//   NETWORK_ERROR   → error de conexión con el backend
-//   PARSE_ERROR     → error procesando respuesta del backend
-//   UNKNOWN         → error no clasificado
+/**
+ * Clase de error personalizada para operaciones WebAuthn.
+ *
+ * Códigos de error:
+ *   NOT_SUPPORTED  - El dispositivo no tiene autenticador de plataforma.
+ *   USER_CANCELLED - El usuario cerró el prompt biométrico.
+ *   NO_CREDENTIALS - La credencial fue registrada en otro dispositivo.
+ *   INVALID_STATE  - El autenticador está en un estado inválido.
+ *   NETWORK_ERROR  - El backend no es alcanzable.
+ *   PARSE_ERROR    - No se pudo interpretar la respuesta del backend.
+ *   UNKNOWN        - Error no clasificado.
+ *   NO_RESPONSE    - navigator.credentials.get retornó null.
+ */
 export class WebAuthnError extends Error {
+  /**
+   * @param {string} message
+   * @param {string} code - Uno de los códigos documentados arriba.
+   */
   constructor(message, code) {
     super(message);
     this.name = 'WebAuthnError';
@@ -118,11 +126,18 @@ export class WebAuthnError extends Error {
   }
 }
 
-// 2. Autenticación biométrica
+/**
+ * Autentica al trabajador usando su credencial WebAuthn registrada.
+ *
+ * Obtiene las opciones de autenticación desde /webauthn/authenticate/options,
+ * invoca navigator.credentials.get() y verifica la assertion con
+ * /webauthn/authenticate/verify.
+ *
+ * @param {{ numero_identificacion: string }} params
+ * @returns {Promise<object>} Respuesta de verificación del backend.
+ * @throws {WebAuthnError} Con código tipado en cada ruta de fallo.
+ */
 export async function authenticateWebAuthn({ numero_identificacion }) {
-  console.log('[WebAuthn] Iniciando autenticación para:', numero_identificacion);
-  
-  // a) Solicita opciones de autenticación al backend
   let options;
   try {
     const res = await fetch(`${API_BASE_URL}/webauthn/authenticate/options`, {
@@ -131,9 +146,7 @@ export async function authenticateWebAuthn({ numero_identificacion }) {
       body: JSON.stringify({ numero_identificacion })
     });
     options = await res.json();
-    console.log('[WebAuthn] Opciones de autenticación recibidas:', options);
-  } catch (e) {
-    console.error('[WebAuthn] Error obteniendo opciones de autenticación:', e);
+  } catch {
     throw new WebAuthnError('Error de conexión al obtener opciones de autenticación', 'NETWORK_ERROR');
   }
 
@@ -145,22 +158,17 @@ export async function authenticateWebAuthn({ numero_identificacion }) {
         id: base64ToUint8Array(c.id)
       }));
     }
-  } catch (e) {
-    console.error('[WebAuthn] Error procesando opciones:', e);
+  } catch {
     throw new WebAuthnError('Error procesando opciones de autenticación', 'PARSE_ERROR');
   }
 
-  // b) Autenticación biométrica
   let assertion;
   try {
     assertion = await navigator.credentials.get({ publicKey: options });
   } catch (e) {
-    console.error('[WebAuthn] Error en navigator.credentials.get:', e, 'name:', e.name, 'message:', e.message);
-
     const errorMsg = e.message?.toLowerCase() || '';
     const errorName = e.name || '';
 
-    // Usuario canceló explícitamente el prompt de huella/face
     const usuarioCancelo = errorMsg.includes('cancel') || errorMsg.includes('abort') ||
       errorMsg.includes('dismissed') || errorMsg.includes('user gesture') ||
       errorMsg.includes('not focused');
@@ -169,8 +177,6 @@ export async function authenticateWebAuthn({ numero_identificacion }) {
       if (usuarioCancelo) {
         throw new WebAuthnError('Cancelaste la autenticación', 'USER_CANCELLED');
       }
-      // NotAllowedError sin cancelación = dispositivo no tiene credencial disponible
-      // (puede ser sin Google Services, sin huella registrada, o credencial en otro dispositivo)
       throw new WebAuthnError('No hay llaves de acceso disponibles en este dispositivo', 'NO_CREDENTIALS');
     }
 
@@ -189,7 +195,6 @@ export async function authenticateWebAuthn({ numero_identificacion }) {
     throw new WebAuthnError('No se recibió respuesta de autenticación', 'NO_RESPONSE');
   }
 
-  // c) Prepara la respuesta para el backend
   const assertionResponse = {
     id: assertion.id,
     rawId: arrayBufferToBase64(assertion.rawId),
@@ -202,7 +207,6 @@ export async function authenticateWebAuthn({ numero_identificacion }) {
     type: assertion.type
   };
 
-  // d) Envía la respuesta al backend para verificar autenticación
   const verifyRes = await fetch(`${API_BASE_URL}/webauthn/authenticate/verify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -210,8 +214,3 @@ export async function authenticateWebAuthn({ numero_identificacion }) {
   });
   return await verifyRes.json();
 }
-
-// Uso:
-// import { registerWebAuthn, authenticateWebAuthn } from './webauthn';
-// await registerWebAuthn({ numero_identificacion, nombre });
-// await authenticateWebAuthn({ numero_identificacion });

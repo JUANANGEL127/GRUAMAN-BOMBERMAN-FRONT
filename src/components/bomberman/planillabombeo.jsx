@@ -3,11 +3,15 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../styles/permiso_trabajo.css";
 
-// Usa variable de entorno para la base de la API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 /**
- * Formulario de Control de Bombeo con estructura y clases compatibles con permiso_trabajo.css
+ * PlanillaBombeo — hoja de control de bombeo para el rol Bomberman.
+ * Recopila datos de operación de la bomba por vaciada de concreto (volumétricos, presiones, tiempos).
+ * Envía mediante POST a /bomberman/planilla_bombeo al guardar.
+ *
+ * @param {Object}   props
+ * @param {Function} [props.onFinish]  Se llama tras un envío exitoso.
  */
 function PlanillaBombeo(props) {
   const [datos, setDatos] = useState({

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-// Datos generales del encabezado
+/** Campos de encabezado generales del formulario */
 const generales = [
   { label: "Cliente", name: "cliente" },
   { label: "Obra", name: "obra" },
@@ -14,7 +14,7 @@ const generales = [
   { label: "Número de servicios desde su ingreso a obra", name: "num_servicios" },
 ];
 
-// Grupos y items del checklist de mantenimiento elevador
+/** Grupos e ítems de la lista de verificación para mantenimiento de elevador */
 const grupos = [
   {
     grupo: "Base Elevador",
@@ -76,9 +76,12 @@ const grupos = [
   },
 ];
 
-// Componente principal Checklist Mantenimiento Elevador
+/**
+ * ChecklistMantenimientoElevador — lista de verificación de mantenimiento técnico para elevador de carga.
+ * Registra calificaciones y observaciones por ítem agrupadas en secciones mecánicas y eléctricas.
+ * Envía mediante POST a /tecnicos/checklist_mantenimiento_elevador al guardar.
+ */
 function ChecklistMantenimientoElevador() {
-  // Estado para datos generales, estado de cada ítem y observaciones
   const [datos, setDatos] = useState(
     generales.reduce((acc, campo) => {
       acc[campo.name] = "";
@@ -98,15 +101,12 @@ function ChecklistMantenimientoElevador() {
     }, {})
   );
 
-  // Estado para firmas y ejecución
   const [firmaRecibo, setFirmaRecibo] = useState({ firma: "", nombre: "", cargo: "" });
   const [ejecutadoPor, setEjecutadoPor] = useState({ tecnico: "", coordinador: "" });
 
-  // Estado para envío y mensaje de resultado
   const [enviando, setEnviando] = useState(false);
   const [mensajeEnvio, setMensajeEnvio] = useState("");
 
-  // Guardar datos en backend
   const handleGuardar = async () => {
     setEnviando(true);
     setMensajeEnvio("");
@@ -134,7 +134,6 @@ function ChecklistMantenimientoElevador() {
     setEnviando(false);
   };
 
-  // Renderizado del formulario
   return (
     <div className="checklist-container">
       <h2 style={{ color: "#1976d2", marginBottom: 16 }}>CHEK LIST MANTENIMIENTO ELEVADOR</h2>

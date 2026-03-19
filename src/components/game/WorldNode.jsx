@@ -1,9 +1,5 @@
 import './WorldNode.css';
 
-/**
- * Configuración visual por estado
- * Fase 5 usará 'completed' e 'in_progress' con datos reales
- */
 const STATUS = {
   completed:   { badge: '✅', label: 'Listo',     cls: 'wn--completed' },
   in_progress: { badge: '⏳', label: 'En curso',  cls: 'wn--progress'  },
@@ -25,7 +21,6 @@ export default function WorldNode({ world, status = 'locked', isHighlighted = fa
   const cfg      = STATUS[status] ?? STATUS.locked;
   const clickable = status !== 'locked';
 
-  // Quitar prefijo "Misión: " para que quepa en la card pequeña
   const shortName = world.name.replace(/^Misión:\s*/i, '');
 
   const classes = [
@@ -43,29 +38,24 @@ export default function WorldNode({ world, status = 'locked', isHighlighted = fa
       aria-label={`${shortName} — ${cfg.label}`}
       aria-disabled={!clickable}
     >
-      {/* Número de orden — esquina superior izquierda */}
       <span className="wn-order" aria-hidden="true">
         {world.order}
       </span>
 
-      {/* Badge "compartido" — esquina superior derecha */}
       {world.shared && (
         <span className="wn-shared" title="Misión compartida" aria-label="Compartida">
           🤝
         </span>
       )}
 
-      {/* Ícono principal */}
       <span className="wn-icon" aria-hidden="true">
         {world.icon}
       </span>
 
-      {/* Nombre corto */}
       <span className="wn-name">
         {shortName}
       </span>
 
-      {/* Badge de estado */}
       <span className={`wn-badge wn-badge--${status}`}>
         <span aria-hidden="true">{cfg.badge}</span>
         {cfg.label}

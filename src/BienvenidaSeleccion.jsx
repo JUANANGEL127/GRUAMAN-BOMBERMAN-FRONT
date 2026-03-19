@@ -2,9 +2,19 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-// Usa variable de entorno para la base de la API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
+/**
+ * Pantalla posterior a la autenticación donde el trabajador selecciona su obra activa.
+ *
+ * Obtiene la lista de obras activas desde la API, solicita la geolocalización y
+ * valida la posición del trabajador respecto al sitio seleccionado antes de navegar
+ * al flujo de juego o a la pantalla lite de selección de formularios.
+ *
+ * @param {Object} props
+ * @param {{ nombre: string, empresa: string, numero_identificacion: string }} props.usuario
+ *   Datos del trabajador autenticado retornados por CedulaIngreso.
+ */
 function BienvenidaSeleccion({ usuario }) {
   const isLite = sessionStorage.getItem('lite_mode') === 'true';
   const [obra_busqueda, setObraBusqueda] = useState("");
@@ -15,25 +25,20 @@ function BienvenidaSeleccion({ usuario }) {
   const [mostrarBocadillo, setMostrarBocadillo] = useState(true);
   const navigate = useNavigate();
 
-  // Ocultar bocadillo después de 5 segundos
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setMostrarBocadillo(false);
-    }, 5000);
+    const timer = setTimeout(() => setMostrarBocadillo(false), 5000);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     axios.get(`${API_BASE_URL}/obras`)
       .then(res => {
-        // Solo mostrar obras con activa === true
         const obrasActivas = (res.data.obras || []).filter(o => o.activa === true);
         setListaObras(obrasActivas);
       })
       .catch(() => setListaObras([]));
   }, []);
 
-  // Guardar usuario recibido en localStorage para que esté disponible en toda la app
   useEffect(() => {
     if (!usuario) return;
     try {
@@ -43,25 +48,29 @@ function BienvenidaSeleccion({ usuario }) {
       if (usuario.empresa) localStorage.setItem("empresa_trabajador", usuario.empresa);
       const cargo = usuario.cargo || usuario.cargo_trabajador || usuario.puesto;
       if (cargo) localStorage.setItem("cargo_trabajador", cargo);
-    } catch (e) {
-      console.error("Error guardando usuario en localStorage", e);
+    } catch {
+      // localStorage not available — continue without persistence
     }
   }, [usuario]);
 
+  /**
+   * Sincroniza la obra seleccionada en localStorage y solicita la geolocalización.
+   * Limpia los datos de obra persistidos cuando el campo se vacía.
+   * @param {React.ChangeEvent<HTMLInputElement>} e
+   */
   const handleObraChange = e => {
     const nombre_obra = e.target.value;
     setObraBusqueda(nombre_obra);
     const obra_obj = lista_obras.find(o => o.nombre_obra === nombre_obra);
     if (obra_obj) {
       setObraIdSeleccionada(obra_obj.id);
-      // Guardar obra seleccionada en localStorage (nombre, id, constructora, nombre_proyecto)
       try {
         localStorage.setItem("obra", obra_obj.nombre_obra || "");
         localStorage.setItem("obra_id", String(obra_obj.id || ""));
         if (obra_obj.constructora) localStorage.setItem("constructora", obra_obj.constructora);
         if (obra_obj.nombre_obra) localStorage.setItem("nombre_proyecto", obra_obj.nombre_obra);
-      } catch (err) {
-        console.error("Error guardando obra en localStorage", err);
+      } catch {
+        // localStorage not available
       }
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -77,12 +86,16 @@ function BienvenidaSeleccion({ usuario }) {
         localStorage.removeItem("obra_id");
         localStorage.removeItem("constructora");
         localStorage.removeItem("nombre_proyecto");
-      } catch (err) {
-        console.error("Error limpiando obra en localStorage", err);
+      } catch {
+        // localStorage not available
       }
     }
   };
 
+  /**
+   * Valida la geolocalización del trabajador frente a la obra seleccionada mediante la API.
+   * Al tener éxito, redirige al flujo de juego o a la pantalla lite de selección de formularios.
+   */
   const handleEmpezar = async () => {
     setError("");
     if (!obra_id_seleccionada || ubicacion.lat === null || ubicacion.lon === null) {
@@ -96,7 +109,6 @@ function BienvenidaSeleccion({ usuario }) {
         lon: ubicacion.lon
       });
       if (resp.data && resp.data.ok) {
-        // Asegurar que la obra seleccionada esté persistida antes de navegar
         const obra_obj = lista_obras.find(o => o.id === obra_id_seleccionada);
         if (obra_obj) {
           try {
@@ -104,23 +116,27 @@ function BienvenidaSeleccion({ usuario }) {
             localStorage.setItem("obra_id", String(obra_obj.id || ""));
             if (obra_obj.constructora) localStorage.setItem("constructora", obra_obj.constructora);
             if (obra_obj.nombre_obra) localStorage.setItem("nombre_proyecto", obra_obj.nombre_obra);
-          } catch (err) {
-            console.error("Error guardando obra en localStorage antes de navegar", err);
+          } catch {
+            // localStorage not available
           }
         }
-        // Determinar personaje y arrancar el juego (o modo lite)
-        const character = usuario.empresa === "GyE" ? "gruaman" : usuario.empresa === "SST" ? "bomberman" : "bomberman";
-        localStorage.setItem("selectedCharacter", character);
+        // Only GyE (empresa_id=1) and AIC/Bomberman (empresa_id=2) use the game flow.
+        // SST, Lideres and any other empresa always go to their classic form screens.
+        const empresasConJuego = ["GyE", "AIC"];
+        const usaJuego = empresasConJuego.includes(usuario.empresa) &&
+                         sessionStorage.getItem('lite_mode') !== 'true';
 
-        if (sessionStorage.getItem('lite_mode') === 'true') {
-          // Modo lite → ir directo a la pantalla de selección de formularios
-          const liteRoute = usuario.empresa === "GyE"     ? "/eleccion"
-                          : usuario.empresa === "Lideres" ? "/eleccion_lideres"
-                          : usuario.empresa === "SST"     ? "/eleccion_sst"
-                          : "/eleccionaic";
-          navigate(liteRoute);
-        } else {
+        if (usaJuego) {
+          const character = usuario.empresa === "GyE" ? "gruaman" : "bomberman";
+          localStorage.setItem("selectedCharacter", character);
           navigate("/game/rotate-screen");
+        } else {
+          const formRoute = usuario.empresa === "GyE"       ? "/eleccion"
+                          : usuario.empresa === "Lideres"  ? "/eleccion_lideres"
+                          : usuario.empresa === "SST"      ? "/eleccion_sst"
+                          : usuario.empresa === "Tecnicos" ? "/eleccion_tecnicos"
+                          : "/eleccionaic";
+          navigate(formRoute);
         }
       } else {
         setError("No se encuentra en la ubicación seleccionada.");
@@ -132,7 +148,6 @@ function BienvenidaSeleccion({ usuario }) {
 
   return (
     <div className="form-container">
-      {/* Bocadillo fuera de la card, usando la imagen texto1.png */}
       {mostrarBocadillo && sessionStorage.getItem('lite_mode') !== 'true' && (
         <div
           style={{

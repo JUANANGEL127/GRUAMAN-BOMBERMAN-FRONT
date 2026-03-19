@@ -1,20 +1,13 @@
-// src/config/gameConfig.js
 /**
- * Configuración de mundos y niveles del juego
- * Basado en los componentes reales de GRUAMAN-BOMBERMAN
+ * Configuración de mundos y niveles para el flujo de formularios gamificado.
  *
- * IDs de mundos → usados por LevelWrapper para mapear componentes
- * Routes         → corresponden a las rutas reales de main.jsx
+ * Cada entrada describe una misión (formulario) incluyendo su ruta, nombre de componente,
+ * tema visual y si debe completarse diariamente. Los IDs son utilizados por
+ * LevelWrapper para resolver los componentes de formulario cargados de forma diferida.
  */
 
 export const gameWorlds = {
-  // ===========================================
-  // BOMBERMAN - 8 FORMULARIOS
-  // Orden: hora_ingreso, permiso_trabajo, planillabombeo, checklist,
-  //        chequeo_alturas, inspeccion_epcc_bomberman, inventariosobra, hora_salida
-  // ===========================================
   bomberman: [
-    // 1. HORA DE INGRESO (Compartido)
     {
       id: 'hora-ingreso',
       name: 'Misión: Registro de Entrada',
@@ -31,7 +24,6 @@ export const gameWorlds = {
       sections: 1
     },
 
-    // 2. PERMISO DE TRABAJO (Compartido)
     {
       id: 'permiso-trabajo',
       name: 'Misión: Permiso de Trabajo',
@@ -48,7 +40,6 @@ export const gameWorlds = {
       sections: 6
     },
 
-    // 3. PLANILLA BOMBEO (Exclusivo Bomberman)
     {
       id: 'planilla-bombeo',
       name: 'Misión: Planilla de Bombeo',
@@ -65,7 +56,6 @@ export const gameWorlds = {
       sections: 3
     },
 
-    // 4. CHECKLIST BOMBA (Exclusivo Bomberman)
     {
       id: 'checklist',
       name: 'Misión: Checklist Bomba',
@@ -82,7 +72,6 @@ export const gameWorlds = {
       sections: 3
     },
 
-    // 5. HERRAMIENTAS DE MANTENIMIENTO (Exclusivo Bomberman)
     {
       id: 'herramientas-mantenimiento',
       name: 'Misión: Herramientas de Mantenimiento',
@@ -99,7 +88,6 @@ export const gameWorlds = {
       sections: 2
     },
 
-    // 6. KIT DE LAVADO Y MANTENIMIENTO (Exclusivo Bomberman)
     {
       id: 'kit-limpieza',
       name: 'Misión: Kit de Lavado',
@@ -116,7 +104,6 @@ export const gameWorlds = {
       sections: 2
     },
 
-    // 7. TRABAJO EN ALTURA (Compartido)
     {
       id: 'chequeo-altura',
       name: 'Misión: Trabajo en Altura',
@@ -133,7 +120,6 @@ export const gameWorlds = {
       sections: 4
     },
 
-    // 7. INSPECCIÓN EPCC BOMBERMAN (Exclusivo Bomberman)
     {
       id: 'inspeccion-epcc-bomberman',
       name: 'Misión: Inspección EPCC',
@@ -150,7 +136,6 @@ export const gameWorlds = {
       sections: 2
     },
 
-    // 8. INVENTARIOS OBRA (Exclusivo Bomberman - NO DIARIO)
     {
       id: 'inventarios-obra',
       name: 'Misión: Inventario de Obra',
@@ -162,12 +147,11 @@ export const gameWorlds = {
       route: '/inventariosobra',
       color: '#795548',
       bgColor: '#EFEBE9',
-      daily: false, // ⚠️ IMPORTANTE: No es diario (mensual)
+      daily: false,
       order: 8,
       sections: 2
     },
 
-    // 9. HORA DE SALIDA (Compartido)
     {
       id: 'hora-salida',
       name: 'Misión: Registro de Salida',
@@ -191,7 +175,6 @@ export const gameWorlds = {
   //        chequeo_elevador, inspeccion_epcc, inspeccion_izaje, hora_salida
   // ===========================================
   gruaman: [
-    // 1. HORA DE INGRESO (Compartido)
     {
       id: 'hora-ingreso',
       name: 'Misión: Registro de Entrada',
@@ -208,7 +191,6 @@ export const gameWorlds = {
       sections: 1
     },
 
-    // 2. PERMISO DE TRABAJO (Compartido)
     {
       id: 'permiso-trabajo',
       name: 'Misión: Permiso de Trabajo',
@@ -225,7 +207,6 @@ export const gameWorlds = {
       sections: 6
     },
 
-    // 3. TRABAJO EN ALTURA (Compartido)
     {
       id: 'chequeo-altura',
       name: 'Misión: Trabajo en Altura',
@@ -242,7 +223,6 @@ export const gameWorlds = {
       sections: 4
     },
 
-    // 4. CHEQUEO TORREGRÚAS (Exclusivo Gruaman)
     {
       id: 'chequeo-torregruas',
       name: 'Misión: Chequeo Torregrúa',
@@ -259,7 +239,6 @@ export const gameWorlds = {
       sections: 3
     },
 
-    // 5. CHEQUEO ELEVADOR (Exclusivo Gruaman)
     {
       id: 'chequeo-elevador',
       name: 'Misión: Chequeo Elevador',
@@ -276,7 +255,6 @@ export const gameWorlds = {
       sections: 3
     },
 
-    // 6. INSPECCIÓN EPCC (Exclusivo Gruaman)
     {
       id: 'inspeccion-epcc',
       name: 'Misión: Inspección EPCC',
@@ -293,7 +271,6 @@ export const gameWorlds = {
       sections: 2
     },
 
-    // 7. INSPECCIÓN DE IZAJE (Exclusivo Gruaman)
     {
       id: 'inspeccion-izaje',
       name: 'Misión: Inspección Izaje',
@@ -310,7 +287,6 @@ export const gameWorlds = {
       sections: 2
     },
 
-    // 8. ATS — ANÁLISIS DE TRABAJO SEGURO (Exclusivo Gruaman)
     {
       id: 'ats',
       name: 'Misión: ATS',
@@ -327,7 +303,6 @@ export const gameWorlds = {
       sections: 1
     },
 
-    // 9. HORA DE SALIDA (Compartido)
     {
       id: 'hora-salida',
       name: 'Misión: Registro de Salida',
@@ -346,19 +321,19 @@ export const gameWorlds = {
   ]
 };
 
-// ===========================================
-// HELPERS
-// ===========================================
-
 /**
- * Obtener mundos por personaje
+ * Retorna todas las configuraciones de mundos para un personaje dado.
+ * @param {'bomberman'|'gruaman'} character
+ * @returns {object[]}
  */
 export const getWorldsByCharacter = (character) => {
   return gameWorlds[character] || [];
 };
 
 /**
- * Obtener solo permisos diarios
+ * Retorna únicamente los mundos de cumplimiento diario obligatorio para el personaje dado.
+ * @param {'bomberman'|'gruaman'} character
+ * @returns {object[]}
  */
 export const getDailyWorlds = (character) => {
   const worlds = gameWorlds[character] || [];
@@ -366,7 +341,10 @@ export const getDailyWorlds = (character) => {
 };
 
 /**
- * Obtener mundo específico
+ * Retorna la configuración de un único mundo según el personaje y su ID.
+ * @param {'bomberman'|'gruaman'} character
+ * @param {string} worldId
+ * @returns {object|undefined}
  */
 export const getWorldById = (character, worldId) => {
   const worlds = gameWorlds[character] || [];
@@ -374,7 +352,10 @@ export const getWorldById = (character, worldId) => {
 };
 
 /**
- * Verificar si un mundo está compartido
+ * Retorna true si el mundo con el ID dado está marcado como compartido entre personajes.
+ * Busca en los arrays de bomberman y gruaman; no se requiere deduplicación.
+ * @param {string} worldId
+ * @returns {boolean}
  */
 export const isSharedWorld = (worldId) => {
   const allWorlds = [...gameWorlds.bomberman, ...gameWorlds.gruaman];
@@ -383,7 +364,9 @@ export const isSharedWorld = (worldId) => {
 };
 
 /**
- * Obtener color del personaje
+ * Retorna los tokens de color primario/secundario y el degradado CSS para un personaje.
+ * @param {'bomberman'|'gruaman'} character
+ * @returns {{ primary: string, secondary: string, gradient: string } | undefined}
  */
 export const getCharacterColor = (character) => {
   return {
@@ -401,11 +384,10 @@ export const getCharacterColor = (character) => {
 };
 
 /**
- * Obtener nombre amigable del personaje
- * Mapeo basado en usuario.empresa de BienvenidaSeleccion:
- *   "GyE"     → gruaman
- *   "Lideres" → bomberman
- *   otros     → bomberman
+ * Retorna el nombre de presentación para una clave de personaje.
+ * Si el personaje no se reconoce, retorna la clave sin procesar.
+ * @param {'bomberman'|'gruaman'} character
+ * @returns {string}
  */
 export const getCharacterName = (character) => {
   return {
@@ -415,16 +397,21 @@ export const getCharacterName = (character) => {
 };
 
 /**
- * Determinar personaje a partir de usuario.empresa
- * (misma lógica que BienvenidaSeleccion.jsx línea 110-116)
+ * Deriva la clave de personaje a partir de `usuario.empresa`.
+ * 'GyE' se mapea a 'gruaman'; todos los demás valores (AIC, Lideres, etc.) a 'bomberman'.
+ * @param {string} empresa
+ * @returns {'bomberman'|'gruaman'}
  */
 export const determineCharacter = (empresa) => {
   if (empresa === 'GyE') return 'gruaman';
-  return 'bomberman'; // AIC, Lideres, otros
+  return 'bomberman';
 };
 
 /**
- * Calcular progreso total
+ * Calcula el porcentaje de completitud general de las misiones (0–100).
+ * @param {number} completedWorlds
+ * @param {number} totalWorlds
+ * @returns {number}
  */
 export const calculateProgress = (completedWorlds, totalWorlds) => {
   if (!totalWorlds || totalWorlds === 0) return 0;

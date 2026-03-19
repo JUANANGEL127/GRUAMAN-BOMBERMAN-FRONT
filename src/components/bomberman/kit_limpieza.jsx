@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 const items_kit = [
   { desc: 'DETERGENTE EN POLVO',             base: 'detergente_polvo' },
@@ -25,6 +25,11 @@ const items_kit = [
   { desc: 'GUAYA',                           base: 'guaya' },
 ];
 
+/**
+ * KitLimpieza — formulario de inventario de kit de lavado y mantenimiento para Bomberman.
+ * Registra la cantidad (buena/mala) y observación por ítem, y envía mediante POST a
+ * /bomberman/kit_limpieza.
+ */
 function KitLimpieza() {
   const [generales, setGenerales] = useState({
     cliente: "",
@@ -39,7 +44,6 @@ function KitLimpieza() {
   const guardarBtnRef = useRef(null);
   const navigate = useNavigate();
 
-  // Cargar lista de bombas y cachear para el modo juego
   useEffect(() => {
     axios.get(`${API_BASE_URL}/bombas`)
       .then(res => {

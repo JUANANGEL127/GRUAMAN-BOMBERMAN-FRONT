@@ -36,7 +36,7 @@ function getSession() {
     if (!session?.startedAt) return null;
 
     if (Date.now() - session.startedAt >= SESSION_DURATION_MS) {
-      // Sesión expirada — limpiar
+      // Sesión expirada — se elimina del almacenamiento
       localStorage.removeItem(getSessionKey());
       return null;
     }
@@ -71,7 +71,7 @@ export function markWorldComplete(worldId) {
       localStorage.setItem(getSessionKey(), JSON.stringify(session));
     }
   } catch {
-    // Cuota de localStorage excedida — ignorar silenciosamente
+    // Cuota de localStorage excedida — se ignora silenciosamente
   }
 }
 

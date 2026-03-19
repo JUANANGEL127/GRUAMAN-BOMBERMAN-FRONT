@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from "react";
 
-// Usa variable de entorno para la base de la API (por si se usa en el futuro)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
-
+/**
+ * Botón flotante "Instalar App" visible únicamente en móvil cuando el navegador
+ * dispara el evento beforeinstallprompt.
+ *
+ * Captura el prompt diferido, se oculta después de que el usuario responde
+ * y desaparece en viewports de más de 600 px de ancho.
+ */
 function InstallPWAButton() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [visible, setVisible] = useState(false);
@@ -16,7 +20,6 @@ function InstallPWAButton() {
     };
     window.addEventListener("beforeinstallprompt", handler);
 
-    // Detectar cambio de tamaño para modo móvil
     const resizeHandler = () => setIsMobile(window.innerWidth <= 600);
     window.addEventListener("resize", resizeHandler);
 

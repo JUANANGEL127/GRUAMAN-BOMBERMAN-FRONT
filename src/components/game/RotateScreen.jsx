@@ -14,12 +14,10 @@ function RotateScreen({ duration = 4000, onComplete }) {
   const onCompleteRef = useRef(onComplete);
   const calledRef = useRef(false);
 
-  // Mantener ref actualizada sin reiniciar el intervalo
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
 
-  // Detectar orientación
   useEffect(() => {
     const check = () => setLandscape(window.innerWidth > window.innerHeight);
     window.addEventListener('resize', check);
@@ -30,7 +28,6 @@ function RotateScreen({ duration = 4000, onComplete }) {
     };
   }, []);
 
-  // Barra de progreso + disparo de onComplete
   useEffect(() => {
     const start = Date.now();
 
@@ -65,17 +62,14 @@ function RotateScreen({ duration = 4000, onComplete }) {
             : 'Estás a punto de empezar una nueva aventura'}
         </p>
 
-        {/* Barra de progreso */}
         <div className="rs-bar">
           <div className="rs-bar-fill" style={{ width: `${progress}%` }} />
         </div>
 
-        {/* Contador */}
         {remainingSec > 0 && (
           <p className="rs-countdown">{remainingSec}s</p>
         )}
 
-        {/* Puntos de loading */}
         <div className="rs-dots">
           <span /><span /><span />
         </div>
