@@ -292,7 +292,7 @@ function BienvenidaSeleccion({ usuario }) {
           </div>
         )}
         {gpsEstado === "ok" && (
-          <div style={{ color: "#16a34a", marginTop: 10, fontSize: "0.9rem" }}>
+          <div style={{ color: "#00A32C", marginTop: 10, fontSize: "0.95rem", fontWeight: 700, letterSpacing: "0.3px", }}>
             Ubicacion confirmada
           </div>
         )}
