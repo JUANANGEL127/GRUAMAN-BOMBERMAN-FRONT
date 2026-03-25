@@ -301,7 +301,6 @@ function BienvenidaSeleccion({ usuario }) {
             <div style={{ color: "#dc2626", fontSize: "0.9rem" }}>GPS no disponible</div>
             <button
               className="button"
-              style={{ padding: "6px 18px", fontSize: "0.85rem", marginTop: 0 }}
               onClick={requestGPS}
             >
               Reintentar GPS
