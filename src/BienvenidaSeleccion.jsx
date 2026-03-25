@@ -2,6 +2,19 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+function useIsLandscape() {
+  const [landscape, setLandscape] = useState(
+    () => window.matchMedia("(orientation: landscape) and (max-height: 500px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(orientation: landscape) and (max-height: 500px)");
+    const onChange = (e) => setLandscape(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return landscape;
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
 /**
@@ -17,6 +30,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bombe
  */
 function BienvenidaSeleccion({ usuario }) {
   const isLite = sessionStorage.getItem('lite_mode') === 'true';
+  const isLandscape = useIsLandscape();
   const [obra_busqueda, setObraBusqueda] = useState("");
   const [lista_obras, setListaObras] = useState([]);
   const [obra_id_seleccionada, setObraIdSeleccionada] = useState("");
@@ -214,8 +228,8 @@ function BienvenidaSeleccion({ usuario }) {
   };
 
   return (
-    <div className="form-container">
-      {mostrarBocadillo && sessionStorage.getItem('lite_mode') !== 'true' && (
+    <div className="form-container" style={isLandscape ? { minHeight: "100vh", justifyContent: "center", paddingTop: "1rem", paddingBottom: "1rem" } : undefined}>
+      {mostrarBocadillo && !isLite && !isLandscape && (
         <div
           style={{
             position: "fixed",
@@ -312,7 +326,7 @@ function BienvenidaSeleccion({ usuario }) {
         </button>
         {error && <div style={{ color: "red", marginTop: 12 }}>{error}</div>}
       </div>
-      {sessionStorage.getItem('lite_mode') !== 'true' && (
+      {!isLite && !isLandscape && (
         <div style={{
           position: "fixed",
           top: "50vh",
@@ -326,7 +340,7 @@ function BienvenidaSeleccion({ usuario }) {
           userSelect: "none"
         }}>
           <img
-            src={usuario.empresa === "GyE" ? "/gruaman1.1.gif" : (usuario.empresa === "Lideres" ? "/bomberman1.1.gif" : "/bomberman1.1.gif")}
+            src={usuario.empresa === "GyE" ? "/gruaman1.1.gif" : "/bomberman1.1.gif"}
             alt={usuario.empresa}
             style={{
               width: "200vw",

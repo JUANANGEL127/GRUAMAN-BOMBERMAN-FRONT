@@ -141,6 +141,59 @@ function useIsMobile() {
 }
 
 /**
+ * Hook de arrastre para botones flotantes.
+ * Persiste la posición en localStorage. Distingue tap de drag (umbral 5px).
+ * @param {string} storageKey - clave para localStorage
+ * @param {() => {x: number, y: number}} defaultPos - función que retorna posición por defecto
+ */
+function useDraggable(defaultPos) {
+  const [pos, setPos] = React.useState(() => defaultPos());
+
+  const posRef = React.useRef(pos);
+  React.useEffect(() => { posRef.current = pos; }, [pos]);
+
+  const dragging = React.useRef(false);
+  const startPtr = React.useRef({ x: 0, y: 0 });
+  const startPos = React.useRef({ x: 0, y: 0 });
+  const wasDragged = React.useRef(false);
+
+  const onPointerDown = React.useCallback((e) => {
+    dragging.current = true;
+    wasDragged.current = false;
+    startPtr.current = { x: e.clientX, y: e.clientY };
+    startPos.current = { ...posRef.current };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, []);
+
+  const onPointerMove = React.useCallback((e) => {
+    if (!dragging.current) return;
+    const dx = e.clientX - startPtr.current.x;
+    const dy = e.clientY - startPtr.current.y;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) wasDragged.current = true;
+    if (!wasDragged.current) return;
+    const newX = Math.max(0, Math.min(window.innerWidth - 64, startPos.current.x + dx));
+    const newY = Math.max(0, Math.min(window.innerHeight - 64, startPos.current.y + dy));
+    setPos({ x: newX, y: newY });
+  }, []);
+
+  const onPointerUp = React.useCallback(() => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    // posición no persiste — vuelve al default al reabrir la app
+  }, []);
+
+  const onClickCapture = React.useCallback((e) => {
+    if (wasDragged.current) {
+      e.stopPropagation();
+      e.preventDefault();
+      wasDragged.current = false;
+    }
+  }, []);
+
+  return { pos, onPointerDown, onPointerMove, onPointerUp, onClickCapture };
+}
+
+/**
  * Botón flotante de emergencia visible únicamente en móvil.
  *
  * Presenta un modal con opciones de llamada y WhatsApp. La opción de WhatsApp
@@ -150,13 +203,15 @@ function useIsMobile() {
  */
 function SOSButton() {
   const isMobile = useIsMobile();
-  if (!isMobile) return null;
-
   const [enviando, setEnviando] = React.useState(false);
   const [mensaje, setMensaje] = React.useState("");
   const [showModal, setShowModal] = React.useState(false);
   const [showRegionModal, setShowRegionModal] = React.useState(false);
   const [showRoleModal, setShowRoleModal] = React.useState(false);
+  const { pos: sosPos, onPointerDown: sosDown, onPointerMove: sosMove, onPointerUp: sosUp, onClickCapture: sosClickCapture } =
+    useDraggable(() => ({ x: 14, y: window.innerHeight - 144 }));
+
+  if (!isMobile) return null;
 
   function getUsuarioObra() {
     let usuario = "";
@@ -258,8 +313,8 @@ function SOSButton() {
       <button
         style={{
           position: "fixed",
-          left: 14,
-          bottom: "80px",
+          left: sosPos.x,
+          top: sosPos.y,
           zIndex: 1000,
           borderRadius: "50%",
           width: 64,
@@ -275,7 +330,14 @@ function SOSButton() {
           justifyContent: "center",
           padding: 0,
           lineHeight: "1",
+          cursor: "grab",
+          touchAction: "none",
+          userSelect: "none",
         }}
+        onPointerDown={sosDown}
+        onPointerMove={sosMove}
+        onPointerUp={sosUp}
+        onClickCapture={sosClickCapture}
         onClick={handleSOS}
         disabled={enviando}
         title="SOS Emergencia"
@@ -489,13 +551,15 @@ function SOSButton() {
  */
 function STPButton() {
   const isMobile = useIsMobile();
-  if (!isMobile) return null;
-
   const [showModal, setShowModal] = React.useState(false);
   const [showCallModal, setShowCallModal] = React.useState(false);
   const [mensaje, setMensaje] = React.useState("");
   const [showRegionModalSTP, setShowRegionModalSTP] = React.useState(false);
   const [showRoleModalSTP, setShowRoleModalSTP] = React.useState(false);
+  const { pos: stpPos, onPointerDown: stpDown, onPointerMove: stpMove, onPointerUp: stpUp, onClickCapture: stpClickCapture } =
+    useDraggable(() => ({ x: window.innerWidth - 78, y: window.innerHeight - 144 }));
+
+  if (!isMobile) return null;
 
   function getUsuarioObra() {
     let usuario = "";
@@ -607,8 +671,8 @@ function STPButton() {
       <button
         style={{
           position: "fixed",
-          right: 14,
-          bottom: "80px",
+          left: stpPos.x,
+          top: stpPos.y,
           zIndex: 1000,
           borderRadius: "50%",
           width: 64,
@@ -624,7 +688,14 @@ function STPButton() {
           justifyContent: "center",
           padding: 0,
           lineHeight: "1",
+          cursor: "grab",
+          touchAction: "none",
+          userSelect: "none",
         }}
+        onPointerDown={stpDown}
+        onPointerMove={stpMove}
+        onPointerUp={stpUp}
+        onClickCapture={stpClickCapture}
         title="STP"
         onClick={handleSTP}
       >

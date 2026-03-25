@@ -159,7 +159,10 @@ function AdminUsuarios() {
                       transition: "background 0.2s"
                     }}
                   >
-                    <span style={{ fontWeight: 500, color: "#222", flex: 1, marginRight: 8 }}>{t.nombre}</span>
+                    <div style={{ flex: 1, marginRight: 8, minWidth: 0 }}>
+                      <span style={{ fontWeight: 500, color: "#222", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.nombre}</span>
+                      <span style={{ fontSize: 12, color: "#757575" }}>{t.numero_identificacion}</span>
+                    </div>
                     <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
                       {/* Toggle activo/inactivo */}
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>

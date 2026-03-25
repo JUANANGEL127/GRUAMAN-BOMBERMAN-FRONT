@@ -369,38 +369,36 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
 
   return (
     <div className="form-container" style={{ position: "relative", minHeight: "100vh" }}>
-      {isMobile && (
-        <div
-          className="card-section"
-          style={{
-            background: isLite ? "#fff" : "rgba(255,255,255,0.22)",
-            borderRadius: "18px",
-            boxShadow: isLite ? "0 2px 12px rgba(0,0,0,0.10)" : "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
-            backdropFilter: isLite ? undefined : "blur(8px)",
-            WebkitBackdropFilter: isLite ? undefined : "blur(8px)",
-            border: isLite ? "1px solid #e0e0e0" : "1px solid rgba(255,255,255,0.28)",
-            padding: "32px 24px",
-            maxWidth: 400,
-            margin: "0 auto",
-            position: "relative",
-            zIndex: 2,
-          }}
-        >
-          <h2 className="card-title">Ingresa tu cédula para iniciar tu aventura</h2>
-          <input
-            className="input"
-            type="text"
-            value={cedula}
-            onChange={e => setCedula(e.target.value)}
-            placeholder="Número de identificación"
-            style={isLite ? { background: "#f7faff", border: "1.5px solid #c5d5ea" } : undefined}
-          />
-          <button className="button" onClick={handleBuscar} style={{ marginTop: 16 }}>
-            Continuar
-          </button>
-          {error && <div style={{ color: "red", marginTop: 12 }}>{error}</div>}
-        </div>
-      )}
+      <div
+        className="card-section"
+        style={{
+          background: isLite ? "#fff" : "rgba(255,255,255,0.22)",
+          borderRadius: "18px",
+          boxShadow: isLite ? "0 2px 12px rgba(0,0,0,0.10)" : "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
+          backdropFilter: isLite ? undefined : "blur(8px)",
+          WebkitBackdropFilter: isLite ? undefined : "blur(8px)",
+          border: isLite ? "1px solid #e0e0e0" : "1px solid rgba(255,255,255,0.28)",
+          padding: "32px 24px",
+          maxWidth: 400,
+          margin: "0 auto",
+          position: "relative",
+          zIndex: 2,
+        }}
+      >
+        <h2 className="card-title">Ingresa tu cédula para iniciar tu aventura</h2>
+        <input
+          className="input"
+          type="text"
+          value={cedula}
+          onChange={e => setCedula(e.target.value)}
+          placeholder="Número de identificación"
+          style={isLite ? { background: "#f7faff", border: "1.5px solid #c5d5ea" } : undefined}
+        />
+        <button className="button" onClick={handleBuscar} style={{ marginTop: 16 }}>
+          Continuar
+        </button>
+        {error && <div style={{ color: "red", marginTop: 12 }}>{error}</div>}
+      </div>
 
       <button
         className="button"
