@@ -21,6 +21,7 @@ function BienvenidaSeleccion({ usuario }) {
   const [lista_obras, setListaObras] = useState([]);
   const [obra_id_seleccionada, setObraIdSeleccionada] = useState("");
   const [ubicacion, setUbicacion] = useState({ lat: null, lon: null });
+  const [gpsEstado, setGpsEstado] = useState("idle"); // idle | cargando | ok | error
   const [error, setError] = useState("");
   const [mostrarBocadillo, setMostrarBocadillo] = useState(true);
   const navigate = useNavigate();
@@ -54,6 +55,32 @@ function BienvenidaSeleccion({ usuario }) {
   }, [usuario]);
 
   /**
+   * Pide la ubicación GPS con opciones de alta precisión.
+   * Actualiza gpsEstado: cargando → ok | error.
+   */
+  const requestGPS = () => {
+    if (!navigator.geolocation) {
+      setGpsEstado("error");
+      setError("Este dispositivo no soporta geolocalización.");
+      return;
+    }
+    setGpsEstado("cargando");
+    setError("");
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setUbicacion({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        setGpsEstado("ok");
+      },
+      () => {
+        setUbicacion({ lat: null, lon: null });
+        setGpsEstado("error");
+        setError("No se pudo obtener tu ubicación. Activa el GPS e intenta de nuevo.");
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+  };
+
+  /**
    * Sincroniza la obra seleccionada en localStorage y solicita la geolocalización.
    * Limpia los datos de obra persistidos cuando el campo se vacía.
    * @param {React.ChangeEvent<HTMLInputElement>} e
@@ -72,15 +99,12 @@ function BienvenidaSeleccion({ usuario }) {
       } catch {
         // localStorage not available
       }
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          pos => setUbicacion({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-          () => setUbicacion({ lat: null, lon: null })
-        );
-      }
+      requestGPS();
     } else {
       setObraIdSeleccionada("");
       setUbicacion({ lat: null, lon: null });
+      setGpsEstado("idle");
+      setError("");
       try {
         localStorage.removeItem("obra");
         localStorage.removeItem("obra_id");
@@ -93,20 +117,15 @@ function BienvenidaSeleccion({ usuario }) {
   };
 
   /**
-   * Valida la geolocalización del trabajador frente a la obra seleccionada mediante la API.
-   * Al tener éxito, redirige al flujo de juego o a la pantalla lite de selección de formularios.
+   * Ejecuta la validación y navegación una vez que ya hay coordenadas disponibles.
+   * @param {{ lat: number, lon: number }} coords
    */
-  const handleEmpezar = async () => {
-    setError("");
-    if (!obra_id_seleccionada || ubicacion.lat === null || ubicacion.lon === null) {
-      setError("Selecciona una catedral y activa la ubicación.");
-      return;
-    }
+  const validarYNavegar = async (coords) => {
     try {
       const resp = await axios.post(`${API_BASE_URL}/validar_ubicacion`, {
         obra_id: obra_id_seleccionada,
-        lat: ubicacion.lat,
-        lon: ubicacion.lon
+        lat: coords.lat,
+        lon: coords.lon
       });
       if (resp.data && resp.data.ok) {
         const obra_obj = lista_obras.find(o => o.id === obra_id_seleccionada);
@@ -139,11 +158,59 @@ function BienvenidaSeleccion({ usuario }) {
           navigate(formRoute);
         }
       } else {
-        setError("No se encuentra en la ubicación seleccionada.");
+        const distancia = resp.data?.distancia;
+        setError(
+          distancia
+            ? `Estás a ${distancia >= 1000 ? (distancia / 1000).toFixed(1) + " km" : distancia + " m"} de la obra. Debes estar a menos de 500 m.`
+            : "No se encuentra en la ubicación seleccionada."
+        );
       }
-    } catch {
-      setError("No se encuentra en la ubicación seleccionada.");
+    } catch (err) {
+      const distancia = err.response?.data?.distancia;
+      setError(
+        distancia
+          ? `Estás a ${distancia >= 1000 ? (distancia / 1000).toFixed(1) + " km" : distancia + " m"} de la obra. Debes estar a menos de 500 m.`
+          : "No se encuentra en la ubicación seleccionada."
+      );
     }
+  };
+
+  /**
+   * Valida la geolocalización del trabajador frente a la obra seleccionada mediante la API.
+   * Si la ubicación aún no está disponible, la solicita en el momento del click.
+   * Al tener éxito, redirige al flujo de juego o a la pantalla lite de selección de formularios.
+   */
+  const handleEmpezar = async () => {
+    setError("");
+    if (!obra_id_seleccionada) {
+      setError("Selecciona una catedral primero.");
+      return;
+    }
+
+    // Opción C: si la ubicación no está lista, pedirla ahora y reintentar
+    if (ubicacion.lat === null || ubicacion.lon === null) {
+      if (!navigator.geolocation) {
+        setError("Este dispositivo no soporta geolocalización.");
+        return;
+      }
+      setGpsEstado("cargando");
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+          setUbicacion(coords);
+          setGpsEstado("ok");
+          validarYNavegar(coords);
+        },
+        () => {
+          setGpsEstado("error");
+          setError("No se pudo obtener tu ubicación. Activa el GPS e intenta de nuevo.");
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      );
+      return;
+    }
+
+    validarYNavegar(ubicacion);
   };
 
   return (
@@ -219,6 +286,28 @@ function BienvenidaSeleccion({ usuario }) {
             <option key={obra.id} value={obra.nombre_obra}></option>
           ))}
         </datalist>
+        {gpsEstado === "cargando" && (
+          <div style={{ color: "#2563eb", marginTop: 10, fontSize: "0.9rem" }}>
+            Obteniendo ubicacion GPS...
+          </div>
+        )}
+        {gpsEstado === "ok" && (
+          <div style={{ color: "#16a34a", marginTop: 10, fontSize: "0.9rem" }}>
+            Ubicacion confirmada
+          </div>
+        )}
+        {gpsEstado === "error" && (
+          <div style={{ marginTop: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+            <div style={{ color: "#dc2626", fontSize: "0.9rem" }}>GPS no disponible</div>
+            <button
+              className="button"
+              style={{ padding: "6px 18px", fontSize: "0.85rem", marginTop: 0 }}
+              onClick={requestGPS}
+            >
+              Reintentar GPS
+            </button>
+          </div>
+        )}
         <button className="button" onClick={handleEmpezar} style={{ marginTop: 18 }}>
           Empecemos
         </button>
