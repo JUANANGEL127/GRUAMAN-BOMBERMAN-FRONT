@@ -1,6 +1,6 @@
 # Skill Registry
 
-Generated: 2026-04-04  
+Generated: 2026-04-05  
 Project: GRUAMAN-BOMBERMAN-FRONT
 
 ## User Skills
@@ -19,11 +19,13 @@ Project: GRUAMAN-BOMBERMAN-FRONT
 
 ## Project Skills
 
-No project-level skills found in `.claude/skills/`, `.gemini/skills/`, `.agent/skills/`, or `skills/`.
+| Skill | Trigger | Source |
+| --- | --- | --- |
+| gruaman-react-pwa | When changing React components, hooks, routes, adapters, offline flows, Dexie usage, Vite/PWA config, or frontend architecture in this repository. | `.agent/skills/gruaman-react-pwa/SKILL.md` |
 
 ## Project Conventions
 
-No convention files found at project root (`AGENTS.md`, `agents.md`, `CLAUDE.md`, `.cursorrules`, `GEMINI.md`, `copilot-instructions.md`).
+- `AGENTS.md`
 
 ## Compact Rules
 
@@ -71,3 +73,11 @@ No convention files found at project root (`AGENTS.md`, `agents.md`, `CLAUDE.md`
 - Activate when this trigger matches: When a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos).
 - Follow the skill workflow in `C:/Users/santi/.codex/skills/.system/skill-installer/SKILL.md`.
 - Keep outputs aligned with repository conventions and constraints.
+
+### gruaman-react-pwa
+- Activate when this trigger matches: When changing React components, hooks, routes, adapters, offline flows, Dexie usage, Vite/PWA config, or frontend architecture in this repository.
+- Keep components render-focused and move logic/transforms into hooks, utils, or adapter modules.
+- Normalize unstable backend payloads before data reaches UI components.
+- Guard browser-only APIs for future SSR/Next.js migration readiness.
+- Do not run build commands unless the user explicitly asks.
+- Use `npm run lint` as the available quality gate after code changes.

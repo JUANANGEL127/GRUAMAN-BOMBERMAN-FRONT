@@ -77,3 +77,15 @@ Maintain and improve this **React + Vite PWA** with strong engineering standards
 - For medium/large changes, prefer SDD workflow (`/sdd-new`, `/sdd-continue`, `/sdd-verify`).
 - Persist important discoveries/decisions/bugfixes with Engram memory.
 - Respect project skill registry at `.atl/skill-registry.md` when triggers match.
+
+## 12) Project AI skills
+- Project-local skills live under `.agent/skills/`.
+- Use `gruaman-react-pwa` for React/Vite/Tailwind/PWA architecture, hooks, adapters, routing, Dexie, and offline-related changes in this repository.
+- Keep the registry at `.atl/skill-registry.md` aligned with project skills so sub-agents receive compact rules.
+
+## 13) Quick start for sub-agents and SDD
+- Use `/sdd-new <change-name>` for medium/large work that needs proposal/spec/tasks before coding.
+- Use `/sdd-continue <change-name>` to move the next dependency-ready SDD phase forward.
+- Use `/sdd-verify <change-name>` to validate implementation against specs/tasks.
+- Ask for `judgment day` when you want dual adversarial review.
+- Prefer `engram` or `hybrid` artifact mode when you want cross-session continuity.
