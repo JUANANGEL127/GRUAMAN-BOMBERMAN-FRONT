@@ -9,17 +9,10 @@
   --borde-transparente: rgba(255, 255, 255, 0.3);
 }
 
-/* === ESTILO GENERAL === */
-body {
-  font-family: "Poppins", "Inter", sans-serif;
-  background: linear-gradient(145deg, var(--blanco), #f3f3f3);
-  color: var(--negro);
-  margin: 0;
-  padding: 0;
-}
-
 /* === CONTENEDOR PRINCIPAL === */
 .form-container {
+  font-family: "Poppins", "Inter", sans-serif;
+  color: var(--negro);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -72,9 +65,9 @@ body {
 }
 
 /* === INPUTS Y SELECTS === */
-input,
-select,
-textarea {
+.form-container input,
+.form-container select,
+.form-container textarea {
   width: 95%;
   padding: 0.75rem;
   font-size: 0.95rem;
@@ -87,20 +80,23 @@ textarea {
   margin-bottom: 2%;
 }
 
-input:focus,
-select:focus,
-textarea:focus {
+.form-container input:focus,
+.form-container select:focus,
+.form-container textarea:focus {
   border-color: var(--naranja);
   box-shadow: 0 0 0 2px rgba(255, 122, 0, 0.3);
 }
 
 /* === PLACEHOLDER === */
-::placeholder {
+.form-container ::placeholder {
   color: #a1a1a1;
   opacity: 0.8;
 }
 
-button {
+.form-container button,
+.form-container input[type="submit"],
+.form-container .btn,
+.form-container .button-green {
   background: linear-gradient(145deg, var(--naranja), var(--naranja-claro));
   color: var(--blanco);
   font-weight: 600;
@@ -118,9 +114,18 @@ button {
   margin-bottom: 5%;
 }
 
-button:hover,
-button:focus,
-button:active {
+.form-container button:hover,
+.form-container button:focus,
+.form-container button:active,
+.form-container input[type="submit"]:hover,
+.form-container input[type="submit"]:focus,
+.form-container input[type="submit"]:active,
+.form-container .btn:hover,
+.form-container .btn:focus,
+.form-container .btn:active,
+.form-container .button-green:hover,
+.form-container .button-green:focus,
+.form-container .button-green:active {
   background: linear-gradient(145deg, var(--azul), #1976d2);
   color: #fff;
   transform: scale(1.03);
@@ -128,7 +133,10 @@ button:active {
 }
 
 @media (hover: none) and (pointer: coarse) {
-  button:active {
+  .form-container button:active,
+  .form-container input[type="submit"]:active,
+  .form-container .btn:active,
+  .form-container .button-green:active {
     background: linear-gradient(145deg, var(--azul), #1976d2);
     color: #fff;
     transform: scale(1.03);
@@ -168,7 +176,10 @@ button:active {
     padding: 1rem;
   }
 
-  button {
+  .form-container button,
+  .form-container input[type="submit"],
+  .form-container .btn,
+  .form-container .button-green {
     width: 100%;
   }
 }
@@ -250,7 +261,7 @@ button:active {
   margin-right: 0;
 }
 
-.button-green {
+.form-container .button-green {
   background: linear-gradient(145deg, #43a047, #66bb6a) !important;
   color: #fff !important;
   border: none !important;
@@ -275,9 +286,9 @@ button:active {
     border-radius: 1.25rem;
   }
 
-  input,
-  select,
-  textarea {
+  .form-container input,
+  .form-container select,
+  .form-container textarea {
     width: 100%;
   }
 
@@ -286,7 +297,10 @@ button:active {
     gap: 12px 20px;
   }
 
-  button {
+  .form-container button,
+  .form-container input[type="submit"],
+  .form-container .btn,
+  .form-container .button-green {
     width: auto;
     padding: 0.85rem 1.25rem;
   }
@@ -319,9 +333,9 @@ button:active {
     font-size: 1.15rem;
   }
 
-  input,
-  select,
-  textarea {
+  .form-container input,
+  .form-container select,
+  .form-container textarea {
     width: 100%;
     font-size: 1rem;
   }
@@ -336,7 +350,10 @@ button:active {
     padding: 10px 12px;
   }
 
-  button {
+  .form-container button,
+  .form-container input[type="submit"],
+  .form-container .btn,
+  .form-container .button-green {
     width: auto;
     padding: 0.9rem 1.5rem;
   }
@@ -385,9 +402,9 @@ button:active {
   }
 
   /* Formularios e inputs ocupan todo el ancho interno de la card */
-  input,
-  select,
-  textarea {
+  .form-container input,
+  .form-container select,
+  .form-container textarea {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -396,7 +413,10 @@ button:active {
   }
 
   /* Botones centrados y consistentes en desktop */
-  button {
+  .form-container button,
+  .form-container input[type="submit"],
+  .form-container .btn,
+  .form-container .button-green {
     display: inline-block;
     margin: 0.75rem auto;
     padding: 0.9rem 1.4rem;
@@ -453,7 +473,10 @@ button:active {
     gap: 12px 18px;
   }
 
-  button {
+  .form-container button,
+  .form-container input[type="submit"],
+  .form-container .btn,
+  .form-container .button-green {
     margin: 0.6rem auto;
   }
 }
@@ -468,10 +491,10 @@ button:active {
   }
 
   /* Selección amplia para abarcar variantes de botones */
-  button,
-  .button-green,
-  input[type="submit"],
-  .btn {
+  .form-container button,
+  .form-container .button-green,
+  .form-container input[type="submit"],
+  .form-container .btn {
     width: var(--btn-desktop-width) !important;
     min-width: var(--btn-desktop-width) !important;
     height: var(--btn-desktop-height) !important;

@@ -1,0 +1,66 @@
+schema: spec-driven
+
+context: |
+  Tech stack: React 19 + Vite 7 (ESM), Tailwind CSS 4, vite-plugin-pwa.
+  Architecture: SPA por módulos en src/components/* con utilidades, hooks y capa db local.
+  Testing: Sin test runner configurado (sin script test y sin vitest/jest en dependencias).
+  Style: ESLint 9 activo; sin comando de type-check ni formatter dedicado.
+
+strict_tdd: false
+
+testing:
+  detected_on: "2026-04-02"
+  strict_tdd:
+    requested: true
+    enabled: false
+    reason: "Hay marker de strict-tdd habilitado, pero no existe test runner en el proyecto."
+  test_runner:
+    available: false
+    framework: null
+    command: null
+  layers:
+    unit:
+      available: false
+      tool: null
+    integration:
+      available: false
+      tool: null
+    e2e:
+      available: false
+      tool: null
+  coverage:
+    available: false
+    command: null
+  quality_tools:
+    linter:
+      available: true
+      command: "npm run lint"
+    type_checker:
+      available: false
+      command: null
+    formatter:
+      available: false
+      command: null
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Identify affected modules/packages
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group tasks by phase (infrastructure, implementation, testing)
+    - Use hierarchical numbering (1.1, 1.2, etc.)
+    - Keep tasks small enough to complete in one session
+  apply:
+    - Follow existing code patterns and conventions
+    - Load relevant coding skills for the project stack
+  verify:
+    - Run tests if test infrastructure exists
+    - Compare implementation against every spec scenario
+  archive:
+    - Warn before merging destructive deltas (large removals)

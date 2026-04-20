@@ -59,6 +59,7 @@ import AtsDesmontajeTorregrua from './components/gruaman/ats/AtsDesmontajeTorreg
 import AtsTelescopaje        from './components/gruaman/ats/AtsTelescopaje';
 import AtsMantenimiento      from './components/gruaman/ats/AtsMantenimiento';
 import AtsElevador           from './components/gruaman/ats/AtsElevador';
+import { IndicadorCentralAdminPage } from "./features/indicador-central";
 
 /**
  * Resuelve el nombre del trabajador y la obra activa desde localStorage,
@@ -1068,6 +1069,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/eleccion_tecnicos/*" element={<EleccionTecnicos />} />
             <Route path="/pqr" element={<PQR />} />
             <Route path="/hallazgos" element={<Hallazgos />} />
+            <Route path="/indicador-central-admin" element={<IndicadorCentralAdminPage />} />
           </Routes>
           {/* <Footer /> */}
         </div>
