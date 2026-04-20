@@ -1,10 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import AdminObrasBomberman from "./admin_obras_bomberman";
-import HorasExtraGruamanAdmin from "../administrador_gruaman/horas_extra_gruaman"; // Importa el componente de horas extra gruaman
-import RegistrosDiariosAdmin from "../administrador/RegistrosDiariosAdmin";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 function AdministradorBomberman() {
   const navigate = useNavigate();
@@ -12,19 +7,18 @@ function AdministradorBomberman() {
   return (
     <div className="form-container">
       <div className="card-section">
-        <h3 className="card-title">
-          Bienvenido Administrador Bomberman
-        </h3>
+        <h3 className="card-title">Bienvenido Administrador Bomberman</h3>
         <p className="label" style={{ marginBottom: 32 }}>
           Selecciona que deseas administrar:
         </p>
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 8
-        }}>
-         
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
           <button
             className="button"
             style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
@@ -53,7 +47,6 @@ function AdministradorBomberman() {
           >
             Administrar Obras
           </button>
-          {/* Nuevos botones admin */}
           <button
             className="button"
             style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
@@ -109,6 +102,13 @@ function AdministradorBomberman() {
             onClick={() => navigate("/registros_diarios_admin")}
           >
             Registros Diarios
+          </button>
+          <button
+            className="button"
+            style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
+            onClick={() => navigate("/indicador-central-admin")}
+          >
+            Indicador Central
           </button>
         </div>
       </div>
