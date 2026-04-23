@@ -100,7 +100,13 @@ function IndicadorCentralAdminShell({ adminRole }) {
             Configura la generación automatica del informe y descarga en Excel directo desde el formulario, sin pasos intermedios.
           </p>
         </div>
-        <a className="indicador-central-page__back-link" href={backPath}>
+        <a className="indicador-central-page__back-link 
+              hover:[background:linear-gradient(145deg,#0057ff,#1976d2)] 
+              hover:[box-shadow:0_6px_15px_rgba(25,118,210,0.28)] 
+              hover:border-[#1976d2]"
+              style={{color:"#fff"}}
+            href={backPath}
+        >
           Volver al menú admin
         </a>
       </header>

@@ -55,12 +55,12 @@ export function ExecutionSection({
         <div>
           <h2 className="indicador-central-title-with-tip">
             Descarga manual
-            <IndicadorCentralInfoTip label="Qué hace esta sección">
-              Este CTA dispara directo /administrador/registros_diarios/descargar y usa el mismo formulario como fuente del payload.
+            <IndicadorCentralInfoTip label="Qué hace esta sección" align="start">
+              Ajusta los campos del  formulario segun requieras filtrar el indicador.
             </IndicadorCentralInfoTip>
           </h2>
           <p className="indicador-central-card__description">
-            Elegí el corte, opcionalmente filtrá por nombre y descargá el workbook sin ejecutar un paso previo aparte.
+            Elige el corte, opcionalmente filtra por el nombre del trabajador y descarga el Excel
           </p>
         </div>
         <span className="indicador-central-status indicador-central-status--warning">
@@ -72,8 +72,8 @@ export function ExecutionSection({
         <div className="indicador-central-field-group">
           <label className="indicador-central-label" htmlFor="indicador-fecha-corte">
             Fecha de corte
-            <IndicadorCentralInfoTip label="Qué fecha se envía">
-              Backend recibe esta fecha como ancla del corte y desde ahí se resuelve la ventana real de descarga.
+            <IndicadorCentralInfoTip label="Qué fecha se envía" align="start">
+              Aquí se indica el periodo de tiempo para la descarga.
             </IndicadorCentralInfoTip>
           </label>
           <input
@@ -107,7 +107,7 @@ export function ExecutionSection({
         <div className="indicador-central-field-group indicador-central-field-group--full">
           <label className="indicador-central-label" htmlFor="indicador-download-nombre">
             Nombre
-            <IndicadorCentralInfoTip label="Qué hace este filtro">
+            <IndicadorCentralInfoTip label="Qué hace este filtro" align="start">
               Es opcional. Se manda como nombre al backend para descargar un informe puntual; no cambia el nombre del archivo.
             </IndicadorCentralInfoTip>
           </label>
@@ -127,7 +127,7 @@ export function ExecutionSection({
           <span className="indicador-central-result-item__label">
             Ventana resuelta
             <IndicadorCentralInfoTip label="Cómo se calcula la ventana" align="start">
-              Diario usa la misma fecha en inicio y fin. Mensual toma desde el día 1 hasta la fecha de corte. Mensual acumulado hoy queda con la misma lógica.
+              Diario usa la misma fecha en inicio y fin. Mensual toma desde el día 1 hasta la fecha de corte.
             </IndicadorCentralInfoTip>
           </span>
           <strong>{requestWindow}</strong>
@@ -148,7 +148,7 @@ export function ExecutionSection({
 
       <div className="indicador-central-actions indicador-central-actions--single">
         <button type="button" className="indicador-central-button" onClick={onExecute} disabled={!canExecute || submitting}>
-          {submitting ? "Descargando..." : "Descargar workbook"}
+          {submitting ? "Descargando..." : "Descargar"}
         </button>
       </div>
     </section>
