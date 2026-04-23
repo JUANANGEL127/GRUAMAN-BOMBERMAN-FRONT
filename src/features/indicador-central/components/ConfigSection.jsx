@@ -1,18 +1,52 @@
-﻿import { IndicadorCentralListEditor } from "./IndicadorCentralListEditor";
+﻿import { useMemo } from "react";
+import { IndicadorCentralListEditor } from "./IndicadorCentralListEditor";
 import { IndicadorCentralInfoTip } from "./IndicadorCentralInfoTip";
+import { IndicadorCentralWorkerSearchEditor } from "./IndicadorCentralWorkerSearchEditor";
 
 function formatCompanyLabel(companyKey, companyOptions = []) {
   const matchedCompany = companyOptions.find((company) => company.value === String(companyKey));
   return matchedCompany?.label || `Empresa ${companyKey}`;
 }
 
-function buildScopeSummary(scope, companyOptions = []) {
+function formatWorksiteOptionLabel(worksite, companyOptions = []) {
+  if (!worksite) return "Sin obra definida";
+
+  const labelParts = [worksite.name || worksite.label || `Obra ${worksite.value}`];
+
+  if (worksite.companyValue) {
+    labelParts.push(formatCompanyLabel(worksite.companyValue, companyOptions));
+  }
+
+  if (worksite.label && worksite.label !== worksite.name) {
+    const extraSegments = worksite.label
+      .split(" · ")
+      .slice(1)
+      .filter((segment) => segment !== "Inactiva");
+
+    labelParts.push(...extraSegments);
+  }
+
+  if (worksite.active === false) {
+    labelParts.push("Inactiva");
+  }
+
+  return [...new Set(labelParts.filter(Boolean))].join(" · ");
+}
+
+function formatWorksiteLabel(scope, worksiteOptions = [], companyOptions = []) {
+  const matchedWorksite = worksiteOptions.find((worksite) => worksite.value === String(scope.obraId));
+  if (matchedWorksite) return formatWorksiteOptionLabel(matchedWorksite, companyOptions);
+  if (scope.obraNombre && scope.obraId) return `${scope.obraNombre} · ${scope.obraId}`;
+  if (scope.obraNombre) return scope.obraNombre;
+  if (scope.obraId) return `Obra ${scope.obraId}`;
+  return "Sin obra definida";
+}
+
+function buildScopeSummary(scope, companyOptions = [], worksiteOptions = []) {
   const companiesLabel = scope.empresaIds.length
     ? scope.empresaIds.map((companyId) => formatCompanyLabel(String(companyId), companyOptions)).join(", ")
     : "sin empresas definidas";
-  const worksiteLabel = scope.segmentarPorObra
-    ? `${scope.obraNombre || "Sin nombre"} · ${scope.obraId || "sin código"}`
-    : "Desactivada";
+  const worksiteLabel = scope.segmentarPorObra ? formatWorksiteLabel(scope, worksiteOptions, companyOptions) : "Desactivada";
   const namesLabel = scope.nombres.length ? `${scope.nombres.length} nombres específicos` : "Sin nombres adicionales";
 
   return [
@@ -27,6 +61,9 @@ export function ConfigSection({
   companyOptions = [],
   companiesLoading = false,
   companiesError = null,
+  worksiteOptions = [],
+  worksitesLoading = false,
+  worksitesError = null,
   loading,
   saving,
   error,
@@ -37,7 +74,25 @@ export function ConfigSection({
   onReset,
 }) {
   const companyKeys = Object.keys(config.formatosPorEmpresa || {}).sort((left, right) => Number(left) - Number(right));
-  const scopeSummary = buildScopeSummary(config.scope, companyOptions);
+  const filteredWorksiteOptions = useMemo(() => {
+    const selectedCompanyIds = new Set(config.scope.empresaIds.map(String));
+    const selectedWorksiteId = config.scope.obraId === null ? null : String(config.scope.obraId);
+
+    return worksiteOptions.filter((worksite) => {
+      if (selectedWorksiteId && worksite.value === selectedWorksiteId) return true;
+      if (!selectedCompanyIds.size) return true;
+      return !worksite.companyValue || selectedCompanyIds.has(worksite.companyValue);
+    });
+  }, [config.scope.empresaIds, config.scope.obraId, worksiteOptions]);
+  const decoratedWorksiteOptions = useMemo(
+    () =>
+      filteredWorksiteOptions.map((worksite) => ({
+        ...worksite,
+        displayLabel: formatWorksiteOptionLabel(worksite, companyOptions),
+      })),
+    [filteredWorksiteOptions, companyOptions]
+  );
+  const scopeSummary = buildScopeSummary(config.scope, companyOptions, decoratedWorksiteOptions);
 
   function updateThreshold(field, value) {
     onChange((currentConfig) => ({
@@ -77,6 +132,19 @@ export function ConfigSection({
       formatosPorEmpresa: {
         ...currentConfig.formatosPorEmpresa,
         [companyKey]: nextFormats,
+      },
+    }));
+  }
+
+  function updateSelectedWorksite(worksiteId) {
+    const selectedWorksite = decoratedWorksiteOptions.find((worksite) => worksite.value === worksiteId) || null;
+
+    onChange((currentConfig) => ({
+      ...currentConfig,
+      scope: {
+        ...currentConfig.scope,
+        obraId: selectedWorksite ? Number(selectedWorksite.value) : null,
+        obraNombre: selectedWorksite?.name || null,
       },
     }));
   }
@@ -250,6 +318,9 @@ export function ConfigSection({
                       Cuando está activo, la obra pasa a ser un filtro estricto. Si lo apagás, se limpian obra ID y nombre para volver al modo cargo-first.
                     </IndicadorCentralInfoTip>
                   </label>
+                  <p className="indicador-central-helper">
+                    Se muestran todas las obras disponibles y las inactivas quedan marcadas para no perder contexto histórico.
+                  </p>
                 </div>
                 <input
                   id="indicador-segmentar-obra"
@@ -260,35 +331,30 @@ export function ConfigSection({
                 />
               </div>
 
-              <div className="indicador-central-form-grid indicador-central-form-grid--compact">
-                <div className="indicador-central-field-group">
-                  <label className="indicador-central-label" htmlFor="indicador-obra-id">
-                    Código de obra
-                  </label>
-                  <input
-                    id="indicador-obra-id"
-                    className="indicador-central-input"
-                    type="number"
-                    value={config.scope.obraId ?? ""}
-                    disabled={!config.scope.segmentarPorObra}
-                    onChange={(event) => updateScopeField("obraId", event.target.value ? Number(event.target.value) : null)}
-                  />
-                </div>
-
-                <div className="indicador-central-field-group">
-                  <label className="indicador-central-label" htmlFor="indicador-obra-nombre">
-                    Nombre de obra
-                  </label>
-                  <input
-                    id="indicador-obra-nombre"
-                    className="indicador-central-input"
-                    type="text"
-                    value={config.scope.obraNombre ?? ""}
-                    disabled={!config.scope.segmentarPorObra}
-                    onChange={(event) => updateScopeField("obraNombre", event.target.value || null)}
-                  />
-                </div>
+              <div className="indicador-central-field-group">
+                <label className="indicador-central-label" htmlFor="indicador-obra-select">
+                  Obra
+                </label>
+                <select
+                  id="indicador-obra-select"
+                  className="indicador-central-input"
+                  value={config.scope.obraId ?? ""}
+                  disabled={!config.scope.segmentarPorObra || worksitesLoading || !decoratedWorksiteOptions.length}
+                  onChange={(event) => updateSelectedWorksite(event.target.value)}
+                >
+                  <option value="">
+                    {worksitesLoading ? "Cargando obras..." : decoratedWorksiteOptions.length ? "Seleccioná una obra" : "No hay obras disponibles"}
+                  </option>
+                  {decoratedWorksiteOptions.map((worksite) => (
+                    <option key={worksite.value} value={worksite.value}>
+                      {worksite.displayLabel}
+                    </option>
+                  ))}
+                </select>
               </div>
+              {worksitesError ? (
+                <p className="indicador-central-inline-alert indicador-central-inline-alert--error">{worksitesError}</p>
+              ) : null}
             </article>
 
             <article className="indicador-central-scope-panel indicador-central-scope-panel--wide">
@@ -301,7 +367,7 @@ export function ConfigSection({
                 </div>
               </div>
 
-              <IndicadorCentralListEditor
+              <IndicadorCentralWorkerSearchEditor
                 label={
                   <>
                     scope.nombres
@@ -311,10 +377,10 @@ export function ConfigSection({
                   </>
                 }
                 items={config.scope.nombres}
-                placeholder="Nombre a incluir"
                 emptyLabel="No hay nombres específicos cargados."
-                addLabel="Agregar nombre"
-                editorHint="Tocá un chip para corregirlo o quitarlo"
+                editorHint="Buscá trabajadores dentro de las empresas seleccionadas y tocá un resultado para agregarlo"
+                companyIds={config.scope.empresaIds}
+                getCompanyLabel={(companyId) => formatCompanyLabel(companyId, companyOptions)}
                 onChange={(nextItems) => updateScopeField("nombres", nextItems)}
               />
             </article>
@@ -411,3 +477,5 @@ export function ConfigSection({
 }
 
 export default ConfigSection;
+
+

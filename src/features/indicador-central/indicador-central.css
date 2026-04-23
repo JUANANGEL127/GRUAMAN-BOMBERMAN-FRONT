@@ -413,6 +413,37 @@
   gap: 8px;
 }
 
+.indicador-central-search-results {
+  display: grid;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.indicador-central-search-result {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.95);
+  color: #1f2937;
+  cursor: pointer;
+  text-align: left;
+}
+
+.indicador-central-search-result span {
+  color: #64748b;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
 .indicador-central-chip {
   display: inline-flex;
   align-items: center;

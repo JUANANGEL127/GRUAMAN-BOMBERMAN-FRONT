@@ -7,6 +7,7 @@ import { useIndicadorCentralCompanies } from "../hooks/useIndicadorCentralCompan
 import { useIndicadorCentralConfig } from "../hooks/useIndicadorCentralConfig";
 import { useIndicadorCentralDownload } from "../hooks/useIndicadorCentralDownload";
 import { useIndicadorCentralExecution } from "../hooks/useIndicadorCentralExecution";
+import { useIndicadorCentralWorksites } from "../hooks/useIndicadorCentralWorksites";
 import "../indicador-central.css";
 
 const INDICADOR_CENTRAL_ADMIN_ROLES = new Set(["gruaman", "bomberman"]);
@@ -43,6 +44,11 @@ function IndicadorCentralAdminShell({ adminRole }) {
     loading: companiesLoading,
     error: companiesError,
   } = useIndicadorCentralCompanies();
+  const {
+    worksites,
+    loading: worksitesLoading,
+    error: worksitesError,
+  } = useIndicadorCentralWorksites();
   const {
     execution,
     setExecutionField,
@@ -114,6 +120,9 @@ function IndicadorCentralAdminShell({ adminRole }) {
               companyOptions={companies}
               companiesLoading={companiesLoading}
               companiesError={companiesError}
+              worksiteOptions={worksites}
+              worksitesLoading={worksitesLoading}
+              worksitesError={worksitesError}
               loading={loading}
               saving={saving}
               error={configError}
