@@ -3,6 +3,8 @@ import { IndicadorCentralListEditor } from "./IndicadorCentralListEditor";
 import { IndicadorCentralInfoTip } from "./IndicadorCentralInfoTip";
 import { IndicadorCentralWorkerSearchEditor } from "./IndicadorCentralWorkerSearchEditor";
 
+const SHOULD_RENDER_COMPANY_FORMATS = false;
+
 function formatCompanyLabel(companyKey, companyOptions = []) {
   const matchedCompany = companyOptions.find((company) => company.value === String(companyKey));
   return matchedCompany?.label || `Empresa ${companyKey}`;
@@ -156,7 +158,7 @@ export function ConfigSection({
           <h2>Configuración del indicador</h2>
           <p className="indicador-central-card__description">
             Edita sólo la configuración necesaria para la generación del reporte: destinatarios, umbrales, cargos a tener en cuenta (Gruaman / Bomberman), exclusiones,
-            envío del informe automaticamente (distribución) y formatos por empresa.
+            envío del informe automaticamente (distribución), scope y exclusiones.
           </p>
         </div>
         <span className="indicador-central-status indicador-central-status--info">
@@ -315,7 +317,7 @@ export function ConfigSection({
                   <label className="indicador-central-label" htmlFor="indicador-segmentar-obra">
                     Segmentar por obra
                     <IndicadorCentralInfoTip label="Qué pasa al segmentar por obra">
-                      Cuando está activo, la obra pasa a ser un filtro estricto. Si lo apagás, se limpian obra ID y nombre para volver al modo cargo-first.
+                      Cuando está activo, la obra pasa a ser un filtro estricto. Si lo apagás, se limpianel filtro para volver al modo cargo-first.
                     </IndicadorCentralInfoTip>
                   </label>
                   <p className="indicador-central-helper">
@@ -407,35 +409,37 @@ export function ConfigSection({
           </div>
         </section>
 
-        <section className="indicador-central-nested-card">
-          <div className="indicador-central-card__header">
-            <div>
-              <h3>Formatos por empresa</h3>
-              <p className="indicador-central-card__description">
-                Definí qué formatos operativos cuentan para cada empresa dentro del contrato actual.
-              </p>
-            </div>
-          </div>
-
-          <div className="indicador-central-company-grid">
-            {companyKeys.map((companyKey) => (
-              <article key={companyKey} className="indicador-central-company-card">
-                <h4>{formatCompanyLabel(companyKey, companyOptions)}</h4>
-                <p className="indicador-central-helper">
-                  Cargá los identificadores de formatos esperados para esta empresa.
+        {SHOULD_RENDER_COMPANY_FORMATS ? (
+          <section className="indicador-central-nested-card">
+            <div className="indicador-central-card__header">
+              <div>
+                <h3>Formatos por empresa</h3>
+                <p className="indicador-central-card__description">
+                  Definí qué formatos operativos cuentan para cada empresa dentro del contrato actual.
                 </p>
-                <IndicadorCentralListEditor
-                  label={`Formatos empresa ${companyKey}`}
-                  items={config.formatosPorEmpresa[companyKey] || []}
-                  placeholder="permiso_trabajo"
-                  emptyLabel="Todavía no hay formatos definidos."
-                  addLabel="Agregar formato"
-                  onChange={(nextItems) => updateCompanyFormats(companyKey, nextItems)}
-                />
-              </article>
-            ))}
-          </div>
-        </section>
+              </div>
+            </div>
+
+            <div className="indicador-central-company-grid">
+              {companyKeys.map((companyKey) => (
+                <article key={companyKey} className="indicador-central-company-card">
+                  <h4>{formatCompanyLabel(companyKey, companyOptions)}</h4>
+                  <p className="indicador-central-helper">
+                    Cargá los identificadores de formatos esperados para esta empresa.
+                  </p>
+                  <IndicadorCentralListEditor
+                    label={`Formatos empresa ${companyKey}`}
+                    items={config.formatosPorEmpresa[companyKey] || []}
+                    placeholder="permiso_trabajo"
+                    emptyLabel="Todavía no hay formatos definidos."
+                    addLabel="Agregar formato"
+                    onChange={(nextItems) => updateCompanyFormats(companyKey, nextItems)}
+                  />
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className="indicador-central-nested-card">
           <div className="indicador-central-card__header">
@@ -477,5 +481,4 @@ export function ConfigSection({
 }
 
 export default ConfigSection;
-
 
