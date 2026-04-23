@@ -26,6 +26,92 @@ function ensureStringArray(value) {
     .filter(Boolean);
 }
 
+function normalizeCompanyOptionItem(item) {
+  if (!isPlainObject(item)) return null;
+
+  const id = toFiniteNumber(
+    firstNonEmpty(item.id, item.empresa_id, item.empresaId, item.value),
+    null
+  );
+  const label = ensureString(
+    firstNonEmpty(
+      item.nombre,
+      item.name,
+      item.label,
+      item.empresa,
+      item.nombre_empresa,
+      item.nombreEmpresa,
+      item.razon_social,
+      item.razonSocial
+    )
+  );
+
+  if (id === null || !label) return null;
+
+  return {
+    value: String(id),
+    label,
+  };
+}
+
+function normalizeWorksiteOptionItem(item) {
+  if (!isPlainObject(item)) return null;
+
+  const id = toFiniteNumber(
+    firstNonEmpty(item.id, item.obra_id, item.obraId, item.value),
+    null
+  );
+  const name = ensureString(
+    firstNonEmpty(item.nombre_obra, item.nombreObra, item.nombre, item.name, item.label)
+  );
+
+  if (id === null || !name) return null;
+
+  const companyId = toFiniteNumber(
+    firstNonEmpty(item.empresa_id, item.empresaId, item.company_id, item.companyId),
+    null
+  );
+  const builder = ensureString(
+    firstNonEmpty(item.constructora, item.cliente, item.empresa, item.builder)
+  );
+  const active = toBoolean(firstNonEmpty(item.activa, item.active), true);
+
+  const labelParts = [name];
+  if (builder) labelParts.push(builder);
+  if (!active) labelParts.push("Inactiva");
+
+  return {
+    value: String(id),
+    label: labelParts.join(" · "),
+    name,
+    companyValue: companyId === null ? null : String(companyId),
+    active,
+  };
+}
+
+function normalizeWorkerOptionItem(item) {
+  if (!isPlainObject(item)) return null;
+
+  const name = ensureString(firstNonEmpty(item.nombre, item.name, item.label));
+  if (!name) return null;
+
+  const id = firstNonEmpty(item.id, item.usuario_id, item.usuarioId, item.numero_identificacion, item.cedula);
+  const companyId = toFiniteNumber(
+    firstNonEmpty(item.empresa_id, item.empresaId, item.company_id, item.companyId),
+    null
+  );
+  const document = ensureString(firstNonEmpty(item.numero_identificacion, item.cedula, item.documento));
+
+  return {
+    value: name,
+    label: name,
+    name,
+    id: id === null ? null : String(id),
+    companyValue: companyId === null ? null : String(companyId),
+    document,
+  };
+}
+
 function toNullableString(value) {
   const normalized = ensureString(value);
   return normalized || null;
@@ -194,6 +280,90 @@ export function extractIndicadorCentralCutTypes(payload = {}) {
 
   const values = sources.flatMap((source) => ensureStringArray(source));
   return [...new Set(values)];
+}
+
+export function normalizeIndicadorCentralCompanies(payload = {}) {
+  const candidate = unwrapCandidate(payload);
+  const sources = [
+    candidate.empresas,
+    candidate.data?.empresas,
+    candidate.results,
+    candidate.rows,
+    candidate.items,
+    candidate,
+  ];
+
+  const normalizedCompanies = sources
+    .flatMap((source) => ensureArray(source))
+    .map((item) => normalizeCompanyOptionItem(item))
+    .filter(Boolean);
+
+  const uniqueCompanies = new Map();
+
+  normalizedCompanies.forEach((company) => {
+    if (!uniqueCompanies.has(company.value)) {
+      uniqueCompanies.set(company.value, company);
+    }
+  });
+
+  return [...uniqueCompanies.values()].sort((left, right) => left.label.localeCompare(right.label, "es"));
+}
+
+export function normalizeIndicadorCentralWorksites(payload = {}) {
+  const candidate = unwrapCandidate(payload);
+  const sources = [
+    candidate.obras,
+    candidate.data?.obras,
+    candidate.results,
+    candidate.rows,
+    candidate.items,
+    candidate,
+  ];
+
+  const normalizedWorksites = sources
+    .flatMap((source) => ensureArray(source))
+    .map((item) => normalizeWorksiteOptionItem(item))
+    .filter(Boolean);
+
+  const uniqueWorksites = new Map();
+
+  normalizedWorksites.forEach((worksite) => {
+    if (!uniqueWorksites.has(worksite.value)) {
+      uniqueWorksites.set(worksite.value, worksite);
+    }
+  });
+
+  return [...uniqueWorksites.values()].sort((left, right) => {
+    if (left.active !== right.active) return left.active ? -1 : 1;
+    return left.label.localeCompare(right.label, "es");
+  });
+}
+
+export function normalizeIndicadorCentralWorkers(payload = {}) {
+  const candidate = unwrapCandidate(payload);
+  const sources = [
+    candidate.trabajadores,
+    candidate.data?.trabajadores,
+    candidate.results,
+    candidate.rows,
+    candidate.items,
+    candidate,
+  ];
+
+  const normalizedWorkers = sources
+    .flatMap((source) => ensureArray(source))
+    .map((item) => normalizeWorkerOptionItem(item))
+    .filter(Boolean);
+
+  const uniqueWorkers = new Map();
+
+  normalizedWorkers.forEach((worker) => {
+    if (!uniqueWorkers.has(worker.value)) {
+      uniqueWorkers.set(worker.value, worker);
+    }
+  });
+
+  return [...uniqueWorkers.values()].sort((left, right) => left.label.localeCompare(right.label, "es"));
 }
 
 export function normalizeIndicadorCentralConfig(payload = {}) {

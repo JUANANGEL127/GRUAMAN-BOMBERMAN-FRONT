@@ -1064,7 +1064,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/horas_extra_bomberman" element={<HorasExtraBombermanAdmin />} />
             <Route path="/horas_extra_gruaman" element={<HorasExtraGruamanAdmin />} />
             <Route path="/eleccion_lideres/*" element={<EleccionLideres />} />
-            <Route path="/registros_diarios_admin" element={<RegistrosDiariosAdmin />} />
+            
             <Route path="/eleccion_sst/*" element={<EleccionSST />} />
             <Route path="/eleccion_tecnicos/*" element={<EleccionTecnicos />} />
             <Route path="/pqr" element={<PQR />} />

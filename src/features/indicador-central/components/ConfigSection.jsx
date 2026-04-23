@@ -1,29 +1,54 @@
-﻿import { IndicadorCentralListEditor } from "./IndicadorCentralListEditor";
+﻿import { useMemo } from "react";
+import { IndicadorCentralListEditor } from "./IndicadorCentralListEditor";
 import { IndicadorCentralInfoTip } from "./IndicadorCentralInfoTip";
+import { IndicadorCentralWorkerSearchEditor } from "./IndicadorCentralWorkerSearchEditor";
 
-const COMPANY_LABELS = {
-  "1": "Grúa Man",
-  "2": "Bomberman",
-};
+const SHOULD_RENDER_COMPANY_FORMATS = false;
 
-function normalizeNumericItem(value) {
-  const normalizedValue = value.trim();
-  if (!normalizedValue) return "";
-  const numericValue = Number(normalizedValue);
-  return Number.isFinite(numericValue) ? String(numericValue) : "";
+function formatCompanyLabel(companyKey, companyOptions = []) {
+  const matchedCompany = companyOptions.find((company) => company.value === String(companyKey));
+  return matchedCompany?.label || `Empresa ${companyKey}`;
 }
 
-function formatCompanyLabel(companyKey) {
-  return COMPANY_LABELS[companyKey] || `Empresa ${companyKey}`;
+function formatWorksiteOptionLabel(worksite, companyOptions = []) {
+  if (!worksite) return "Sin obra definida";
+
+  const labelParts = [worksite.name || worksite.label || `Obra ${worksite.value}`];
+
+  if (worksite.companyValue) {
+    labelParts.push(formatCompanyLabel(worksite.companyValue, companyOptions));
+  }
+
+  if (worksite.label && worksite.label !== worksite.name) {
+    const extraSegments = worksite.label
+      .split(" · ")
+      .slice(1)
+      .filter((segment) => segment !== "Inactiva");
+
+    labelParts.push(...extraSegments);
+  }
+
+  if (worksite.active === false) {
+    labelParts.push("Inactiva");
+  }
+
+  return [...new Set(labelParts.filter(Boolean))].join(" · ");
 }
 
-function buildScopeSummary(scope) {
+function formatWorksiteLabel(scope, worksiteOptions = [], companyOptions = []) {
+  const matchedWorksite = worksiteOptions.find((worksite) => worksite.value === String(scope.obraId));
+  if (matchedWorksite) return formatWorksiteOptionLabel(matchedWorksite, companyOptions);
+  if (scope.obraNombre && scope.obraId) return `${scope.obraNombre} · ${scope.obraId}`;
+  if (scope.obraNombre) return scope.obraNombre;
+  if (scope.obraId) return `Obra ${scope.obraId}`;
+  return "Sin obra definida";
+}
+
+function buildScopeSummary(scope, companyOptions = [], worksiteOptions = []) {
   const companiesLabel = scope.empresaIds.length
-    ? scope.empresaIds.map((companyId) => formatCompanyLabel(String(companyId))).join(", ")
+    ? scope.empresaIds.map((companyId) => formatCompanyLabel(String(companyId), companyOptions)).join(", ")
     : "sin empresas definidas";
-  const worksiteLabel = scope.segmentarPorObra
-    ? `${scope.obraNombre || "Sin nombre"} · ${scope.obraId || "sin código"}`
-    : "Desactivada";
+  const worksiteLabel = scope.segmentarPorObra ? formatWorksiteLabel(scope, worksiteOptions, companyOptions) : "Desactivada";
   const namesLabel = scope.nombres.length ? `${scope.nombres.length} nombres específicos` : "Sin nombres adicionales";
 
   return [
@@ -35,6 +60,12 @@ function buildScopeSummary(scope) {
 
 export function ConfigSection({
   config,
+  companyOptions = [],
+  companiesLoading = false,
+  companiesError = null,
+  worksiteOptions = [],
+  worksitesLoading = false,
+  worksitesError = null,
   loading,
   saving,
   error,
@@ -45,7 +76,25 @@ export function ConfigSection({
   onReset,
 }) {
   const companyKeys = Object.keys(config.formatosPorEmpresa || {}).sort((left, right) => Number(left) - Number(right));
-  const scopeSummary = buildScopeSummary(config.scope);
+  const filteredWorksiteOptions = useMemo(() => {
+    const selectedCompanyIds = new Set(config.scope.empresaIds.map(String));
+    const selectedWorksiteId = config.scope.obraId === null ? null : String(config.scope.obraId);
+
+    return worksiteOptions.filter((worksite) => {
+      if (selectedWorksiteId && worksite.value === selectedWorksiteId) return true;
+      if (!selectedCompanyIds.size) return true;
+      return !worksite.companyValue || selectedCompanyIds.has(worksite.companyValue);
+    });
+  }, [config.scope.empresaIds, config.scope.obraId, worksiteOptions]);
+  const decoratedWorksiteOptions = useMemo(
+    () =>
+      filteredWorksiteOptions.map((worksite) => ({
+        ...worksite,
+        displayLabel: formatWorksiteOptionLabel(worksite, companyOptions),
+      })),
+    [filteredWorksiteOptions, companyOptions]
+  );
+  const scopeSummary = buildScopeSummary(config.scope, companyOptions, decoratedWorksiteOptions);
 
   function updateThreshold(field, value) {
     onChange((currentConfig) => ({
@@ -89,14 +138,27 @@ export function ConfigSection({
     }));
   }
 
+  function updateSelectedWorksite(worksiteId) {
+    const selectedWorksite = decoratedWorksiteOptions.find((worksite) => worksite.value === worksiteId) || null;
+
+    onChange((currentConfig) => ({
+      ...currentConfig,
+      scope: {
+        ...currentConfig.scope,
+        obraId: selectedWorksite ? Number(selectedWorksite.value) : null,
+        obraNombre: selectedWorksite?.name || null,
+      },
+    }));
+  }
+
   return (
     <section className="indicador-central-card">
       <div className="indicador-central-card__header">
         <div>
-          <h2>Configuración del módulo</h2>
+          <h2>Configuración del indicador</h2>
           <p className="indicador-central-card__description">
-            Editá sólo la configuración que hoy guarda backend: destinatarios, umbrales, scope, exclusiones,
-            distribución y formatos por empresa.
+            Edita sólo la configuración necesaria para la generación del reporte: destinatarios, umbrales, cargos a tener en cuenta (Gruaman / Bomberman), exclusiones,
+            envío del informe automaticamente (distribución), scope y exclusiones.
           </p>
         </div>
         <span className="indicador-central-status indicador-central-status--info">
@@ -130,7 +192,7 @@ export function ConfigSection({
             <div>
               <h3>Umbrales y distribución</h3>
               <p className="indicador-central-card__description">
-                Frontend sólo edita estos valores; la interpretación y la ejecución siguen siendo responsabilidad del backend.
+                Valores de referencia para la interpretación del indicador, la distribución habilita el envío automático a la lista de correos previa.
               </p>
             </div>
           </div>
@@ -171,11 +233,11 @@ export function ConfigSection({
                 <label className="indicador-central-label" htmlFor="indicador-distribucion-habilitada">
                   Distribución habilitada
                   <IndicadorCentralInfoTip label="Cómo funciona la distribución">
-                    Activar esto sólo habilita el envío automático del backend. No cambia la descarga manual del workbook.
+                    Activar esto sólo habilita el envío automático. No cambia la descarga manual del Excel.
                   </IndicadorCentralInfoTip>
                 </label>
                 <p className="indicador-central-helper">
-                  Encendé o apagá el envío automático sin tocar la lógica del cron.
+                  Enciende o apaga el envío automático sin tocar la lógica del cron.
                 </p>
               </div>
               <input
@@ -199,7 +261,7 @@ export function ConfigSection({
             <div>
               <h3>Scope activo</h3>
               <p className="indicador-central-card__description">
-                La base es empresa-first. Acá definís el scope persistente que backend guarda para el módulo.
+                Acá se definen los filtros que segmentan la data para la generación del informe.
               </p>
             </div>
           </div>
@@ -208,23 +270,29 @@ export function ConfigSection({
             <article className="indicador-central-scope-panel">
               <div className="indicador-central-scope-panel__header">
                 <div>
-                  <h4>Empresas incluidas</h4>
+                  <h4>Cargos incluidos</h4>
                   <p className="indicador-central-helper">
-                    Definí qué empresas quedan incluidas dentro del alcance persistente del módulo.
+                    Define qué Cargos quedan incluidoss dentro del alcance del informe.
                   </p>
                 </div>
               </div>
 
               <IndicadorCentralListEditor
-                label="IDs de empresa"
+                label="Cargos"
                 items={config.scope.empresaIds.map(String)}
-                placeholder="1"
+                placeholder={companiesLoading ? "Cargando..." : "Seleccioná un Cargo"}
                 emptyLabel="No hay empresas configuradas."
-                addLabel="Sumar empresa"
+                addLabel="Agregar cargo"
                 editorHint="Tocá un chip para editarlo"
-                normalizeItem={normalizeNumericItem}
+                options={companyOptions}
+                disabled={companiesLoading || !companyOptions.length}
+                getItemLabel={(companyId) => formatCompanyLabel(companyId, companyOptions)}
+                normalizeItem={(value) => value.trim()}
                 onChange={(nextItems) => updateScopeField("empresaIds", nextItems.map(Number))}
               />
+              {companiesError ? (
+                <p className="indicador-central-inline-alert indicador-central-inline-alert--error">{companiesError}</p>
+              ) : null}
             </article>
 
             <article className="indicador-central-scope-panel">
@@ -232,7 +300,7 @@ export function ConfigSection({
                 <div>
                   <h4>Filtro por obra</h4>
                   <p className="indicador-central-helper">
-                    Activá esta segmentación sólo cuando necesités forzar una obra puntual.
+                    Activá esta segmentación sólo cuando necesités filtrar una obra puntual.
                   </p>
                 </div>
                 <span
@@ -249,11 +317,11 @@ export function ConfigSection({
                   <label className="indicador-central-label" htmlFor="indicador-segmentar-obra">
                     Segmentar por obra
                     <IndicadorCentralInfoTip label="Qué pasa al segmentar por obra">
-                      Cuando está activo, la obra pasa a ser un filtro estricto. Si lo apagás, se limpian obra ID y nombre para volver al modo empresa-first.
+                      Cuando está activo, la obra pasa a ser un filtro estricto. Si lo apagás, se limpianel filtro para volver al modo cargo-first.
                     </IndicadorCentralInfoTip>
                   </label>
                   <p className="indicador-central-helper">
-                    Backend guarda este flag como parte del scope persistente.
+                    Se muestran todas las obras disponibles y las inactivas quedan marcadas para no perder contexto histórico.
                   </p>
                 </div>
                 <input
@@ -265,35 +333,30 @@ export function ConfigSection({
                 />
               </div>
 
-              <div className="indicador-central-form-grid indicador-central-form-grid--compact">
-                <div className="indicador-central-field-group">
-                  <label className="indicador-central-label" htmlFor="indicador-obra-id">
-                    Código de obra
-                  </label>
-                  <input
-                    id="indicador-obra-id"
-                    className="indicador-central-input"
-                    type="number"
-                    value={config.scope.obraId ?? ""}
-                    disabled={!config.scope.segmentarPorObra}
-                    onChange={(event) => updateScopeField("obraId", event.target.value ? Number(event.target.value) : null)}
-                  />
-                </div>
-
-                <div className="indicador-central-field-group">
-                  <label className="indicador-central-label" htmlFor="indicador-obra-nombre">
-                    Nombre de obra
-                  </label>
-                  <input
-                    id="indicador-obra-nombre"
-                    className="indicador-central-input"
-                    type="text"
-                    value={config.scope.obraNombre ?? ""}
-                    disabled={!config.scope.segmentarPorObra}
-                    onChange={(event) => updateScopeField("obraNombre", event.target.value || null)}
-                  />
-                </div>
+              <div className="indicador-central-field-group">
+                <label className="indicador-central-label" htmlFor="indicador-obra-select">
+                  Obra
+                </label>
+                <select
+                  id="indicador-obra-select"
+                  className="indicador-central-input"
+                  value={config.scope.obraId ?? ""}
+                  disabled={!config.scope.segmentarPorObra || worksitesLoading || !decoratedWorksiteOptions.length}
+                  onChange={(event) => updateSelectedWorksite(event.target.value)}
+                >
+                  <option value="">
+                    {worksitesLoading ? "Cargando obras..." : decoratedWorksiteOptions.length ? "Seleccioná una obra" : "No hay obras disponibles"}
+                  </option>
+                  {decoratedWorksiteOptions.map((worksite) => (
+                    <option key={worksite.value} value={worksite.value}>
+                      {worksite.displayLabel}
+                    </option>
+                  ))}
+                </select>
               </div>
+              {worksitesError ? (
+                <p className="indicador-central-inline-alert indicador-central-inline-alert--error">{worksitesError}</p>
+              ) : null}
             </article>
 
             <article className="indicador-central-scope-panel indicador-central-scope-panel--wide">
@@ -306,7 +369,7 @@ export function ConfigSection({
                 </div>
               </div>
 
-              <IndicadorCentralListEditor
+              <IndicadorCentralWorkerSearchEditor
                 label={
                   <>
                     scope.nombres
@@ -316,10 +379,10 @@ export function ConfigSection({
                   </>
                 }
                 items={config.scope.nombres}
-                placeholder="Nombre a incluir"
                 emptyLabel="No hay nombres específicos cargados."
-                addLabel="Agregar nombre"
-                editorHint="Tocá un chip para corregirlo o quitarlo"
+                editorHint="Buscá trabajadores dentro de las empresas seleccionadas y tocá un resultado para agregarlo"
+                companyIds={config.scope.empresaIds}
+                getCompanyLabel={(companyId) => formatCompanyLabel(companyId, companyOptions)}
                 onChange={(nextItems) => updateScopeField("nombres", nextItems)}
               />
             </article>
@@ -346,35 +409,37 @@ export function ConfigSection({
           </div>
         </section>
 
-        <section className="indicador-central-nested-card">
-          <div className="indicador-central-card__header">
-            <div>
-              <h3>Formatos por empresa</h3>
-              <p className="indicador-central-card__description">
-                Definí qué formatos operativos cuentan para cada empresa dentro del contrato actual.
-              </p>
-            </div>
-          </div>
-
-          <div className="indicador-central-company-grid">
-            {companyKeys.map((companyKey) => (
-              <article key={companyKey} className="indicador-central-company-card">
-                <h4>{formatCompanyLabel(companyKey)}</h4>
-                <p className="indicador-central-helper">
-                  Cargá los identificadores de formatos esperados para esta empresa.
+        {SHOULD_RENDER_COMPANY_FORMATS ? (
+          <section className="indicador-central-nested-card">
+            <div className="indicador-central-card__header">
+              <div>
+                <h3>Formatos por empresa</h3>
+                <p className="indicador-central-card__description">
+                  Definí qué formatos operativos cuentan para cada empresa dentro del contrato actual.
                 </p>
-                <IndicadorCentralListEditor
-                  label={`Formatos empresa ${companyKey}`}
-                  items={config.formatosPorEmpresa[companyKey] || []}
-                  placeholder="permiso_trabajo"
-                  emptyLabel="Todavía no hay formatos definidos."
-                  addLabel="Agregar formato"
-                  onChange={(nextItems) => updateCompanyFormats(companyKey, nextItems)}
-                />
-              </article>
-            ))}
-          </div>
-        </section>
+              </div>
+            </div>
+
+            <div className="indicador-central-company-grid">
+              {companyKeys.map((companyKey) => (
+                <article key={companyKey} className="indicador-central-company-card">
+                  <h4>{formatCompanyLabel(companyKey, companyOptions)}</h4>
+                  <p className="indicador-central-helper">
+                    Cargá los identificadores de formatos esperados para esta empresa.
+                  </p>
+                  <IndicadorCentralListEditor
+                    label={`Formatos empresa ${companyKey}`}
+                    items={config.formatosPorEmpresa[companyKey] || []}
+                    placeholder="permiso_trabajo"
+                    emptyLabel="Todavía no hay formatos definidos."
+                    addLabel="Agregar formato"
+                    onChange={(nextItems) => updateCompanyFormats(companyKey, nextItems)}
+                  />
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className="indicador-central-nested-card">
           <div className="indicador-central-card__header">
@@ -416,3 +481,4 @@ export function ConfigSection({
 }
 
 export default ConfigSection;
+

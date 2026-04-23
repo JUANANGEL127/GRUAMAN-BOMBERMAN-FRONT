@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { ConfigSection } from "../components/ConfigSection";
 import { ExecutionSection } from "../components/ExecutionSection";
 import { IndicadorCentralTabs } from "../components/IndicadorCentralTabs";
+import { useIndicadorCentralCompanies } from "../hooks/useIndicadorCentralCompanies";
 import { useIndicadorCentralConfig } from "../hooks/useIndicadorCentralConfig";
 import { useIndicadorCentralDownload } from "../hooks/useIndicadorCentralDownload";
 import { useIndicadorCentralExecution } from "../hooks/useIndicadorCentralExecution";
+import { useIndicadorCentralWorksites } from "../hooks/useIndicadorCentralWorksites";
 import "../indicador-central.css";
 
 const INDICADOR_CENTRAL_ADMIN_ROLES = new Set(["gruaman", "bomberman"]);
@@ -37,6 +39,16 @@ function IndicadorCentralAdminShell({ adminRole }) {
     saveConfig,
     resetConfig,
   } = useIndicadorCentralConfig({ updatedBy: resolveUpdatedBy(adminRole) });
+  const {
+    companies,
+    loading: companiesLoading,
+    error: companiesError,
+  } = useIndicadorCentralCompanies();
+  const {
+    worksites,
+    loading: worksitesLoading,
+    error: worksitesError,
+  } = useIndicadorCentralWorksites();
   const {
     execution,
     setExecutionField,
@@ -85,10 +97,16 @@ function IndicadorCentralAdminShell({ adminRole }) {
           <p className="indicador-central-page__eyebrow">Admin panel</p>
           <h1 className="indicador-central-page__title">Indicador Central</h1>
           <p className="indicador-central-page__subtitle">
-            Configurá el módulo y descargá el workbook directo desde el formulario, sin pasos intermedios.
+            Configura la generación automatica del informe y descarga en Excel directo desde el formulario, sin pasos intermedios.
           </p>
         </div>
-        <a className="indicador-central-page__back-link" href={backPath}>
+        <a className="indicador-central-page__back-link 
+              hover:[background:linear-gradient(145deg,#0057ff,#1976d2)] 
+              hover:[box-shadow:0_6px_15px_rgba(25,118,210,0.28)] 
+              hover:border-[#1976d2]"
+              style={{color:"#fff"}}
+            href={backPath}
+        >
           Volver al menú admin
         </a>
       </header>
@@ -105,6 +123,12 @@ function IndicadorCentralAdminShell({ adminRole }) {
           >
             <ConfigSection
               config={config}
+              companyOptions={companies}
+              companiesLoading={companiesLoading}
+              companiesError={companiesError}
+              worksiteOptions={worksites}
+              worksitesLoading={worksitesLoading}
+              worksitesError={worksitesError}
               loading={loading}
               saving={saving}
               error={configError}
