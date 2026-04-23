@@ -99,13 +99,6 @@ function AdministradorBomberman() {
           <button
             className="button"
             style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
-            onClick={() => navigate("/registros_diarios_admin")}
-          >
-            Registros Diarios
-          </button>
-          <button
-            className="button"
-            style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
             onClick={() => navigate("/indicador-central-admin")}
           >
             Indicador Central

@@ -1,25 +1,14 @@
 ﻿import { IndicadorCentralListEditor } from "./IndicadorCentralListEditor";
 import { IndicadorCentralInfoTip } from "./IndicadorCentralInfoTip";
 
-const COMPANY_LABELS = {
-  "1": "Grúa Man",
-  "2": "Bomberman",
-};
-
-function normalizeNumericItem(value) {
-  const normalizedValue = value.trim();
-  if (!normalizedValue) return "";
-  const numericValue = Number(normalizedValue);
-  return Number.isFinite(numericValue) ? String(numericValue) : "";
+function formatCompanyLabel(companyKey, companyOptions = []) {
+  const matchedCompany = companyOptions.find((company) => company.value === String(companyKey));
+  return matchedCompany?.label || `Empresa ${companyKey}`;
 }
 
-function formatCompanyLabel(companyKey) {
-  return COMPANY_LABELS[companyKey] || `Empresa ${companyKey}`;
-}
-
-function buildScopeSummary(scope) {
+function buildScopeSummary(scope, companyOptions = []) {
   const companiesLabel = scope.empresaIds.length
-    ? scope.empresaIds.map((companyId) => formatCompanyLabel(String(companyId))).join(", ")
+    ? scope.empresaIds.map((companyId) => formatCompanyLabel(String(companyId), companyOptions)).join(", ")
     : "sin empresas definidas";
   const worksiteLabel = scope.segmentarPorObra
     ? `${scope.obraNombre || "Sin nombre"} · ${scope.obraId || "sin código"}`
@@ -35,6 +24,9 @@ function buildScopeSummary(scope) {
 
 export function ConfigSection({
   config,
+  companyOptions = [],
+  companiesLoading = false,
+  companiesError = null,
   loading,
   saving,
   error,
@@ -45,7 +37,7 @@ export function ConfigSection({
   onReset,
 }) {
   const companyKeys = Object.keys(config.formatosPorEmpresa || {}).sort((left, right) => Number(left) - Number(right));
-  const scopeSummary = buildScopeSummary(config.scope);
+  const scopeSummary = buildScopeSummary(config.scope, companyOptions);
 
   function updateThreshold(field, value) {
     onChange((currentConfig) => ({
@@ -93,10 +85,10 @@ export function ConfigSection({
     <section className="indicador-central-card">
       <div className="indicador-central-card__header">
         <div>
-          <h2>Configuración del módulo</h2>
+          <h2>Configuración del indicador</h2>
           <p className="indicador-central-card__description">
-            Editá sólo la configuración que hoy guarda backend: destinatarios, umbrales, scope, exclusiones,
-            distribución y formatos por empresa.
+            Edita sólo la configuración necesaria para la generación del reporte: destinatarios, umbrales, cargos a tener en cuenta (Gruaman / Bomberman), exclusiones,
+            envío del informe automaticamente (distribución) y formatos por empresa.
           </p>
         </div>
         <span className="indicador-central-status indicador-central-status--info">
@@ -130,7 +122,7 @@ export function ConfigSection({
             <div>
               <h3>Umbrales y distribución</h3>
               <p className="indicador-central-card__description">
-                Frontend sólo edita estos valores; la interpretación y la ejecución siguen siendo responsabilidad del backend.
+                Valores de referencia para la interpretación del indicador, la distribución habilita el envío automático a la lista de correos previa.
               </p>
             </div>
           </div>
@@ -171,11 +163,11 @@ export function ConfigSection({
                 <label className="indicador-central-label" htmlFor="indicador-distribucion-habilitada">
                   Distribución habilitada
                   <IndicadorCentralInfoTip label="Cómo funciona la distribución">
-                    Activar esto sólo habilita el envío automático del backend. No cambia la descarga manual del workbook.
+                    Activar esto sólo habilita el envío automático. No cambia la descarga manual del Excel.
                   </IndicadorCentralInfoTip>
                 </label>
                 <p className="indicador-central-helper">
-                  Encendé o apagá el envío automático sin tocar la lógica del cron.
+                  Enciende o apaga el envío automático sin tocar la lógica del cron.
                 </p>
               </div>
               <input
@@ -199,7 +191,7 @@ export function ConfigSection({
             <div>
               <h3>Scope activo</h3>
               <p className="indicador-central-card__description">
-                La base es empresa-first. Acá definís el scope persistente que backend guarda para el módulo.
+                Acá se definen los filtros que segmentan la data para la generación del informe.
               </p>
             </div>
           </div>
@@ -208,23 +200,29 @@ export function ConfigSection({
             <article className="indicador-central-scope-panel">
               <div className="indicador-central-scope-panel__header">
                 <div>
-                  <h4>Empresas incluidas</h4>
+                  <h4>Cargos incluidos</h4>
                   <p className="indicador-central-helper">
-                    Definí qué empresas quedan incluidas dentro del alcance persistente del módulo.
+                    Define qué Cargos quedan incluidoss dentro del alcance del informe.
                   </p>
                 </div>
               </div>
 
               <IndicadorCentralListEditor
-                label="IDs de empresa"
+                label="Cargos"
                 items={config.scope.empresaIds.map(String)}
-                placeholder="1"
+                placeholder={companiesLoading ? "Cargando..." : "Seleccioná un Cargo"}
                 emptyLabel="No hay empresas configuradas."
-                addLabel="Sumar empresa"
+                addLabel="Agregar cargo"
                 editorHint="Tocá un chip para editarlo"
-                normalizeItem={normalizeNumericItem}
+                options={companyOptions}
+                disabled={companiesLoading || !companyOptions.length}
+                getItemLabel={(companyId) => formatCompanyLabel(companyId, companyOptions)}
+                normalizeItem={(value) => value.trim()}
                 onChange={(nextItems) => updateScopeField("empresaIds", nextItems.map(Number))}
               />
+              {companiesError ? (
+                <p className="indicador-central-inline-alert indicador-central-inline-alert--error">{companiesError}</p>
+              ) : null}
             </article>
 
             <article className="indicador-central-scope-panel">
@@ -232,7 +230,7 @@ export function ConfigSection({
                 <div>
                   <h4>Filtro por obra</h4>
                   <p className="indicador-central-helper">
-                    Activá esta segmentación sólo cuando necesités forzar una obra puntual.
+                    Activá esta segmentación sólo cuando necesités filtrar una obra puntual.
                   </p>
                 </div>
                 <span
@@ -249,12 +247,9 @@ export function ConfigSection({
                   <label className="indicador-central-label" htmlFor="indicador-segmentar-obra">
                     Segmentar por obra
                     <IndicadorCentralInfoTip label="Qué pasa al segmentar por obra">
-                      Cuando está activo, la obra pasa a ser un filtro estricto. Si lo apagás, se limpian obra ID y nombre para volver al modo empresa-first.
+                      Cuando está activo, la obra pasa a ser un filtro estricto. Si lo apagás, se limpian obra ID y nombre para volver al modo cargo-first.
                     </IndicadorCentralInfoTip>
                   </label>
-                  <p className="indicador-central-helper">
-                    Backend guarda este flag como parte del scope persistente.
-                  </p>
                 </div>
                 <input
                   id="indicador-segmentar-obra"
@@ -359,7 +354,7 @@ export function ConfigSection({
           <div className="indicador-central-company-grid">
             {companyKeys.map((companyKey) => (
               <article key={companyKey} className="indicador-central-company-card">
-                <h4>{formatCompanyLabel(companyKey)}</h4>
+                <h4>{formatCompanyLabel(companyKey, companyOptions)}</h4>
                 <p className="indicador-central-helper">
                   Cargá los identificadores de formatos esperados para esta empresa.
                 </p>

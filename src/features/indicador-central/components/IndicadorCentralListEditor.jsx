@@ -15,8 +15,12 @@ export function IndicadorCentralListEditor({
   editorHint = "Tocá un chip para editarlo",
   onChange,
   normalizeItem = (value) => value.trim(),
+  options = [],
+  getItemLabel = (value) => value,
+  disabled = false,
 }) {
   const [draftValue, setDraftValue] = useState("");
+  const hasOptions = options.length > 0;
 
   function commitItem() {
     const normalizedValue = normalizeItem(draftValue);
@@ -47,19 +51,36 @@ export function IndicadorCentralListEditor({
       </div>
 
       <div className="indicador-central-inline-form">
-        <input
-          className="indicador-central-input"
-          type={inputType}
-          value={draftValue}
-          placeholder={placeholder}
-          onChange={(event) => setDraftValue(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              commitItem();
-            }
-          }}
-        />
+        {hasOptions ? (
+          <select
+            className="indicador-central-input"
+            value={draftValue}
+            disabled={disabled}
+            onChange={(event) => setDraftValue(event.target.value)}
+          >
+            <option value="">{placeholder || "Seleccioná una opción"}</option>
+            {options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            className="indicador-central-input"
+            type={inputType}
+            value={draftValue}
+            placeholder={placeholder}
+            disabled={disabled}
+            onChange={(event) => setDraftValue(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                commitItem();
+              }
+            }}
+          />
+        )}
         <button type="button" className="indicador-central-button" onClick={commitItem}>
           {addLabel}
         </button>
@@ -74,7 +95,7 @@ export function IndicadorCentralListEditor({
               className="indicador-central-chip"
               onClick={() => startEditing(item)}
             >
-              <span>{item}</span>
+              <span>{getItemLabel(item)}</span>
               <span aria-hidden="true">x</span>
             </button>
           ))}

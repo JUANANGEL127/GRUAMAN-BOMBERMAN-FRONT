@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ConfigSection } from "../components/ConfigSection";
 import { ExecutionSection } from "../components/ExecutionSection";
 import { IndicadorCentralTabs } from "../components/IndicadorCentralTabs";
+import { useIndicadorCentralCompanies } from "../hooks/useIndicadorCentralCompanies";
 import { useIndicadorCentralConfig } from "../hooks/useIndicadorCentralConfig";
 import { useIndicadorCentralDownload } from "../hooks/useIndicadorCentralDownload";
 import { useIndicadorCentralExecution } from "../hooks/useIndicadorCentralExecution";
@@ -37,6 +38,11 @@ function IndicadorCentralAdminShell({ adminRole }) {
     saveConfig,
     resetConfig,
   } = useIndicadorCentralConfig({ updatedBy: resolveUpdatedBy(adminRole) });
+  const {
+    companies,
+    loading: companiesLoading,
+    error: companiesError,
+  } = useIndicadorCentralCompanies();
   const {
     execution,
     setExecutionField,
@@ -85,7 +91,7 @@ function IndicadorCentralAdminShell({ adminRole }) {
           <p className="indicador-central-page__eyebrow">Admin panel</p>
           <h1 className="indicador-central-page__title">Indicador Central</h1>
           <p className="indicador-central-page__subtitle">
-            Configurá el módulo y descargá el workbook directo desde el formulario, sin pasos intermedios.
+            Configura la generación automatica del informe y descarga en Excel directo desde el formulario, sin pasos intermedios.
           </p>
         </div>
         <a className="indicador-central-page__back-link" href={backPath}>
@@ -105,6 +111,9 @@ function IndicadorCentralAdminShell({ adminRole }) {
           >
             <ConfigSection
               config={config}
+              companyOptions={companies}
+              companiesLoading={companiesLoading}
+              companiesError={companiesError}
               loading={loading}
               saving={saving}
               error={configError}

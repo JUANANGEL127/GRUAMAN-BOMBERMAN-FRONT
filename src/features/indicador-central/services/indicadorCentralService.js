@@ -3,6 +3,7 @@ import api from "../../../utils/api";
 export const INDICADOR_CENTRAL_ENDPOINTS = Object.freeze({
   CONFIGURACION: "/administrador/indicador_central/configuracion",
   WORKBOOK_DOWNLOAD: "/administrador/registros_diarios/descargar",
+  GET_EMPRESAS: "/roles/empresas/"
 });
 
 export async function getIndicadorCentralConfig() {
@@ -20,4 +21,9 @@ export async function downloadIndicadorCentralWorkbook(payload = {}, axiosConfig
     responseType: "blob",
     ...axiosConfig,
   });
+}
+
+export async function getEmpresas() {
+  const response = await api.get(INDICADOR_CENTRAL_ENDPOINTS.GET_EMPRESAS);
+  return response.data;
 }

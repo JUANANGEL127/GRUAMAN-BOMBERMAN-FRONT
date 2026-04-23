@@ -26,6 +26,34 @@ function ensureStringArray(value) {
     .filter(Boolean);
 }
 
+function normalizeCompanyOptionItem(item) {
+  if (!isPlainObject(item)) return null;
+
+  const id = toFiniteNumber(
+    firstNonEmpty(item.id, item.empresa_id, item.empresaId, item.value),
+    null
+  );
+  const label = ensureString(
+    firstNonEmpty(
+      item.nombre,
+      item.name,
+      item.label,
+      item.empresa,
+      item.nombre_empresa,
+      item.nombreEmpresa,
+      item.razon_social,
+      item.razonSocial
+    )
+  );
+
+  if (id === null || !label) return null;
+
+  return {
+    value: String(id),
+    label,
+  };
+}
+
 function toNullableString(value) {
   const normalized = ensureString(value);
   return normalized || null;
@@ -194,6 +222,33 @@ export function extractIndicadorCentralCutTypes(payload = {}) {
 
   const values = sources.flatMap((source) => ensureStringArray(source));
   return [...new Set(values)];
+}
+
+export function normalizeIndicadorCentralCompanies(payload = {}) {
+  const candidate = unwrapCandidate(payload);
+  const sources = [
+    candidate.empresas,
+    candidate.data?.empresas,
+    candidate.results,
+    candidate.rows,
+    candidate.items,
+    candidate,
+  ];
+
+  const normalizedCompanies = sources
+    .flatMap((source) => ensureArray(source))
+    .map((item) => normalizeCompanyOptionItem(item))
+    .filter(Boolean);
+
+  const uniqueCompanies = new Map();
+
+  normalizedCompanies.forEach((company) => {
+    if (!uniqueCompanies.has(company.value)) {
+      uniqueCompanies.set(company.value, company);
+    }
+  });
+
+  return [...uniqueCompanies.values()].sort((left, right) => left.label.localeCompare(right.label, "es"));
 }
 
 export function normalizeIndicadorCentralConfig(payload = {}) {

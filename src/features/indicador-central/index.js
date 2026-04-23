@@ -9,6 +9,7 @@ export {
   detectIndicadorCentralGranularity,
   extractIndicadorCentralCutTypes,
   normalizeIndicadorCentralConfig,
+  normalizeIndicadorCentralCompanies,
   normalizeIndicadorCentralDownloadRequest,
   normalizeIndicadorCentralExecution,
   normalizeIndicadorCentralExecutionResponse,
@@ -18,9 +19,11 @@ export {
 export {
   downloadIndicadorCentralWorkbook,
   getIndicadorCentralConfig,
+  getEmpresas,
   INDICADOR_CENTRAL_ENDPOINTS,
   updateIndicadorCentralConfig,
 } from "./services/indicadorCentralService";
+export { useIndicadorCentralCompanies } from "./hooks/useIndicadorCentralCompanies";
 export { useIndicadorCentralConfig } from "./hooks/useIndicadorCentralConfig";
 export { useIndicadorCentralDownload } from "./hooks/useIndicadorCentralDownload";
 export { useIndicadorCentralExecution } from "./hooks/useIndicadorCentralExecution";
