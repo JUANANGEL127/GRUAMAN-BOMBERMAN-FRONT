@@ -451,11 +451,13 @@ export function ConfigSection({
             </div>
           </div>
 
-          <IndicadorCentralListEditor
+          <IndicadorCentralWorkerSearchEditor
             label="Nombres excluidos"
             items={config.exclusiones}
-            placeholder="Nombre a excluir"
             emptyLabel="No hay exclusiones configuradas."
+            editorHint="Buscá trabajadores dentro de las empresas seleccionadas y tocá un resultado para excluirlo"
+            companyIds={config.scope.empresaIds}
+            getCompanyLabel={(companyId) => formatCompanyLabel(companyId, companyOptions)}
             onChange={(nextItems) => onChange((currentConfig) => ({ ...currentConfig, exclusiones: nextItems }))}
           />
         </section>
