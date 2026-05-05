@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 /** Mapea cada campo de BD al rol del trabajador que debe completarlo: "operario" | "auxiliar" | "ambos" */
 const ITEM_ROLES = {
@@ -318,8 +316,8 @@ function Checklist() {
       }
     } catch {}
 
-    axios
-      .get(`${API_BASE_URL}/obras`)
+    api
+      .get("/obras")
       .then((res) => {
         const obras = Array.isArray(res.data.obras) ? res.data.obras : res.data || [];
         const obra_encontrada = obras.find((o) => o.nombre_obra === nombre_obra_local);
@@ -346,8 +344,8 @@ function Checklist() {
   }, [nombre_operador_local, nombre_obra_local]);
 
   useEffect(() => {
-    axios
-      .get(`${API_BASE_URL}/bombas`)
+    api
+      .get("/bombas")
       .then((res) => {
         const bombas = Array.isArray(res.data.bombas) ? res.data.bombas : res.data || [];
         set_lista_bombas(bombas);
@@ -510,7 +508,7 @@ function Checklist() {
         ...checklistPayload
       };
 
-      await axios.post(`${API_BASE_URL}/bomberman/checklist`, payload);
+      await api.post("/bomberman/checklist", payload);
       localStorage.setItem(
         "bomberman_checklist_respuestas",
         JSON.stringify({

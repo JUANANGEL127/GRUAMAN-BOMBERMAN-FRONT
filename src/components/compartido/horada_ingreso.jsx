@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api, { API_BASE_URL } from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+import axios from "axios";
 
 /**
  * HoradaIngreso — formulario legado para el registro de hora de ingreso a la jornada.
@@ -29,7 +28,7 @@ export default function HoradaIngreso() {
     const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
     const cargo = localStorage.getItem("cargo_trabajador") || "";
 
-    axios.get(`${API_BASE_URL}/obras`)
+    api.get("/obras")
       .then(res => {
         let obras = [];
         if (Array.isArray(res.data.obras)) {
@@ -93,25 +92,15 @@ export default function HoradaIngreso() {
     };
 
     try {
-      const resp = await fetch(`${API_BASE_URL}/horas_jornada/ingreso`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      let data = {};
-      try {
-        data = await resp.json();
-      } catch {
-        data = {};
-      }
-      if (resp.ok) {
-        setGuardado(true);
-        setTimeout(() => navigate(-1), 500);
-      } else {
-        setError((data && data.error) || `Error al guardar. Código: ${resp.status}`);
-      }
+      await axios.post(`${API_BASE_URL}/horas_jornada/ingreso`, payload, { withCredentials: true })
+      setGuardado(true);
+      setTimeout(() => navigate(-1), 500);
     } catch (e) {
-      setError("Error de red al guardar");
+      setError(
+        e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          "Error de red al guardar"
+      );
     }
   };
 

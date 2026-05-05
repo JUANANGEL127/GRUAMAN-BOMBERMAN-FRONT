@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
 const preguntas = [
 	{
@@ -137,7 +135,7 @@ function ChequeoAlturas({ value = {}, onChange }) {
 		const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 		const cargo = localStorage.getItem("cargo_trabajador") || "";
 
-		axios.get(`${API_BASE_URL}/obras`)
+		api.get("/obras")
 			.then(res => {
 				let obras = [];
 				if (Array.isArray(res.data.obras)) {
@@ -284,7 +282,7 @@ function ChequeoAlturas({ value = {}, onChange }) {
 				"chequeo_alturas_respuestas",
 				JSON.stringify({ weekKey, respuestas, generales })
 			);
-			await axios.post(`${API_BASE_URL}/compartido/chequeo_alturas`, payload);
+			await api.post("/compartido/chequeo_alturas", payload);
 			alert("Lista de chequeo enviada correctamente.");
 			if (onChange) onChange({});
 			setRespuestas({});

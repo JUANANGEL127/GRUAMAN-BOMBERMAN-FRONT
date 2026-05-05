@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import api from "../../utils/api";
 
 /** Campos de encabezado generales del formulario */
 const camposGenerales = [
@@ -128,16 +129,8 @@ function ChecklistMentinimiento() {
       ejecutadoPor
     };
     try {
-      const res = await fetch("http://localhost:3000/gruaman/checklist_mentinimiento_grua", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        setMensajeEnvio("Datos enviados correctamente.");
-      } else {
-        setMensajeEnvio("Error al enviar datos.");
-      }
+      await api.post("/gruaman/checklist_mentinimiento_grua", payload);
+      setMensajeEnvio("Datos enviados correctamente.");
     } catch (err) {
       setMensajeEnvio("Error de red: " + err.message);
     }

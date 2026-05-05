@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/api";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 /**
  * PlanillaBombeo — hoja de control de bombeo para el rol Bomberman.
@@ -74,7 +72,7 @@ function PlanillaBombeo(props) {
   }, [nombre_operador_local]);
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/nombres_trabajadores`)
+    api.get("/nombres_trabajadores")
       .then(res => {
         let nombres = [];
         if (Array.isArray(res.data)) {
@@ -89,7 +87,7 @@ function PlanillaBombeo(props) {
   }, []);
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/obras`)
+    api.get("/obras")
       .then(res => {
         let obras = [];
         if (Array.isArray(res.data.obras)) {
@@ -116,7 +114,7 @@ function PlanillaBombeo(props) {
   }, [nombre_operador_local]);
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/bombas`)
+    api.get("/bombas")
       .then(res => {
         let bombas = [];
         if (Array.isArray(res.data.bombas)) {
@@ -311,21 +309,7 @@ function PlanillaBombeo(props) {
     };
 
     try {
-      const res = await fetch(`${API_BASE_URL}/bomberman/planillabombeo`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const res_text = await res.text();
-      if (!res.ok) {
-        let msg = res_text || "Error al guardar";
-        try {
-          const json = JSON.parse(res_text);
-          if (json.message) msg = json.message;
-          else if (json.error) msg = json.error;
-        } catch (_) {}
-        throw new Error(`(${res.status}) ${msg}`);
-      }
+      await api.post("/bomberman/planillabombeo", payload);
       alert("Guardado exitosamente");
       localStorage.removeItem("hora_llegada_obra");
       localStorage.removeItem("hora_salida_obra");

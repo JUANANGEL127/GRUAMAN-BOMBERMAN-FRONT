@@ -1,21 +1,80 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "./features/auth/hooks/useAuth";
+import { getCompanySlug } from "./features/auth/adapters/authSessionAdapter";
+import { consumeReturnTo } from "./features/auth/utils/returnTo";
 
 function useIsLandscape() {
-  const [landscape, setLandscape] = useState(
-    () => window.matchMedia("(orientation: landscape) and (max-height: 500px)").matches
-  );
+  const [landscape, setLandscape] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(orientation: landscape) and (max-height: 500px)").matches;
+  });
+
   useEffect(() => {
-    const mq = window.matchMedia("(orientation: landscape) and (max-height: 500px)");
-    const onChange = (e) => setLandscape(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
+    if (typeof window === "undefined") return undefined;
+
+    const mediaQuery = window.matchMedia("(orientation: landscape) and (max-height: 500px)");
+    const handleChange = (event) => setLandscape(event.matches);
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleChange);
+    } else {
+      mediaQuery.addListener(handleChange);
+    }
+
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener("change", handleChange);
+      } else {
+        mediaQuery.removeListener(handleChange);
+      }
+    };
   }, []);
+
   return landscape;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const AXIOS_AUTH_CONFIG = { withCredentials: true };
+
+function resolveUsuarioDesdeSesion(session) {
+  const user = session?.user;
+  if (!user) return null;
+
+  const legacyProfile = session?.legacyProfile;
+
+  return {
+    nombre: user.name || legacyProfile?.nombre_trabajador || "",
+    empresa: getCompanySlug(
+      legacyProfile?.empresa_trabajador || user.companyName || user.companySlug || ""
+    ),
+    numero_identificacion: user.documentId || legacyProfile?.cedula_trabajador || "",
+    cargo: legacyProfile?.cargo_trabajador || user.cargo || "",
+  };
+}
+
+function resolveWorkerLandingPath(usuario, isLite) {
+  const empresa = getCompanySlug(usuario?.empresa || "");
+  const empresasConJuego = ["GyE", "AIC"];
+  const usaJuego = empresasConJuego.includes(empresa) && !isLite;
+
+  if (usaJuego) {
+    const character = empresa === "GyE" ? "gruaman" : "bomberman";
+    try {
+      localStorage.setItem("selectedCharacter", character);
+    } catch {
+      // Local UI metadata is optional.
+    }
+    return "/game/rotate-screen";
+  }
+
+  if (empresa === "GyE") return "/eleccion";
+  if (empresa === "Lideres") return "/eleccion_lideres";
+  if (empresa === "SST") return "/eleccion_sst";
+  if (empresa === "Tecnicos") return "/eleccion_tecnicos";
+  return "/eleccionaic";
+}
 
 /**
  * Pantalla posterior a la autenticación donde el trabajador selecciona su obra activa.
@@ -25,17 +84,22 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bombe
  * al flujo de juego o a la pantalla lite de selección de formularios.
  *
  * @param {Object} props
- * @param {{ nombre: string, empresa: string, numero_identificacion: string }} props.usuario
- *   Datos del trabajador autenticado retornados por CedulaIngreso.
+ * @param {{ nombre?: string, empresa?: string, numero_identificacion?: string, cargo?: string }} [props.usuario]
+ *   Datos del trabajador autenticado retornados por CedulaIngreso o rehidratados desde la sesión.
  */
 function BienvenidaSeleccion({ usuario }) {
-  const isLite = sessionStorage.getItem('lite_mode') === 'true';
+  const { session } = useAuth();
+  const usuarioAutenticado = useMemo(
+    () => usuario || resolveUsuarioDesdeSesion(session) || {},
+    [session, usuario]
+  );
+  const isLite = typeof window !== "undefined" && sessionStorage.getItem("lite_mode") === "true";
   const isLandscape = useIsLandscape();
-  const [obra_busqueda, setObraBusqueda] = useState("");
-  const [lista_obras, setListaObras] = useState([]);
-  const [obra_id_seleccionada, setObraIdSeleccionada] = useState("");
+  const [obraBusqueda, setObraBusqueda] = useState("");
+  const [listaObras, setListaObras] = useState([]);
+  const [obraIdSeleccionada, setObraIdSeleccionada] = useState("");
   const [ubicacion, setUbicacion] = useState({ lat: null, lon: null });
-  const [gpsEstado, setGpsEstado] = useState("idle"); // idle | cargando | ok | error
+  const [gpsEstado, setGpsEstado] = useState("idle");
   const [error, setError] = useState("");
   const [mostrarBocadillo, setMostrarBocadillo] = useState(true);
   const navigate = useNavigate();
@@ -46,43 +110,47 @@ function BienvenidaSeleccion({ usuario }) {
   }, []);
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/obras`)
-      .then(res => {
-        const obrasActivas = (res.data.obras || []).filter(o => o.activa === true);
+    axios
+      .get(`${API_BASE_URL}/obras`, AXIOS_AUTH_CONFIG)
+      .then((response) => {
+        const obrasActivas = (response.data?.obras || []).filter((obra) => obra?.activa === true);
         setListaObras(obrasActivas);
       })
       .catch(() => setListaObras([]));
   }, []);
 
   useEffect(() => {
-    if (!usuario) return;
-    try {
-      localStorage.setItem("usuario", JSON.stringify(usuario));
-      if (usuario.nombre) localStorage.setItem("nombre_trabajador", usuario.nombre);
-      if (usuario.numero_identificacion) localStorage.setItem("cedula_trabajador", usuario.numero_identificacion);
-      if (usuario.empresa) localStorage.setItem("empresa_trabajador", usuario.empresa);
-      const cargo = usuario.cargo || usuario.cargo_trabajador || usuario.puesto;
-      if (cargo) localStorage.setItem("cargo_trabajador", cargo);
-    } catch {
-      // localStorage not available — continue without persistence
-    }
-  }, [usuario]);
+    if (!usuarioAutenticado?.nombre && !usuarioAutenticado?.numero_identificacion) return;
 
-  /**
-   * Pide la ubicación GPS con opciones de alta precisión.
-   * Actualiza gpsEstado: cargando → ok | error.
-   */
+    try {
+      localStorage.setItem("usuario", JSON.stringify(usuarioAutenticado));
+      if (usuarioAutenticado.nombre) localStorage.setItem("nombre_trabajador", usuarioAutenticado.nombre);
+      if (usuarioAutenticado.numero_identificacion) {
+        localStorage.setItem("cedula_trabajador", usuarioAutenticado.numero_identificacion);
+      }
+      if (usuarioAutenticado.empresa) {
+        localStorage.setItem("empresa_trabajador", usuarioAutenticado.empresa);
+      }
+      if (usuarioAutenticado.cargo) {
+        localStorage.setItem("cargo_trabajador", usuarioAutenticado.cargo);
+      }
+    } catch {
+      // Local persistence is optional UI metadata only.
+    }
+  }, [usuarioAutenticado]);
+
   const requestGPS = () => {
-    if (!navigator.geolocation) {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
       setGpsEstado("error");
       setError("Este dispositivo no soporta geolocalización.");
       return;
     }
+
     setGpsEstado("cargando");
     setError("");
     navigator.geolocation.getCurrentPosition(
-      pos => {
-        setUbicacion({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+      (position) => {
+        setUbicacion({ lat: position.coords.latitude, lon: position.coords.longitude });
         setGpsEstado("ok");
       },
       () => {
@@ -94,123 +162,103 @@ function BienvenidaSeleccion({ usuario }) {
     );
   };
 
-  /**
-   * Sincroniza la obra seleccionada en localStorage y solicita la geolocalización.
-   * Limpia los datos de obra persistidos cuando el campo se vacía.
-   * @param {React.ChangeEvent<HTMLInputElement>} e
-   */
-  const handleObraChange = e => {
-    const nombre_obra = e.target.value;
-    setObraBusqueda(nombre_obra);
-    const obra_obj = lista_obras.find(o => o.nombre_obra === nombre_obra);
-    if (obra_obj) {
-      setObraIdSeleccionada(obra_obj.id);
+  const handleObraChange = (event) => {
+    const nombreObra = event.target.value;
+    setObraBusqueda(nombreObra);
+    const obraSeleccionada = listaObras.find((obra) => obra?.nombre_obra === nombreObra);
+
+    if (obraSeleccionada) {
+      setObraIdSeleccionada(String(obraSeleccionada.id || ""));
       try {
-        localStorage.setItem("obra", obra_obj.nombre_obra || "");
-        localStorage.setItem("obra_id", String(obra_obj.id || ""));
-        if (obra_obj.constructora) localStorage.setItem("constructora", obra_obj.constructora);
-        if (obra_obj.nombre_obra) localStorage.setItem("nombre_proyecto", obra_obj.nombre_obra);
+        localStorage.setItem("obra", obraSeleccionada.nombre_obra || "");
+        localStorage.setItem("obra_id", String(obraSeleccionada.id || ""));
+        if (obraSeleccionada.constructora) localStorage.setItem("constructora", obraSeleccionada.constructora);
+        if (obraSeleccionada.nombre_obra) localStorage.setItem("nombre_proyecto", obraSeleccionada.nombre_obra);
       } catch {
-        // localStorage not available
+        // Local persistence is optional UI metadata only.
       }
       requestGPS();
-    } else {
-      setObraIdSeleccionada("");
-      setUbicacion({ lat: null, lon: null });
-      setGpsEstado("idle");
-      setError("");
-      try {
-        localStorage.removeItem("obra");
-        localStorage.removeItem("obra_id");
-        localStorage.removeItem("constructora");
-        localStorage.removeItem("nombre_proyecto");
-      } catch {
-        // localStorage not available
-      }
+      return;
+    }
+
+    setObraIdSeleccionada("");
+    setUbicacion({ lat: null, lon: null });
+    setGpsEstado("idle");
+    setError("");
+    try {
+      localStorage.removeItem("obra");
+      localStorage.removeItem("obra_id");
+      localStorage.removeItem("constructora");
+      localStorage.removeItem("nombre_proyecto");
+    } catch {
+      // Ignore local cleanup failures.
     }
   };
 
-  /**
-   * Ejecuta la validación y navegación una vez que ya hay coordenadas disponibles.
-   * @param {{ lat: number, lon: number }} coords
-   */
   const validarYNavegar = async (coords) => {
     try {
-      const resp = await axios.post(`${API_BASE_URL}/validar_ubicacion`, {
-        obra_id: obra_id_seleccionada,
-        lat: coords.lat,
-        lon: coords.lon
-      });
-      if (resp.data && resp.data.ok) {
-        const obra_obj = lista_obras.find(o => o.id === obra_id_seleccionada);
-        if (obra_obj) {
+      const response = await axios.post(
+        `${API_BASE_URL}/validar_ubicacion`,
+        {
+          obra_id: obraIdSeleccionada,
+          lat: coords.lat,
+          lon: coords.lon,
+        },
+        AXIOS_AUTH_CONFIG
+      );
+
+      if (response.data?.ok) {
+        const obraSeleccionada = listaObras.find((obra) => String(obra?.id || "") === String(obraIdSeleccionada));
+        if (obraSeleccionada) {
           try {
-            localStorage.setItem("obra", obra_obj.nombre_obra || "");
-            localStorage.setItem("obra_id", String(obra_obj.id || ""));
-            if (obra_obj.constructora) localStorage.setItem("constructora", obra_obj.constructora);
-            if (obra_obj.nombre_obra) localStorage.setItem("nombre_proyecto", obra_obj.nombre_obra);
+            localStorage.setItem("obra", obraSeleccionada.nombre_obra || "");
+            localStorage.setItem("obra_id", String(obraSeleccionada.id || ""));
+            if (obraSeleccionada.constructora) localStorage.setItem("constructora", obraSeleccionada.constructora);
+            if (obraSeleccionada.nombre_obra) localStorage.setItem("nombre_proyecto", obraSeleccionada.nombre_obra);
           } catch {
-            // localStorage not available
+            // Local persistence is optional UI metadata only.
           }
         }
-        // Only GyE (empresa_id=1) and AIC/Bomberman (empresa_id=2) use the game flow.
-        // SST, Lideres and any other empresa always go to their classic form screens.
-        const empresasConJuego = ["GyE", "AIC"];
-        const usaJuego = empresasConJuego.includes(usuario.empresa) &&
-                         sessionStorage.getItem('lite_mode') !== 'true';
 
-        if (usaJuego) {
-          const character = usuario.empresa === "GyE" ? "gruaman" : "bomberman";
-          localStorage.setItem("selectedCharacter", character);
-          navigate("/game/rotate-screen");
-        } else {
-          const formRoute = usuario.empresa === "GyE"       ? "/eleccion"
-                          : usuario.empresa === "Lideres"  ? "/eleccion_lideres"
-                          : usuario.empresa === "SST"      ? "/eleccion_sst"
-                          : usuario.empresa === "Tecnicos" ? "/eleccion_tecnicos"
-                          : "/eleccionaic";
-          navigate(formRoute);
-        }
-      } else {
-        const distancia = resp.data?.distancia;
-        setError(
-          distancia
-            ? `Estás a ${distancia >= 1000 ? (distancia / 1000).toFixed(1) + " km" : distancia + " m"} de la obra. Debes estar a menos de 500 m.`
-            : "No se encuentra en la ubicación seleccionada."
-        );
+        const pendingReturnTo = consumeReturnTo();
+        const defaultPath = resolveWorkerLandingPath(usuarioAutenticado, isLite);
+        navigate(pendingReturnTo || defaultPath, { replace: true });
+        return;
       }
-    } catch (err) {
-      const distancia = err.response?.data?.distancia;
+
+      const distancia = response.data?.distancia;
       setError(
         distancia
-          ? `Estás a ${distancia >= 1000 ? (distancia / 1000).toFixed(1) + " km" : distancia + " m"} de la obra. Debes estar a menos de 500 m.`
+          ? `Estás a ${distancia >= 1000 ? `${(distancia / 1000).toFixed(1)} km` : `${distancia} m`} de la obra. Debes estar a menos de 500 m.`
+          : "No se encuentra en la ubicación seleccionada."
+      );
+    } catch (requestError) {
+      const distancia = requestError.response?.data?.distancia;
+      setError(
+        distancia
+          ? `Estás a ${distancia >= 1000 ? `${(distancia / 1000).toFixed(1)} km` : `${distancia} m`} de la obra. Debes estar a menos de 500 m.`
           : "No se encuentra en la ubicación seleccionada."
       );
     }
   };
 
-  /**
-   * Valida la geolocalización del trabajador frente a la obra seleccionada mediante la API.
-   * Si la ubicación aún no está disponible, la solicita en el momento del click.
-   * Al tener éxito, redirige al flujo de juego o a la pantalla lite de selección de formularios.
-   */
   const handleEmpezar = async () => {
     setError("");
-    if (!obra_id_seleccionada) {
+    if (!obraIdSeleccionada) {
       setError("Selecciona una catedral primero.");
       return;
     }
 
-    // Opción C: si la ubicación no está lista, pedirla ahora y reintentar
     if (ubicacion.lat === null || ubicacion.lon === null) {
-      if (!navigator.geolocation) {
+      if (typeof navigator === "undefined" || !navigator.geolocation) {
         setError("Este dispositivo no soporta geolocalización.");
         return;
       }
+
       setGpsEstado("cargando");
       navigator.geolocation.getCurrentPosition(
-        pos => {
-          const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        (position) => {
+          const coords = { lat: position.coords.latitude, lon: position.coords.longitude };
           setUbicacion(coords);
           setGpsEstado("ok");
           validarYNavegar(coords);
@@ -224,11 +272,14 @@ function BienvenidaSeleccion({ usuario }) {
       return;
     }
 
-    validarYNavegar(ubicacion);
+    await validarYNavegar(ubicacion);
   };
 
   return (
-    <div className="form-container" style={isLandscape ? { minHeight: "100vh", justifyContent: "center", paddingTop: "1rem", paddingBottom: "1rem" } : undefined}>
+    <div
+      className="form-container"
+      style={isLandscape ? { minHeight: "100vh", justifyContent: "center", paddingTop: "1rem", paddingBottom: "1rem" } : undefined}
+    >
       {mostrarBocadillo && !isLite && !isLandscape && (
         <div
           style={{
@@ -274,30 +325,32 @@ function BienvenidaSeleccion({ usuario }) {
               lineHeight: "1.2",
               pointerEvents: "none",
               fontFamily: "'sans-serif",
-              letterSpacing: "1px"
+              letterSpacing: "1px",
             }}
           >
             <div>Bienvenido</div>
             <div style={{ marginTop: "4px" }}>Super héroe</div>
             <div style={{ marginTop: "4px", fontWeight: 600, fontSize: "1.25rem" }}>
-              {usuario.nombre}
+              {usuarioAutenticado?.nombre || ""}
             </div>
           </div>
         </div>
       )}
       <div className="card-section" style={{ alignItems: "center", textAlign: "center" }}>
-        <h2 className="card-title" style={{ marginBottom: 18 }}>Selecciona la catedral que deseas construir hoy</h2>
+        <h2 className="card-title" style={{ marginBottom: 18 }}>
+          Selecciona la catedral que deseas construir hoy
+        </h2>
         <input
           className="input"
           list="lista-obras"
           placeholder="Buscar o selecciona la obra"
-          value={obra_busqueda}
+          value={obraBusqueda}
           onChange={handleObraChange}
           style={isLite ? { background: "#f7faff", border: "1.5px solid #c5d5ea" } : undefined}
         />
         <datalist id="lista-obras">
-          {lista_obras.map((obra) => (
-            <option key={obra.id} value={obra.nombre_obra}></option>
+          {listaObras.map((obra) => (
+            <option key={obra.id} value={obra.nombre_obra} />
           ))}
         </datalist>
         {gpsEstado === "cargando" && (
@@ -306,17 +359,14 @@ function BienvenidaSeleccion({ usuario }) {
           </div>
         )}
         {gpsEstado === "ok" && (
-          <div style={{ color: "#00A32C", marginTop: 10, fontSize: "0.95rem", fontWeight: 700, letterSpacing: "0.3px", }}>
+          <div style={{ color: "#00A32C", marginTop: 10, fontSize: "0.95rem", fontWeight: 700, letterSpacing: "0.3px" }}>
             Ubicacion confirmada
           </div>
         )}
         {gpsEstado === "error" && (
           <div style={{ marginTop: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
             <div style={{ color: "#dc2626", fontSize: "0.9rem" }}>GPS no disponible</div>
-            <button
-              className="button"
-              onClick={requestGPS}
-            >
+            <button className="button" onClick={requestGPS}>
               Reintentar GPS
             </button>
           </div>
@@ -327,21 +377,23 @@ function BienvenidaSeleccion({ usuario }) {
         {error && <div style={{ color: "red", marginTop: 12 }}>{error}</div>}
       </div>
       {!isLite && !isLandscape && (
-        <div style={{
-          position: "fixed",
-          top: "50vh",
-          width: "100vw",
-          height: "100vh",
-          zIndex: 0,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "flex-start",
-          pointerEvents: "none",
-          userSelect: "none"
-        }}>
+        <div
+          style={{
+            position: "fixed",
+            top: "50vh",
+            width: "100vw",
+            height: "100vh",
+            zIndex: 0,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "flex-start",
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
+        >
           <img
-            src={usuario.empresa === "GyE" ? "/gruaman1.1.gif" : "/bomberman1.1.gif"}
-            alt={usuario.empresa}
+            src={usuarioAutenticado?.empresa === "GyE" ? "/gruaman1.1.gif" : "/bomberman1.1.gif"}
+            alt={usuarioAutenticado?.empresa || "worker-company"}
             style={{
               width: "200vw",
               height: "50vh",
