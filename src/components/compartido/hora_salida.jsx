@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/api";
 import "../../styles/permiso_trabajo.css"; 
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 /**
  * @returns {{ nombre: string, cedula: string, cargo: string, empresa: string, obra: string }}
@@ -58,7 +56,7 @@ export default function HoraSalida() {
     const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
     const cargo = localStorage.getItem("cargo_trabajador") || "";
 
-    axios.get(`${API_BASE_URL}/obras`)
+    api.get("/obras")
       .then(res => {
         let obras = [];
         if (Array.isArray(res.data.obras)) {
@@ -110,25 +108,15 @@ export default function HoraSalida() {
     };
 
     try {
-      const resp = await fetch(`${API_BASE_URL}/horas_jornada/salida`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      let data = {};
-      try {
-        data = await resp.json();
-      } catch {
-        data = {};
-      }
-      if (resp.ok) {
-        setGuardado(true);
-        setTimeout(() => navigate(-1), 500);
-      } else {
-        setError((data && data.error) || `Error al guardar. Código: ${resp.status}`);
-      }
+      await api.post("/horas_jornada/salida", payload);
+      setGuardado(true);
+      setTimeout(() => navigate(-1), 500);
     } catch (e) {
-      setError("Error de red al guardar");
+      setError(
+        e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          "Error de red al guardar"
+      );
     }
   };
 

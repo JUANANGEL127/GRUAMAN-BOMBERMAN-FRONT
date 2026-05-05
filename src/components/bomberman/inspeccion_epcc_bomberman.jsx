@@ -1,9 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 const datosGeneralesFields = [
   { name: "nombre", label: "Nombre" },
@@ -170,7 +168,7 @@ function inspeccion_epcc_bomberman() {
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
     const fechaHoy = getColombiaDateString();
 
-    axios.get(`${API_BASE_URL}/obras`)
+    api.get("/obras")
       .then(res => {
         let obras = [];
         if (Array.isArray(res.data.obras)) obras = res.data.obras;
@@ -338,9 +336,7 @@ function inspeccion_epcc_bomberman() {
     );
 
     try {
-      await axios.post(`${API_BASE_URL}/bomberman/inspeccion_epcc_bomberman`, payload, {
-        headers: { "Content-Type": "application/json" }
-      });
+      await api.post("/bomberman/inspeccion_epcc_bomberman", payload);
       window.alert("Inspección guardada correctamente en backend.");
       setMostrarFlechaGuardar(false);
       navigate(-1);
