@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./features/auth/hooks/useAuth";
 import { getCompanySlug } from "./features/auth/adapters/authSessionAdapter";
 import { consumeReturnTo } from "./features/auth/utils/returnTo";
+import api from "./utils/api";
 
 function useIsLandscape() {
   const [landscape, setLandscape] = useState(() => {
@@ -34,9 +34,6 @@ function useIsLandscape() {
 
   return landscape;
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
-const AXIOS_AUTH_CONFIG = { withCredentials: true };
 
 function resolveUsuarioDesdeSesion(session) {
   const user = session?.user;
@@ -110,8 +107,8 @@ function BienvenidaSeleccion({ usuario }) {
   }, []);
 
   useEffect(() => {
-    axios
-      .get(`${API_BASE_URL}/obras`, AXIOS_AUTH_CONFIG)
+    api
+      .get("/obras")
       .then((response) => {
         const obrasActivas = (response.data?.obras || []).filter((obra) => obra?.activa === true);
         setListaObras(obrasActivas);
@@ -197,14 +194,13 @@ function BienvenidaSeleccion({ usuario }) {
 
   const validarYNavegar = async (coords) => {
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/validar_ubicacion`,
+      const response = await api.post(
+        "/validar_ubicacion",
         {
           obra_id: obraIdSeleccionada,
           lat: coords.lat,
           lon: coords.lon,
-        },
-        AXIOS_AUTH_CONFIG
+        }
       );
 
       if (response.data?.ok) {

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import api, { API_BASE_URL } from "../../utils/api";
+import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
-import axios from "axios";
 
 /**
  * HoradaIngreso — formulario legado para el registro de hora de ingreso a la jornada.
@@ -92,7 +91,10 @@ export default function HoradaIngreso() {
     };
 
     try {
-      await axios.post(`${API_BASE_URL}/horas_jornada/ingreso`, payload, { withCredentials: true })
+      await api.post(
+        "/horas_jornada/ingreso",
+        payload
+      );
       setGuardado(true);
       setTimeout(() => navigate(-1), 500);
     } catch (e) {

@@ -16,7 +16,6 @@ export const API_BASE_URL =
 
 const CSRF_COOKIE_NAME = "gm_csrf";
 const CSRF_HEADER_NAME = "X-CSRF-Token";
-const UNSAFE_METHODS = new Set(["post", "put", "patch", "delete"]);
 const AUTH_CONTROL_PATHS = [
   "/auth/session",
   "/auth/refresh",
@@ -45,10 +44,6 @@ const authTransport = axios.create({
 let refreshRequestPromise = null;
 let logoutRequestPromise = null;
 
-function getRequestMethod(config = {}) {
-  return String(config.method ?? "get").toLowerCase();
-}
-
 function resolveRequestPath(config = {}) {
   const rawUrl = String(config.url ?? "").trim();
 
@@ -72,10 +67,6 @@ function isAuthControlRequest(config = {}) {
   return AUTH_CONTROL_PATHS.some((candidate) => path.startsWith(candidate));
 }
 
-function shouldAttachCsrf(config = {}) {
-  return UNSAFE_METHODS.has(getRequestMethod(config));
-}
-
 function withCsrfHeader(config = {}) {
   const nextConfig = {
     ...config,
@@ -85,15 +76,11 @@ function withCsrfHeader(config = {}) {
     },
   };
 
-  if (!shouldAttachCsrf(nextConfig)) {
-    return nextConfig;
-  }
-
   const csrfToken = readCookieValue(CSRF_COOKIE_NAME);
   if (csrfToken && !nextConfig.headers[CSRF_HEADER_NAME]) {
     nextConfig.headers[CSRF_HEADER_NAME] = csrfToken;
   }
-
+  
   return nextConfig;
 }
 
