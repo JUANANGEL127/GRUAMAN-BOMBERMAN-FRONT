@@ -106,6 +106,10 @@ function clearAuthStateAndEmit(eventType, detail = {}) {
   instance.interceptors.request.use((config) => withCsrfHeader(config));
 });
 
+// Safety net for legacy modules that still import raw axios directly.
+axios.defaults.withCredentials = true;
+axios.interceptors.request.use((config) => withCsrfHeader(config));
+
 export function isUnauthorizedError(error) {
   return Boolean(error?.isAuthUnauthorized || error?.response?.status === 401);
 }
