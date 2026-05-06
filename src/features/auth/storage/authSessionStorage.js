@@ -5,6 +5,7 @@ import {
 } from "../adapters/authSessionAdapter";
 
 export const AUTH_SESSION_STORAGE_KEY = "auth.session.v1";
+export const AUTH_CSRF_TOKEN_STORAGE_KEY = "auth.csrf.v1";
 export const AUTH_SESSION_METADATA_MAX_AGE_MS = 15 * 60 * 1000;
 
 const LEGACY_WORKER_AUTH_KEYS = Object.freeze([
@@ -149,9 +150,25 @@ export function clearAuthSessionStorage() {
 
   if (storage) {
     storage.removeItem(AUTH_SESSION_STORAGE_KEY);
+    storage.removeItem(AUTH_CSRF_TOKEN_STORAGE_KEY);
   }
 
   clearLegacyAuthKeys();
+}
+
+export function readCsrfTokenStorage() {
+  const storage = getLocalStorage();
+  if (!storage) return "";
+  return storage.getItem(AUTH_CSRF_TOKEN_STORAGE_KEY) || "";
+}
+
+export function writeCsrfTokenStorage(token) {
+  const storage = getLocalStorage();
+  if (!storage) return;
+
+  const normalizedToken = typeof token === "string" ? token.trim() : "";
+  if (!normalizedToken) return;
+  storage.setItem(AUTH_CSRF_TOKEN_STORAGE_KEY, normalizedToken);
 }
 
 export function syncLegacySessionKeys(session) {

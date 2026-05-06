@@ -7,7 +7,9 @@
 import axios from "axios";
 import {
   clearAuthSessionStorage,
+  readCsrfTokenStorage,
   readCookieValue,
+  writeCsrfTokenStorage,
 } from "../features/auth/storage/authSessionStorage";
 import { AUTH_EVENTS, emitAuthEvent } from "../features/auth/utils/authEvents";
 
@@ -76,12 +78,19 @@ function withCsrfHeader(config = {}) {
     },
   };
 
-  const csrfToken = readCookieValue(CSRF_COOKIE_NAME);
+  const csrfToken = readCsrfTokenStorage() || readCookieValue(CSRF_COOKIE_NAME);
   if (csrfToken && !nextConfig.headers[CSRF_HEADER_NAME]) {
     nextConfig.headers[CSRF_HEADER_NAME] = csrfToken;
   }
   
   return nextConfig;
+}
+
+function syncCsrfTokenFromPayload(payload) {
+  const token = payload?.csrfToken;
+  if (typeof token === "string" && token.trim()) {
+    writeCsrfTokenStorage(token);
+  }
 }
 
 function normalizeAuthError(error, flags = {}) {
@@ -104,11 +113,19 @@ function clearAuthStateAndEmit(eventType, detail = {}) {
 
 [api, authTransport].forEach((instance) => {
   instance.interceptors.request.use((config) => withCsrfHeader(config));
+  instance.interceptors.response.use((response) => {
+    syncCsrfTokenFromPayload(response?.data);
+    return response;
+  });
 });
 
 // Safety net for legacy modules that still import raw axios directly.
 axios.defaults.withCredentials = true;
 axios.interceptors.request.use((config) => withCsrfHeader(config));
+axios.interceptors.response.use((response) => {
+  syncCsrfTokenFromPayload(response?.data);
+  return response;
+});
 
 export function isUnauthorizedError(error) {
   return Boolean(error?.isAuthUnauthorized || error?.response?.status === 401);
