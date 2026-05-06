@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 const accesorios = [
   { desc: "BOLA DE LIMPIEZA PARA TUBERIA DE 5.5\" CIFA" },
@@ -212,7 +210,7 @@ function inventariosobra() {
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
     const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 
-    axios.get(`${API_BASE_URL}/obras`)
+    api.get("/obras")
       .then(res => {
         let obras = [];
         if (Array.isArray(res.data.obras)) obras = res.data.obras;
@@ -279,7 +277,7 @@ function inventariosobra() {
     };
 
     try {
-      await axios.post(`${API_BASE_URL}/bomberman/inventariosobra`, payload);
+      await api.post("/bomberman/inventariosobra", payload);
       window.alert("Inventario guardado correctamente en backend.");
       navigate(-1);
     } catch (err) {

@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 function getCurrentWeekKey() {
   const now = new Date();
@@ -289,8 +287,8 @@ function PermisoTrabajo(props) {
       setFirmas((prev) => ({ ...prev, trabajador_autorizado: nombre_operador }));
     }
 
-    axios
-      .get(`${API_BASE_URL}/obras`)
+    api
+      .get("/obras")
       .then((res) => {
         const obras = Array.isArray(res.data.obras) ? res.data.obras : [];
         const obra_seleccionada = obras.find((o) => o.nombre_obra === nombre_proyecto);
@@ -455,7 +453,7 @@ function PermisoTrabajo(props) {
     };
 
     try {
-      await axios.post(`${API_BASE_URL}/compartido/permiso_trabajo`, payload);
+      await api.post("/compartido/permiso_trabajo", payload);
 
       const weekKey = getCurrentWeekKey();
       localStorage.setItem(

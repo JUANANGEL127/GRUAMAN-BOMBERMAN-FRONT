@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
@@ -9,7 +10,6 @@ import InventarioObra from "./components/bomberman/inventariosobra";
 import HerramientasMantenimiento from "./components/bomberman/herramientas_mantenimiento";
 import KitLimpieza from "./components/bomberman/kit_limpieza";
 import Administrador from "./components/administrador_gruaman/administrador";
-import Footer from "./components/Footer";
 import PermisoTrabajo from "./components/compartido/permiso_trabajo";
 import ChequeoAlturas from "./components/compartido/chequeo_alturas";
 import ChequeoTorreGruas from "./components/gruaman/chequeo_torregruas";
@@ -19,7 +19,7 @@ import InspeccionEPCCBomberman from "./components/bomberman/inspeccion_epcc_bomb
 import ChequeoElevador from "./components/gruaman/chequeo_elevador";
 import CedulaIngreso from "./CedulaIngreso";
 import BienvenidaSeleccion from "./BienvenidaSeleccion";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import "./index.css";
 import PermisoTrabajoAdmin from "./components/administrador_gruaman/permiso_trabajo_admin";
 import ChequeoAlturasAdmin from "./components/administrador_gruaman/chequeo_alturas_admin";
@@ -43,7 +43,6 @@ import HoraSalida from "./components/compartido/hora_salida";
 import HorasExtraBombermanAdmin from "./components/administrador_bomberman/horas_extra_bomberman";
 import HorasExtraGruamanAdmin from "./components/administrador_gruaman/horas_extra_gruaman";
 import EleccionLideres from "./components/Lideres_bombas/eleccion_lideres";
-import RegistrosDiariosAdmin from './components/administrador/RegistrosDiariosAdmin';
 import EleccionSST from './components/sst/eleccion_sst';
 import EleccionTecnicos from './components/tecnicos/eleccion_tecnicos';
 import PQR from './components/sst/pqr';
@@ -59,64 +58,30 @@ import AtsDesmontajeTorregrua from './components/gruaman/ats/AtsDesmontajeTorreg
 import AtsTelescopaje        from './components/gruaman/ats/AtsTelescopaje';
 import AtsMantenimiento      from './components/gruaman/ats/AtsMantenimiento';
 import AtsElevador           from './components/gruaman/ats/AtsElevador';
+import { getSessionHomePath, isAuthenticatedAuthSession } from "./features/auth/adapters/authSessionAdapter";
+import { AuthProvider } from "./features/auth/context/AuthProvider";
+import ForbiddenPage from "./features/auth/pages/ForbiddenPage";
+import { useAuth } from "./features/auth/hooks/useAuth";
+import ProtectedRoute from "./features/auth/routes/ProtectedRoute";
+import RoleGuard from "./features/auth/routes/RoleGuard";
+import { readReturnTo } from "./features/auth/utils/returnTo";
 import { IndicadorCentralAdminPage } from "./features/indicador-central";
 
-/**
- * Resuelve el nombre del trabajador y la obra activa desde localStorage,
- * admitiendo tanto cadenas simples como objetos serializados en JSON.
- *
- * @returns {{ usuario: string, obra: string }}
- */
-function getUsuarioObra() {
-  let usuario = "";
-  let obra = "";
+function resolveAdminLanding(session) {
+  const pendingReturnTo = readReturnTo();
 
-  const nombreTrabajador = localStorage.getItem("nombre_trabajador");
-  if (nombreTrabajador && nombreTrabajador.trim()) {
-    usuario = nombreTrabajador;
-  } else {
-    const usuarioStorage = localStorage.getItem("usuario");
-    if (usuarioStorage) {
-      try {
-        const usuarioParsed = JSON.parse(usuarioStorage);
-        if (usuarioParsed && typeof usuarioParsed === "object" && usuarioParsed.nombre) {
-          usuario = usuarioParsed.nombre;
-        } else if (typeof usuarioParsed === "string") {
-          usuario = usuarioParsed;
-        } else {
-          usuario = usuarioStorage;
-        }
-      } catch {
-        usuario = usuarioStorage;
-      }
-    }
+  if (
+    pendingReturnTo &&
+    (pendingReturnTo.startsWith("/administrador") ||
+      pendingReturnTo.startsWith("/indicador-central-admin"))
+  ) {
+    return pendingReturnTo;
   }
 
-  const obraStorage = localStorage.getItem("obra");
-  if (obraStorage && obraStorage.trim()) {
-    obra = obraStorage;
-  } else {
-    const nombreProyecto = localStorage.getItem("nombre_proyecto");
-    if (nombreProyecto && nombreProyecto.trim()) {
-      obra = nombreProyecto;
-    } else {
-      try {
-        const obraParsed = JSON.parse(obraStorage);
-        if (obraParsed && typeof obraParsed === "object" && obraParsed.nombre) {
-          obra = obraParsed.nombre;
-        } else if (typeof obraParsed === "string") {
-          obra = obraParsed;
-        }
-      } catch {
-        obra = obraStorage;
-      }
-    }
-  }
-
-  return { usuario, obra };
+  return getSessionHomePath(session);
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+
 
 /**
  * Se suscribe a cambios en el ancho del viewport y retorna true cuando
@@ -204,8 +169,7 @@ function useDraggable(defaultPos) {
  */
 function SOSButton() {
   const isMobile = useIsMobile();
-  const [enviando, setEnviando] = React.useState(false);
-  const [mensaje, setMensaje] = React.useState("");
+    const [mensaje, setMensaje] = React.useState("");
   const [showModal, setShowModal] = React.useState(false);
   const [showRegionModal, setShowRegionModal] = React.useState(false);
   const [showRoleModal, setShowRoleModal] = React.useState(false);
@@ -340,7 +304,6 @@ function SOSButton() {
         onPointerUp={sosUp}
         onClickCapture={sosClickCapture}
         onClick={handleSOS}
-        disabled={enviando}
         title="SOS Emergencia"
       >
         <span style={{ fontSize: 24, fontWeight: "bold", color: "#fff", letterSpacing: 2 }}>SOS</span>
@@ -958,14 +921,140 @@ function STPButton() {
   );
 }
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
-      .then(registration => {
+const workerRoutes = [
+  { path: "bienvenida", element: <BienvenidaSeleccion /> },
+  { path: "game/rotate-screen", element: <GameFlow key="rotate" step="rotate" /> },
+  { path: "game/story-intro", element: <GameFlow key="story" step="story" /> },
+  { path: "game/world-map", element: <GameFlow key="map" step="map" /> },
+  { path: "game/level/:worldId", element: <LevelWrapper /> },
+  { path: "ats-selector", element: <AtsSelector /> },
+  { path: "ats/operacion-torregrua", element: <AtsOperacionTorregrua /> },
+  { path: "ats/mando-inalam", element: <AtsMandoInalam /> },
+  { path: "ats/montaje-torregrua", element: <AtsMontajeTorregrua /> },
+  { path: "ats/montaje-elevador", element: <AtsMontajeElevador /> },
+  { path: "ats/desmontaje-torregrua", element: <AtsDesmontajeTorregrua /> },
+  { path: "ats/telescopaje", element: <AtsTelescopaje /> },
+  { path: "ats/mantenimiento", element: <AtsMantenimiento /> },
+  { path: "ats/elevador", element: <AtsElevador /> },
+  { path: "eleccion/*", element: <Eleccion /> },
+  { path: "eleccionaic/*", element: <EleccionAIC /> },
+  { path: "planillabombeo", element: <PlanillaBombeo /> },
+  { path: "checklist", element: <Checklist /> },
+  { path: "inventariosobra/*", element: <InventarioObra /> },
+  { path: "herramientas_mantenimiento", element: <HerramientasMantenimiento /> },
+  { path: "kit_limpieza", element: <KitLimpieza /> },
+  { path: "permiso_trabajo", element: <PermisoTrabajo /> },
+  { path: "chequeo_alturas", element: <ChequeoAlturas /> },
+  { path: "chequeo_torregruas", element: <ChequeoTorreGruas /> },
+  { path: "chequeo_elevador", element: <ChequeoElevador /> },
+  { path: "inspeccion_epcc", element: <InspeccionEPCC /> },
+  { path: "inspeccion_izaje", element: <InspeccionIzaje /> },
+  { path: "inspeccion_epcc_bomberman", element: <InspeccionEPCCBomberman /> },
+  { path: "hora_ingreso", element: <HoraIngreso /> },
+  { path: "hora_salida", element: <HoraSalida /> },
+  { path: "eleccion_lideres/*", element: <EleccionLideres /> },
+  { path: "eleccion_sst/*", element: <EleccionSST /> },
+  { path: "eleccion_tecnicos/*", element: <EleccionTecnicos /> },
+  { path: "pqr", element: <PQR /> },
+  { path: "hallazgos", element: <Hallazgos /> },
+];
+
+const gruamanAdminRoutes = [
+  { path: "administrador", element: <Administrador /> },
+  { path: "permiso_trabajo_admin", element: <PermisoTrabajoAdmin /> },
+  { path: "chequeo_alturas_admin", element: <ChequeoAlturasAdmin /> },
+  { path: "chequeo_torregruas_admin", element: <ChequeoTorreGruasAdmin /> },
+  { path: "chequeo_elevador_admin", element: <ChequeoElevadorAdmin /> },
+  { path: "inspeccion_EPCC_admins", element: <InspeccionEPCCAdmins /> },
+  { path: "inspeccion_izaje_admin", element: <InspeccionIzajeAdmin /> },
+  { path: "admin_usuarios", element: <AdminUsuarios /> },
+  { path: "admins_obras", element: <AdminsObras /> },
+  { path: "horas_extra_gruaman", element: <HorasExtraGruamanAdmin /> },
+];
+
+const bombermanAdminRoutes = [
+  { path: "administrador_bomberman", element: <AdministradorBomberman /> },
+  { path: "planilla_bombeo_admin", element: <PlanillaBombeoAdmin /> },
+  { path: "inventarios_obra_admin", element: <InventariosObraAdmin /> },
+  { path: "checklist_admin", element: <ChecklistAdmin /> },
+  { path: "inspeccion_epcc_bomberman_admin", element: <InspeccionEPCCBombermanAdmin /> },
+  { path: "herramientas_mantenimiento_admin", element: <HerramientasMantenimientoAdmin /> },
+  { path: "kit_limpieza_admin", element: <KitLimpiezaAdmin /> },
+  { path: "admin_usuarios_bomberman", element: <AdminUsuariosBomberman /> },
+  { path: "admin_obras_bomberman", element: <AdminObrasBomberman /> },
+  { path: "horas_extra_bomberman", element: <HorasExtraBombermanAdmin /> },
+];
+
+function CedulaLoginBridge() {
+  const navigate = useNavigate();
+  const { isAuthenticated, isReady, session, signIn } = useAuth();
+  const [bridgeError, setBridgeError] = React.useState("");
+
+  const resolveSessionLanding = React.useCallback((authSession) => {
+    if (authSession?.kind === "admin") {
+      return resolveAdminLanding(authSession);
+    }
+
+    return getSessionHomePath(authSession);
+  }, []);
+
+  React.useEffect(() => {
+    if (!isReady || !isAuthenticated || !session) return;
+    navigate(resolveSessionLanding(session), { replace: true });
+  }, [isAuthenticated, isReady, navigate, resolveSessionLanding, session]);
+
+  const handleUsuarioAutenticado = React.useCallback(async () => {
+    try {
+      const refreshedSession = await signIn({ source: "cedula-login-bridge" });
+
+      if (isAuthenticatedAuthSession(refreshedSession)) {
+        setBridgeError("");
+        navigate(resolveSessionLanding(refreshedSession), { replace: true });
+        return;
+      }
+    } catch {
+      // The inline message below is the user-facing fallback.
+    }
+
+    setBridgeError(
+      "La autenticación local terminó, pero no pudimos rehidratar la sesión segura desde /auth/session."
+    );
+  }, [navigate, resolveSessionLanding, signIn]);
+
+  return (
+    <>
+      <CedulaIngreso onUsuarioEncontrado={handleUsuarioAutenticado} />
+      {bridgeError ? (
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
+          <div
+            style={{
+              maxWidth: 420,
+              padding: "12px 16px",
+              borderRadius: 12,
+              background: "rgba(255,255,255,0.92)",
+              border: "1px solid #dc2626",
+              color: "#991b1b",
+              textAlign: "center",
+              fontWeight: 600,
+            }}
+          >
+            {bridgeError}
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js", { updateViaCache: "none" })
+      .then((registration) => {
         registration.update();
-        registration.addEventListener('updatefound', () => {
+        registration.addEventListener("updatefound", () => {
           const newWorker = registration.installing;
-          newWorker.addEventListener('statechange', () => {});
+          newWorker?.addEventListener("statechange", () => {});
         });
       })
       .catch(() => {});
@@ -975,107 +1064,77 @@ if ('serviceWorker' in navigator) {
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
-      <div
-        style={{
-          minHeight: "100vh",
-          minWidth: "100vw",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
+      <AuthProvider>
         <div
           style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            zIndex: 0,
-            backgroundImage: "url('/fondo.jpeg')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-            pointerEvents: "none",
-            userSelect: "none",
+            minHeight: "100vh",
+            minWidth: "100vw",
+            position: "relative",
+            overflow: "hidden",
           }}
-        />
-        <div className="global-clouds" aria-hidden="true">
-          <span className="global-cloud global-cloud--1">☁️</span>
-          <span className="global-cloud global-cloud--2">☁️</span>
-          <span className="global-cloud global-cloud--3">☁️</span>
-          <span className="global-cloud global-cloud--4">☁️</span>
-        </div>
-        <SOSButton />
-        <STPButton />
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <Routes>
-            <Route path="/game/rotate-screen" element={<GameFlow key="rotate" step="rotate" />} />
-            <Route path="/game/story-intro"   element={<GameFlow key="story"  step="story"  />} />
-            <Route path="/game/world-map"     element={<GameFlow key="map"    step="map"    />} />
-            <Route path="/game/level/:worldId" element={<LevelWrapper />} />
+        >
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              zIndex: 0,
+              backgroundImage: "url('/fondo.jpeg')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+              pointerEvents: "none",
+              userSelect: "none",
+            }}
+          />
+          <div className="global-clouds" aria-hidden="true">
+            <span className="global-cloud global-cloud--1">☁</span>
+            <span className="global-cloud global-cloud--2">☁</span>
+            <span className="global-cloud global-cloud--3">☁</span>
+            <span className="global-cloud global-cloud--4">☁</span>
+          </div>
+          <SOSButton />
+          <STPButton />
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <Routes>
+              <Route path="/" element={<App />} />
+              <Route path="/cedula" element={<CedulaLoginBridge />} />
+              <Route path="/acceso-denegado" element={<ForbiddenPage />} />
 
-            <Route path="/ats-selector"                    element={<AtsSelector />} />
-            <Route path="/ats/operacion-torregrua"         element={<AtsOperacionTorregrua />} />
-            <Route path="/ats/mando-inalam"                element={<AtsMandoInalam />} />
-            <Route path="/ats/montaje-torregrua"           element={<AtsMontajeTorregrua />} />
-            <Route path="/ats/montaje-elevador"            element={<AtsMontajeElevador />} />
-            <Route path="/ats/desmontaje-torregrua"        element={<AtsDesmontajeTorregrua />} />
-            <Route path="/ats/telescopaje"                 element={<AtsTelescopaje />} />
-            <Route path="/ats/mantenimiento"               element={<AtsMantenimiento />} />
-            <Route path="/ats/elevador"                    element={<AtsElevador />} />
+              <Route element={<ProtectedRoute />}>
+                <Route element={<RoleGuard allowedKinds={["worker"]} />}>
+                  {workerRoutes.map((route) => (
+                    <Route key={route.path} path={route.path} element={route.element} />
+                  ))}
+                </Route>
 
-            <Route path="/" element={<App />} />
-            <Route path="/cedula" element={<CedulaIngreso />} />
-            <Route path="/bienvenida" element={<BienvenidaSeleccion usuario={{ nombre: "Invitado", empresa: "GyE" }} />} />
-            <Route path="/eleccion/*" element={<Eleccion />} />
-            <Route path="/eleccionaic/*" element={<EleccionAIC />} />
-            <Route path="/administrador" element={<Administrador />} />
-            <Route path="/planillabombeo" element={<PlanillaBombeo />} />
-            <Route path="/checklist" element={<Checklist />} />
-            <Route path="/inventariosobra/*" element={<InventarioObra />} />
-            <Route path="/herramientas_mantenimiento" element={<HerramientasMantenimiento />} />
-            <Route path="/kit_limpieza" element={<KitLimpieza />} />
-            <Route path="/permiso_trabajo" element={<PermisoTrabajo />} />
-            <Route path="/chequeo_alturas" element={<ChequeoAlturas />} />
-            <Route path="/chequeo_torregruas" element={<ChequeoTorreGruas />} />
-            <Route path="/chequeo_elevador" element={<ChequeoElevador />} />
-            <Route path="/inspeccion_epcc" element={<InspeccionEPCC />} />
-            <Route path="/inspeccion_izaje" element={<InspeccionIzaje />} />
-            <Route path="/inspeccion_epcc_bomberman" element={<InspeccionEPCCBomberman />} />
-            <Route path="/permiso_trabajo_admin" element={<PermisoTrabajoAdmin />} />
-            <Route path="/chequeo_alturas_admin" element={<ChequeoAlturasAdmin />} />
-            <Route path="/chequeo_torregruas_admin" element={<ChequeoTorreGruasAdmin />} />
-            <Route path="/chequeo_elevador_admin" element={<ChequeoElevadorAdmin />} />
-            <Route path="/inspeccion_EPCC_admins" element={<InspeccionEPCCAdmins />} />
-            <Route path="/inspeccion_izaje_admin" element={<InspeccionIzajeAdmin />} />
-            <Route path="/administrador_bomberman" element={<AdministradorBomberman />} />
-            <Route path="/planilla_bombeo_admin" element={<PlanillaBombeoAdmin />} />
-            <Route path="/inventarios_obra_admin" element={<InventariosObraAdmin />} />
-            <Route path="/checklist_admin" element={<ChecklistAdmin />} />
-            <Route path="/inspeccion_epcc_bomberman_admin" element={<InspeccionEPCCBombermanAdmin />} />
-            <Route path="/herramientas_mantenimiento_admin" element={<HerramientasMantenimientoAdmin />} />
-            <Route path="/kit_limpieza_admin" element={<KitLimpiezaAdmin />} />
-            <Route path="/admin_usuarios" element={<AdminUsuarios />} />
-            <Route path="/admin_usuarios_bomberman" element={<AdminUsuariosBomberman />} />
-            <Route path="/admins_obras" element={<AdminsObras />} />
-            <Route path="/admin_obras_bomberman" element={<AdminObrasBomberman />} />
-            <Route path="/hora_ingreso" element={<HoraIngreso />} />
-            <Route path="/hora_salida" element={<HoraSalida />} />
-            <Route path="/horas_extra_bomberman" element={<HorasExtraBombermanAdmin />} />
-            <Route path="/horas_extra_gruaman" element={<HorasExtraGruamanAdmin />} />
-            <Route path="/eleccion_lideres/*" element={<EleccionLideres />} />
-            
-            <Route path="/eleccion_sst/*" element={<EleccionSST />} />
-            <Route path="/eleccion_tecnicos/*" element={<EleccionTecnicos />} />
-            <Route path="/pqr" element={<PQR />} />
-            <Route path="/hallazgos" element={<Hallazgos />} />
-            <Route path="/indicador-central-admin" element={<IndicadorCentralAdminPage />} />
-          </Routes>
-          {/* <Footer /> */}
+                <Route element={<RoleGuard allowedKinds={["admin"]} allowedAdminRoles={["gruaman"]} />}>
+                  {gruamanAdminRoutes.map((route) => (
+                    <Route key={route.path} path={route.path} element={route.element} />
+                  ))}
+                </Route>
+
+                <Route element={<RoleGuard allowedKinds={["admin"]} allowedAdminRoles={["bomberman"]} />}>
+                  {bombermanAdminRoutes.map((route) => (
+                    <Route key={route.path} path={route.path} element={route.element} />
+                  ))}
+                </Route>
+
+                <Route
+                  element={<RoleGuard allowedKinds={["admin"]} allowedAdminRoles={["gruaman", "bomberman"]} />}
+                >
+                  <Route path="indicador-central-admin" element={<IndicadorCentralAdminPage />} />
+                </Route>
+              </Route>
+
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+            {/* <Footer /> */}
+          </div>
         </div>
-      </div>
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
-
-

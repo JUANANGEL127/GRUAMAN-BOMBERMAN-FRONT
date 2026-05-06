@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import "../../App.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 const DIRECTORES = [];
 const AREAS = [];
@@ -33,7 +31,7 @@ function PQR() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/obras`)
+    api.get("/obras")
       .then(res => {
         const activas = (res.data.obras || []).filter(o => o.activa === true);
         setObras(activas);
@@ -59,7 +57,7 @@ function PQR() {
 
     setEnviando(true);
     try {
-      await axios.post(`${API_BASE_URL}/sst/pqr`, form);
+      await api.post("/sst/pqr", form);
       setExito(true);
       setForm(prev => ({ ...prev, nombre_director: "", area: "", pqr: "" }));
     } catch (err) {

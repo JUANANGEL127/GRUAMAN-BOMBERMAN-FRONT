@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 const secciones = [
 	{
@@ -184,7 +182,7 @@ function InspeccionIzaje({ value = {}, onChange }) {
 		const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 		const cargo = localStorage.getItem("cargo_trabajador") || "";
 
-		axios.get(`${API_BASE_URL}/obras`)
+		api.get("/obras")
 			.then(res => {
 				let obras = [];
 				if (Array.isArray(res.data.obras)) {
@@ -361,7 +359,7 @@ function InspeccionIzaje({ value = {}, onChange }) {
 			if ('grillete_identificacion_legible' in payload) {
 				delete payload.grillete_identificacion_legible;
 			}
-			await axios.post(`${API_BASE_URL}/gruaman/inspeccion_izaje`, payload);
+			await api.post("/gruaman/inspeccion_izaje", payload);
 					const weekKey = getCurrentWeekKey();
 			localStorage.setItem(
 				"inspeccion_izaje_respuestas",

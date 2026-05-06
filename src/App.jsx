@@ -1,68 +1,113 @@
-import React, { useState, useEffect } from "react";
-import CedulaIngreso from "./CedulaIngreso";
-import BienvenidaSeleccion from "./BienvenidaSeleccion";
+import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import "./App.css";
 import InstallPWAButton from "./components/InstallPWAButton";
 import IntroVideo from "./components/IntroVideo";
 import SlowConnectionBanner from "./components/SlowConnectionBanner";
 import { subscribeUser } from "./pushNotifications";
+import { getSessionHomePath } from "./features/auth/adapters/authSessionAdapter";
+import { useAuth } from "./features/auth/hooks/useAuth";
+import { readReturnTo } from "./features/auth/utils/returnTo";
 
-/**
- * Componente raíz de la aplicación, renderizado en la ruta "/".
- *
- * Gestiona el flujo de autenticación e intro-video en el nivel superior:
- * - Muestra IntroVideo en la primera carga (omitido en modo lite).
- * - Al terminar el video, renderiza CedulaIngreso para autenticación y
- *   luego transiciona a BienvenidaSeleccion tras un inicio de sesión exitoso.
- * - Suscribe al trabajador autenticado a las notificaciones push.
- * - Muestra SlowConnectionBanner cuando el video de intro supera el tiempo límite,
- *   ofreciendo al usuario un modo lite (sin animaciones).
- */
+function isBrowserEnvironment() {
+  return typeof window !== "undefined";
+}
+
+function resolveAdminLanding(session) {
+  const pendingReturnTo = readReturnTo();
+
+  if (
+    pendingReturnTo &&
+    (pendingReturnTo.startsWith("/administrador") ||
+      pendingReturnTo.startsWith("/indicador-central-admin"))
+  ) {
+    return pendingReturnTo;
+  }
+
+  return getSessionHomePath(session);
+}
+
+function resolveSessionLanding(session) {
+  if (!session) {
+    return "/cedula";
+  }
+
+  if (session.kind === "admin") {
+    return resolveAdminLanding(session);
+  }
+
+  return getSessionHomePath(session);
+}
+
+function LoadingScreen() {
+  return (
+    <div className="form-container">
+      <div className="card-section" style={{ alignItems: "center", textAlign: "center" }}>
+        <h2 className="card-title">Preparing your session</h2>
+        <p style={{ marginTop: 12 }}>We are validating your secure cookies with the backend.</p>
+      </div>
+    </div>
+  );
+}
+
 function App() {
-  const [usuario, setUsuario] = useState(null);
+  const { isAuthenticated, isHydrating, isReady, session } = useAuth();
+  const isLiteMode =
+    isBrowserEnvironment() && window.sessionStorage.getItem("lite_mode") === "true";
+  const [showIntro, setShowIntro] = useState(!isLiteMode);
+  const [showLiteBanner, setShowLiteBanner] = useState(true);
 
-  const isLiteMode = sessionStorage.getItem('lite_mode') === 'true';
-
-  const [showIntro,      setShowIntro]      = useState(!isLiteMode);
-  const [showLiteBanner, setShowLiteBanner] = useState(false);
-
-  const trabajadorId = usuario?.id;
   useEffect(() => {
-    if (trabajadorId && 'serviceWorker' in navigator && 'PushManager' in window) {
-      subscribeUser(trabajadorId).catch(() => {});
+    const workerId =
+      session?.kind === "worker" ? session.user?.documentId || session.user?.id || "" : "";
+
+    if (!workerId || !isBrowserEnvironment()) {
+      return;
     }
-  }, [trabajadorId]);
+
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      return;
+    }
+
+    subscribeUser(workerId).catch(() => {});
+  }, [session]);
 
   const handleIntroEnd = () => setShowIntro(false);
 
   const handleSlowDetected = () => {
-    if (!isLiteMode) setShowLiteBanner(true);
+    if (!isLiteMode) {
+      setShowLiteBanner(true);
+    }
   };
 
   const handleUseLite = () => {
-    sessionStorage.setItem('lite_mode', 'true');
+    if (isBrowserEnvironment()) {
+      window.sessionStorage.setItem("lite_mode", "true");
+    }
+
     setShowLiteBanner(false);
+    setShowIntro(false);
   };
 
   const handleDismissBanner = () => setShowLiteBanner(false);
 
+  const redirectTarget =
+    isReady && !isHydrating
+      ? isAuthenticated
+        ? resolveSessionLanding(session)
+        : "/cedula"
+      : "";
+
   return (
     <div className="App">
-      {showIntro && (
-        <IntroVideo
-          onVideoEnd={handleIntroEnd}
-          onSlowDetected={handleSlowDetected}
-        />
+      {showIntro ? (
+        <IntroVideo onVideoEnd={handleIntroEnd} onSlowDetected={handleSlowDetected} />
+      ) : redirectTarget ? (
+        <Navigate to={redirectTarget} replace />
+      ) : (
+        <LoadingScreen />
       )}
-      {!showIntro && (
-        <>
-          {!usuario ? (
-            <CedulaIngreso onUsuarioEncontrado={setUsuario} />
-          ) : (
-            <BienvenidaSeleccion usuario={usuario} />
-          )}
-        </>
-      )}
+
       {showLiteBanner && (
         <SlowConnectionBanner
           onUseLite={handleUseLite}
@@ -73,7 +118,5 @@ function App() {
     </div>
   );
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
 
 export default App;

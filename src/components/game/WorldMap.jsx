@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getWorldsByCharacter, getCharacterName } from '../../config/gameConfig';
 import { getCompletedWorlds, computeWorldStatus, markWorldComplete } from '../../db/gameProgress';
+import { useAuth } from "../../features/auth/hooks/useAuth";
 import WorldNode        from './WorldNode';
 import CircleTransition from './CircleTransition';
 import './WorldMap.css';
@@ -17,6 +18,7 @@ const TUTORIAL_KEY = 'game_tutorial_seen';
  */
 export default function WorldMap() {
   const navigate = useNavigate();
+  const { signOut }= useAuth()
 
   const character     = localStorage.getItem('selectedCharacter') || 'bomberman';
   const userName      = localStorage.getItem('nombre_trabajador')  || 'Héroe';
@@ -73,6 +75,11 @@ export default function WorldMap() {
   const handleCoverDone = () => {
     if (destination) navigate(destination);
   };
+
+  const handleSignOut = async() => {
+    //navigateTo('/bienvenida')
+    await signOut();
+  }
 
   const progressPct = dailyWorlds.length > 0
     ? (completedCount / dailyWorlds.length) * 100
@@ -196,7 +203,7 @@ export default function WorldMap() {
       <footer className="wm-footer">
         <button
           className="wm-salir"
-          onClick={() => navigateTo('/bienvenida')}
+          onClick={handleSignOut}
         >
           ← Salir
         </button>

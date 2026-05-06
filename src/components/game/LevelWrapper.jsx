@@ -68,7 +68,7 @@ export default function LevelWrapper() {
   const isGamified       = !!gamifiedSections;
 
   const [sectionIdx,   setSectionIdx]   = useState(0);
-  const [allAnswers,   setAllAnswers]   = useState({});
+  const [_allAnswers,   setAllAnswers]   = useState({});
   const [submitting,   setSubmitting]   = useState(false);
   const [submitError,  setSubmitError]  = useState(null);
   const [missionDone,  setMissionDone]  = useState(false);

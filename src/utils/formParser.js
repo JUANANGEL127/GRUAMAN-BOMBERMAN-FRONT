@@ -11,11 +11,8 @@
  * originales envían. Los campos no capturados en la UI gamificada se leen
  * del localStorage (datos guardados previamente) o usan 'NA' como default.
  */
-import axios from 'axios';
+import api from "../utils/api";
 import { getCurrentWeekKey, todayStrBogota } from './dateUtils';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL
-  || 'https://gruaman-bomberman-back.onrender.com';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -327,7 +324,7 @@ function buildChecklistOptions(field) {
 }
 
 /** @deprecated — mantenido solo como referencia; buildChecklist ya usa valores directos */
-function ynChecklist(val, field) {
+/* function ynChecklist(val, field) {
   const opts = CHECKLIST_FIELD_OPTIONS[field];
   if (!opts) {
     // Sin opciones personalizadas: mapeo estándar BUENO/REGULAR/MALO
@@ -335,7 +332,7 @@ function ynChecklist(val, field) {
   }
   // Campo de 2 opciones: yes=opts[0] (bueno), no=opts[1] (malo), na=opts[0] (bueno por defecto)
   return val === 'yes' ? opts[0] : val === 'no' ? opts[1] : opts[0];
-}
+} */
 
 /** Construye secciones de preguntas para el checklist según el cargo del usuario */
 function buildChecklistSections() {
@@ -1404,7 +1401,9 @@ function getCachedBombas() {
     if (cached) {
       return JSON.parse(cached).map(b => ({ value: b.numero_bomba, label: b.numero_bomba, icon: '🏎️' }));
     }
-  } catch {}
+  } catch(err){
+    console.error("fail response",err);    
+  }
   return [];
 }
 
@@ -2149,5 +2148,5 @@ export async function submitFormData(worldId, answers) {
   const payload = convertAnswersToFormData(worldId, answers);
   persistAnswers(worldId, answers);
 
-  await axios.post(`${API_BASE}${endpoint}`, payload);
+  await api.post(`${endpoint}`, payload);
 }

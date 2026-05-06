@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 const items_kit = [
   { desc: 'DETERGENTE EN POLVO',             base: 'detergente_polvo' },
@@ -45,7 +43,7 @@ function KitLimpieza() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/bombas`)
+    api.get("/bombas")
       .then(res => {
         const bombas = Array.isArray(res.data.bombas) ? res.data.bombas : res.data || [];
         set_lista_bombas(bombas);
@@ -65,7 +63,7 @@ function KitLimpieza() {
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
     const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 
-    axios.get(`${API_BASE_URL}/obras`)
+    api.get("/obras")
       .then(res => {
         let obras = [];
         if (Array.isArray(res.data.obras)) obras = res.data.obras;
@@ -110,7 +108,7 @@ function KitLimpieza() {
     };
 
     try {
-      await axios.post(`${API_BASE_URL}/bomberman/kit_limpieza`, payload);
+      await api.post("/bomberman/kit_limpieza", payload);
       window.alert("Kit de lavado y mantenimiento guardado correctamente.");
       navigate(-1);
     } catch (err) {

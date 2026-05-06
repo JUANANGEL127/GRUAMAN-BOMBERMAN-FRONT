@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 // Mapeo de las preguntas (items) a los nombres de las columnas de la DB
 const MAPEO_DB = {
@@ -183,7 +181,7 @@ function ChequeoElevador() {
       let constructora = "";
       try {
         // Asumiendo que esta URL es correcta y funcional
-        const res = await axios.get(`${API_BASE_URL}/obras`);
+        const res = await api.get("/obras");
         const obras = Array.isArray(res.data.obras) ? res.data.obras : res.data || [];
         const obra_obj = obras.find(
           (o) => (o.nombre_obra || o.nombre || "") === proyecto
@@ -288,7 +286,7 @@ function ChequeoElevador() {
     };
 
     try {
-      await axios.post(`${API_BASE_URL}/gruaman/chequeo_elevador`, payload);
+      await api.post("/gruaman/chequeo_elevador", payload);
       alert("Chequeo de elevador enviado correctamente.");
       navigate(-1); // vuelve al componente anterior
     } catch (err) {

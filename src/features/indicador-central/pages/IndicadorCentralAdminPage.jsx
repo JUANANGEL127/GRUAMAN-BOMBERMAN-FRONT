@@ -1,5 +1,9 @@
-﻿import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import {
+  getLegacyAdminRole,
+  getSessionHomePath,
+} from "../../auth/adapters/authSessionAdapter";
+import { useAuth } from "../../auth/hooks/useAuth";
 import { ConfigSection } from "../components/ConfigSection";
 import { ExecutionSection } from "../components/ExecutionSection";
 import { IndicadorCentralTabs } from "../components/IndicadorCentralTabs";
@@ -10,22 +14,16 @@ import { useIndicadorCentralExecution } from "../hooks/useIndicadorCentralExecut
 import { useIndicadorCentralWorksites } from "../hooks/useIndicadorCentralWorksites";
 import "../indicador-central.css";
 
-const INDICADOR_CENTRAL_ADMIN_ROLES = new Set(["gruaman", "bomberman"]);
 const INDICADOR_TABS = [
-  { id: "configuracion", label: "Configuración" },
+  { id: "configuracion", label: "Configuraci�n" },
   { id: "ejecucion", label: "Descarga" },
 ];
-
-function resolveAdminHome(adminRole) {
-  if (adminRole === "bomberman") return "/administrador_bomberman";
-  return "/administrador";
-}
 
 function resolveUpdatedBy(adminRole) {
   return adminRole ? `panel.${adminRole}` : "panel.indicador_central";
 }
 
-function IndicadorCentralAdminShell({ adminRole }) {
+function IndicadorCentralAdminShell({ adminRole, backPath }) {
   const [activeTab, setActiveTab] = useState("configuracion");
   const {
     config,
@@ -68,8 +66,6 @@ function IndicadorCentralAdminShell({ adminRole }) {
     syncSupportedCutTypes({ tipos_corte_disponibles: configCutTypes });
   }, [configCutTypes, syncSupportedCutTypes]);
 
-  const backPath = useMemo(() => resolveAdminHome(adminRole), [adminRole]);
-
   function updateConfig(updater) {
     setConfig((currentConfig) => (typeof updater === "function" ? updater(currentConfig) : updater));
   }
@@ -97,17 +93,18 @@ function IndicadorCentralAdminShell({ adminRole }) {
           <p className="indicador-central-page__eyebrow">Admin panel</p>
           <h1 className="indicador-central-page__title">Indicador Central</h1>
           <p className="indicador-central-page__subtitle">
-            Configura la generación automatica del informe y descarga en Excel directo desde el formulario, sin pasos intermedios.
+            Configura la generaci�n automatica del informe y descarga en Excel directo desde el formulario, sin pasos intermedios.
           </p>
         </div>
-        <a className="indicador-central-page__back-link 
+        <a
+          className="indicador-central-page__back-link 
               hover:[background:linear-gradient(145deg,#0057ff,#1976d2)] 
               hover:[box-shadow:0_6px_15px_rgba(25,118,210,0.28)] 
               hover:border-[#1976d2]"
-              style={{color:"#fff"}}
-            href={backPath}
+          style={{ color: "#fff" }}
+          href={backPath}
         >
-          Volver al menú admin
+          Volver al men� admin
         </a>
       </header>
 
@@ -165,22 +162,11 @@ function IndicadorCentralAdminShell({ adminRole }) {
 }
 
 export function IndicadorCentralAdminPage() {
-  const navigate = useNavigate();
-  const [authState, setAuthState] = useState({ ready: false, adminRole: null });
+  const { isHydrating, isReady, session } = useAuth();
+  const adminRole = useMemo(() => getLegacyAdminRole(session), [session]);
+  const backPath = useMemo(() => getSessionHomePath(session), [session]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const adminRole = window.localStorage.getItem("admin_rol");
-    if (!INDICADOR_CENTRAL_ADMIN_ROLES.has(adminRole)) {
-      navigate("/cedula", { replace: true });
-      return;
-    }
-
-    setAuthState({ ready: true, adminRole });
-  }, [navigate]);
-
-  if (!authState.ready) {
+  if (!isReady || isHydrating || !adminRole) {
     return (
       <section className="indicador-central-page indicador-central-page--loading" aria-label="Loading admin access">
         <div className="indicador-central-card">
@@ -190,7 +176,7 @@ export function IndicadorCentralAdminPage() {
     );
   }
 
-  return <IndicadorCentralAdminShell adminRole={authState.adminRole} />;
+  return <IndicadorCentralAdminShell adminRole={adminRole} backPath={backPath} />;
 }
 
 export default IndicadorCentralAdminPage;

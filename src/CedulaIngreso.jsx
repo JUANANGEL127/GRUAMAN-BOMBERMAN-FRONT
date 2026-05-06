@@ -1,74 +1,116 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { registerWebAuthn, authenticateWebAuthn, WebAuthnError, checkWebAuthnSupport } from "./components/webauthn";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "./utils/api";
+import {
+  authenticateWebAuthn,
+  checkWebAuthnSupport,
+  registerWebAuthn,
+  WebAuthnError,
+} from "./components/webauthn";
 import { subscribeUser } from "./pushNotifications";
+import { useAuth } from "./features/auth/hooks/useAuth";
+import {
+  getSessionHomePath,
+  isAuthenticatedAuthSession,
+  mergeAuthSessions,
+  normalizeAdminLoginResponse,
+  normalizeAuthSession,
+  normalizePinSetResponse,
+  normalizePinStatusResponse,
+  normalizePinVerifyResponse,
+  toWorkerCompatibilityUser,
+} from "./features/auth/adapters/authSessionAdapter";
+import { consumeReturnTo, readReturnTo } from "./features/auth/utils/returnTo";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gruaman-bomberman-back.onrender.com";
+const WEB_AUTHN_DIAGNOSTIC = Object.freeze({
+  titulo: "Este dispositivo no puede usar huella dactilar",
+  pasos: [
+    "Verifica que tengas Google Services instalado y actualizado.",
+    "Asegúrate de tener una cuenta de Google activa y configurada en el teléfono.",
+    "Revisa que tengas huella dactilar registrada en Ajustes → Seguridad.",
+    "Revisa que las Llaves de acceso estén habilitadas en tu cuenta de Google (passwords.google.com).",
+    "Si ninguna de las anteriores aplica, contacta al administrador.",
+  ],
+});
 
-/**
- * Se suscribe a cambios en el ancho del viewport y retorna true cuando
- * este es menor a 600 px.
- *
- * @returns {boolean}
- */
 function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState(
     typeof window !== "undefined" ? window.innerWidth < 600 : true
   );
+
   React.useEffect(() => {
-    const mq = window.matchMedia("(max-width: 599px)");
-    const onChange = (e) => setIsMobile(e.matches);
-    if (mq.addEventListener) mq.addEventListener("change", onChange);
-    else mq.addListener(onChange);
+    const mediaQuery = window.matchMedia("(max-width: 599px)");
+    const handleChange = (event) => setIsMobile(event.matches);
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleChange);
+    } else {
+      mediaQuery.addListener(handleChange);
+    }
+
     return () => {
-      if (mq.removeEventListener) mq.removeEventListener("change", onChange);
-      else mq.removeListener(onChange);
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener("change", handleChange);
+      } else {
+        mediaQuery.removeListener(handleChange);
+      }
     };
   }, []);
+
   return isMobile;
 }
 
-/**
- * Convierte un empresa_id numérico a su identificador de unidad de negocio en cadena.
- *
- * @param {number|string} id - empresa_id proveniente de la respuesta de la API.
- * @returns {'GyE'|'AIC'|'SST'|'Lideres'|''}
- */
-function empresaFromId(id) {
-  const n = Number(id);
-  if (n === 1) return "GyE";
-  if (n === 2) return "AIC";
-  if (n === 3) return "Tecnicos";
-  if (n === 4) return "SST";
-  if (n === 5) return "Lideres";
+function buildWorkerHint(documentId, fallback = null) {
+  return mergeAuthSessions(
+    fallback,
+    normalizeAuthSession(
+      {
+        numero_identificacion: documentId,
+      },
+      {
+        source: "cedula-input",
+        defaultKind: "worker",
+        authenticatedByDefault: false,
+      }
+    )
+  );
+}
+
+function getWorkerLookupErrorMessage(sessionHint) {
+  // Note: 'active' validation should only happen AFTER auth (PIN verify, webauthn verify)
+  // At the lookup stage, we only check for explicit backend errors.
+  // The backend will validate user status during PIN/webauthn verification.
+  
+  if (sessionHint?.authFlow?.success === false && sessionHint?.authFlow?.errorMessage) {
+    return sessionHint.authFlow.errorMessage;
+  }
+
   return "";
 }
 
-/**
- * Pantalla de ingreso por cédula con autenticación biométrica (WebAuthn) y
- * fallback por PIN.
- *
- * Flujo de autenticación:
- * 1. El trabajador ingresa su número de identificación.
- * 2. El componente consulta /datos_basicos y valida que el trabajador esté activo.
- * 3. Si el dispositivo soporta WebAuthn y el trabajador no tiene credencial registrada,
- *    registra una nueva. Si ya existe, autentica con ella.
- * 4. En dispositivos sin soporte WebAuthn se usa el flujo basado en PIN.
- * 5. Al tener éxito, invoca onUsuarioEncontrado con el objeto de trabajador normalizado.
- *
- * También provee un modal de login de administrador que redirige al panel
- * correspondiente según el rol retornado por /admin/login.
- *
- * @param {Object} props
- * @param {Function} props.onUsuarioEncontrado - Se llama con el objeto del trabajador autenticado.
- */
-function CedulaIngreso({ onUsuarioEncontrado }) {
-  const handleUsuarioAutenticado = (usuario, empresa_id) => {
-    localStorage.setItem("nombre_trabajador", usuario.nombre || "");
-    localStorage.setItem("cedula_trabajador", usuario.numero_identificacion || "");
-    localStorage.setItem("empresa_id", String(empresa_id || ""));
-    onUsuarioEncontrado && onUsuarioEncontrado(usuario);
-  };
+async function subscribeAuthenticatedWorker(workerUser) {
+  if (
+    typeof window === "undefined" ||
+    !workerUser?.numero_identificacion ||
+    !("Notification" in window) ||
+    !("serviceWorker" in navigator)
+  ) {
+    return;
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      await subscribeUser(workerUser.numero_identificacion).catch(() => {});
+    }
+  } catch {
+    // Push notifications are best-effort and should not block login recovery.
+  }
+}
+
+function CedulaIngresoContent({ onUsuarioEncontrado }) {
+  const navigate = useNavigate();
+  const { isAuthenticated, isReady, session, signIn } = useAuth();
 
   const [cedula, setCedula] = useState("");
   const [error, setError] = useState("");
@@ -80,187 +122,223 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
   const [adminShowPass, setAdminShowPass] = useState(false);
   const [showRegistrarLlaveModal, setShowRegistrarLlaveModal] = useState(false);
   const [registrarLlaveLoading, setRegistrarLlaveLoading] = useState(false);
-  const [pendingUsuario, setPendingUsuario] = useState(null);
+  const [pendingSessionHint, setPendingSessionHint] = useState(null);
   const [diagnostico, setDiagnostico] = useState(null);
   const [showPinModal, setShowPinModal] = useState(false);
-  const [pinModo, setPinModo] = useState('verificar');
-  const [pinInput, setPinInput] = useState('');
-  const [pinConfirm, setPinConfirm] = useState('');
-  const [pinError, setPinError] = useState('');
+  const [pinModo, setPinModo] = useState("verificar");
+  const [pinInput, setPinInput] = useState("");
+  const [pinConfirm, setPinConfirm] = useState("");
+  const [pinError, setPinError] = useState("");
   const [pinLoading, setPinLoading] = useState(false);
 
+  const handledSessionRef = useRef("");
   const isMobile = useIsMobile();
-  const isLite   = sessionStorage.getItem('lite_mode') === 'true';
+  const isLite = sessionStorage.getItem("lite_mode") === "true";
 
   useEffect(() => {
-    if (isLite) return; // sin GIFs rotativos en modo lite
+    if (isLite) {
+      return undefined;
+    }
+
     const gifs = ["/gruaman1.1.gif", "/bomberman1.1.gif"];
     const interval = setInterval(() => {
-      setGifIndex(prev => (prev + 1) % gifs.length);
+      setGifIndex((previousValue) => (previousValue + 1) % gifs.length);
     }, 2500);
+
     return () => clearInterval(interval);
   }, [isLite]);
 
-  const handleBuscar = async () => {
-    setError("");
-    if (!cedula) {
-      setError("Por favor ingresa tu número de identificación.");
-      return;
-    }
-    try {
-      const resp = await axios.get(`${API_BASE_URL}/datos_basicos`);
-      const datosArray = Array.isArray(resp.data.datos) ? resp.data.datos : (Array.isArray(resp.data) ? resp.data : []);
-      // Solo permitir ingreso si activo === true
-      const usuario = datosArray.find(u => {
-        const id = u.numero_identificacion || u.cedula || u.id || "";
-        return id === cedula && u.activo === true;
-      }) || null;
+  const finalizeAuthenticatedSession = useCallback(
+    async (authenticatedSession) => {
+      if (!isAuthenticatedAuthSession(authenticatedSession)) {
+        return;
+      }
 
-      if (usuario) {
-        try {
-          const nombre = usuario.nombre || usuario.nombres || usuario.nombre_trabajador || "";
-          const numeroId = usuario.numero_identificacion || usuario.cedula || usuario.id || cedula;
-          const cargo = usuario.cargo || usuario.cargo_trabajador || usuario.puesto || "";
-          const empresaName = empresaFromId(usuario.empresa_id) || usuario.empresa || "";
-          const obra = usuario.obra || usuario.nombre_proyecto || usuario.nombre_obra || "";
+      if (authenticatedSession.kind === "worker") {
+        const workerUser = toWorkerCompatibilityUser(authenticatedSession);
+        await subscribeAuthenticatedWorker(workerUser);
 
-          localStorage.setItem("nombre_trabajador", nombre);
-          localStorage.setItem("usuario", JSON.stringify(usuario));
-          localStorage.setItem("cedula_trabajador", numeroId);
-          localStorage.setItem("cedula", numeroId);
-          if (cargo) localStorage.setItem("cargo_trabajador", cargo);
-          if (empresaName) localStorage.setItem("empresa_trabajador", empresaName);
-          if (obra) {
-            localStorage.setItem("obra", obra);
-            localStorage.setItem("nombre_proyecto", obra);
-          }
-        } catch {
-          // localStorage not available
-        }
-
-        try {
-          const pinRes = await axios.get(`${API_BASE_URL}/auth/pin/status?numero_identificacion=${encodeURIComponent(cedula)}`);
-          const pinStatus = pinRes.data;
-          if (pinStatus && pinStatus.pinHabilitado) {
-            setPendingUsuario(usuario);
-            setPinModo(pinStatus.pinConfigurado ? 'verificar' : 'crear');
-            setPinInput('');
-            setPinConfirm('');
-            setPinError('');
-            setShowPinModal(true);
-            return;
-          }
-        } catch {
-          // PIN status unavailable — proceed with biometric flow
-        }
-
-        if ("Notification" in window && "serviceWorker" in navigator) {
-          try {
-            const permission = await Notification.requestPermission();
-            if (permission === "granted") {
-              const numeroId = usuario.numero_identificacion || usuario.cedula || usuario.id || cedula;
-              await subscribeUser(numeroId).catch(() => {});
-            }
-          } catch {
-            // Push subscription not critical — continue
-          }
-        }
-
-        const soportaBiometria = await checkWebAuthnSupport();
-        if (!soportaBiometria) {
-          setDiagnostico({
-            titulo: 'Este dispositivo no puede usar huella dactilar',
-            pasos: [
-              'Verifica que tengas Google Services instalado y actualizado.',
-              'Asegúrate de tener una cuenta de Google activa y configurada en el teléfono.',
-              'Revisa que tengas huella dactilar registrada en Ajustes → Seguridad.',
-              'Revisa que las Llaves de acceso estén habilitadas en tu cuenta de Google (passwords.google.com).',
-              'Si ninguna de las anteriores aplica, contacta al administrador.'
-            ]
-          });
+        if (onUsuarioEncontrado) {
+          onUsuarioEncontrado(workerUser);
           return;
         }
 
-        let biometriaRegistrada = false;
-        try {
-          const res = await axios.post(`${API_BASE_URL}/webauthn/hasCredential`, { numero_identificacion: cedula });
-          biometriaRegistrada = !!(res.data && res.data.hasCredential);
-        } catch {
-          biometriaRegistrada = false;
-        }
-
-        if (!biometriaRegistrada) {
-          try {
-            await registerWebAuthn({ numero_identificacion: cedula, nombre: usuario.nombre });
-          } catch (e) {
-            if (e instanceof WebAuthnError && e.code === 'USER_CANCELLED') {
-              setError("Cancelaste el registro de huella. Inténtalo de nuevo.");
-            } else {
-              setError("No se pudo registrar la biometría. Verifica que tengas huella dactilar configurada en los ajustes del teléfono.");
-            }
-            return;
-          }
-        } else {
-          try {
-            await authenticateWebAuthn({ numero_identificacion: cedula });
-          } catch (e) {
-            if (e instanceof WebAuthnError && e.code === 'USER_CANCELLED') {
-              setError("Cancelaste la autenticación. Inténtalo de nuevo.");
-              return;
-            }
-
-            if (e instanceof WebAuthnError && e.code === 'NO_CREDENTIALS') {
-              setPendingUsuario(usuario);
-              setShowRegistrarLlaveModal(true);
-              return;
-            }
-
-            setError("No se pudo autenticar. Inténtalo de nuevo.");
-            return;
-          }
-        }
-
-        handleUsuarioAutenticado({
-          nombre: usuario.nombre,
-          empresa: empresaFromId(usuario.empresa_id),
-          numero_identificacion: usuario.numero_identificacion
-        }, usuario.empresa_id);
-      } else {
-        setError("No haces parte de nuestros super héroes o tu usuario está inactivo.");
+        navigate("/bienvenida", { replace: true });
+        return;
       }
+
+      const pendingAdminReturnTo = readReturnTo();
+      const nextAdminPath =
+        pendingAdminReturnTo && pendingAdminReturnTo.startsWith("/administrador")
+          ? consumeReturnTo()
+          : getSessionHomePath(authenticatedSession);
+
+      navigate(nextAdminPath, { replace: true });
+    },
+    [navigate, onUsuarioEncontrado]
+  );
+
+  useEffect(() => {
+    if (!isReady || !isAuthenticated) {
+      return;
+    }
+
+    const handledSessionKey = [
+      session?.kind ?? "",
+      session?.user?.documentId ?? "",
+      session?.expiresAt ?? "",
+    ].join(":");
+
+    if (!handledSessionKey || handledSessionRef.current === handledSessionKey) {
+      return;
+    }
+
+    handledSessionRef.current = handledSessionKey;
+    finalizeAuthenticatedSession(session).catch(() => {});
+  }, [finalizeAuthenticatedSession, isAuthenticated, isReady, session]);
+
+  const handleBuscar = async () => {
+    const normalizedCedula = cedula.trim();
+    setError("");
+    setDiagnostico(null);
+
+    if (!normalizedCedula) {
+      setError("Por favor ingresa tu número de identificación.");
+      return;
+    }
+
+    try {
+      const pinStatusResponse = await api.get("/auth/pin/status", {
+        params: {
+          numero_identificacion: normalizedCedula,
+        },
+        skipAuthHandling: true,
+      });
+
+      const workerSessionHint = buildWorkerHint(
+        normalizedCedula,
+        normalizePinStatusResponse(pinStatusResponse.data)
+      );
+      const lookupErrorMessage = getWorkerLookupErrorMessage(workerSessionHint);
+
+      if (lookupErrorMessage) {
+        setError(lookupErrorMessage);
+        return;
+      }
+
+      setPendingSessionHint(workerSessionHint);
+
+      if (workerSessionHint.authFlow.pinEnabled) {
+        setPinModo(workerSessionHint.authFlow.pinConfigured ? "verificar" : "crear");
+        setPinInput("");
+        setPinConfirm("");
+        setPinError("");
+        setShowPinModal(true);
+        return;
+      }
+
+      const soportaBiometria = await checkWebAuthnSupport();
+      if (!soportaBiometria) {
+        setDiagnostico(WEB_AUTHN_DIAGNOSTIC);
+        return;
+      }
+
+      let biometriaRegistrada = false;
+      try {
+        const hasCredentialResponse = await api.post(
+          "/webauthn/hasCredential",
+          { numero_identificacion: normalizedCedula },
+          { skipAuthHandling: true }
+        );
+        biometriaRegistrada = Boolean(hasCredentialResponse.data?.hasCredential);
+      } catch {
+        biometriaRegistrada = false;
+      }
+
+      let authVerificationPayload;
+
+      if (!biometriaRegistrada) {
+        try {
+          authVerificationPayload = await registerWebAuthn({
+            numero_identificacion: normalizedCedula,
+            nombre: workerSessionHint.user.name || workerSessionHint.legacyProfile.nombre_trabajador,
+          });
+        } catch (webAuthnError) {
+          if (webAuthnError instanceof WebAuthnError && webAuthnError.code === "USER_CANCELLED") {
+            setError("Cancelaste el registro de huella. Inténtalo de nuevo.");
+          } else {
+            setError(
+              "No se pudo registrar la biometría. Verifica que tengas huella dactilar configurada en los ajustes del teléfono."
+            );
+          }
+          return;
+        }
+      } else {
+        try {
+          authVerificationPayload = await authenticateWebAuthn({
+            numero_identificacion: normalizedCedula,
+          });
+        } catch (webAuthnError) {
+          if (webAuthnError instanceof WebAuthnError && webAuthnError.code === "USER_CANCELLED") {
+            setError("Cancelaste la autenticación. Inténtalo de nuevo.");
+            return;
+          }
+
+          if (webAuthnError instanceof WebAuthnError && webAuthnError.code === "NO_CREDENTIALS") {
+            setShowRegistrarLlaveModal(true);
+            return;
+          }
+
+          setError("No se pudo autenticar. Inténtalo de nuevo.");
+          return;
+        }
+      }
+
+      const authenticatedSession = await signIn({
+        hintSession: mergeAuthSessions(
+          normalizeAuthSession(authVerificationPayload, {
+            source: biometriaRegistrada
+              ? "/webauthn/authenticate/verify"
+              : "/webauthn/register/verify",
+            defaultKind: "worker",
+            authenticatedByDefault: true,
+          }),
+          workerSessionHint
+        ),
+        source: biometriaRegistrada ? "webauthn-authenticate" : "webauthn-register",
+      });
+
+      await finalizeAuthenticatedSession(authenticatedSession);
     } catch {
       setError("No haces parte de nuestros super héroes.");
     }
   };
 
-  /**
-   * Envía las credenciales de administrador a /admin/login y redirige al panel
-   * de administración correspondiente si el inicio de sesión es exitoso.
-   */
   const handleAdminLogin = async () => {
     setAdminError("");
     setAdminLoading(true);
+
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: adminPass }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        setAdminError("");
-        setShowAdminModal(false);
-        localStorage.setItem("admin_rol", data.rol);
-        if (data.rol === "gruaman") {
-          window.location.href = "/administrador";
-        } else if (data.rol === "bomberman") {
-          window.location.href = "/administrador_bomberman";
-        } else {
-          setAdminError("Rol no reconocido.");
-        }
-      } else {
-        setAdminError(data.error || "Contraseña incorrecta.");
+      const response = await api.post(
+        "/admin/login",
+        { password: adminPass },
+        { skipAuthHandling: true }
+      );
+      const adminSessionHint = normalizeAdminLoginResponse(response.data);
+
+      if (!adminSessionHint.authFlow.success) {
+        setAdminError(adminSessionHint.authFlow.errorMessage || "Contraseña incorrecta.");
+        return;
       }
+
+      setShowAdminModal(false);
+
+      const authenticatedSession = await signIn({
+        hintSession: adminSessionHint,
+        source: "admin-login",
+      });
+
+      await finalizeAuthenticatedSession(authenticatedSession);
     } catch {
       setAdminError("Error de conexión.");
     } finally {
@@ -268,29 +346,43 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
     }
   };
 
-  /**
-   * Registra una nueva credencial WebAuthn para el trabajador pendiente en este dispositivo.
-   * Se utiliza cuando la credencial del trabajador está almacenada en otro dispositivo.
-   */
   const handleRegistrarNuevaLlave = async () => {
-    if (!pendingUsuario) return;
+    if (!pendingSessionHint) {
+      return;
+    }
+
+    const numeroIdentificacion = pendingSessionHint.user.documentId || cedula.trim();
+    const nombre = pendingSessionHint.user.name || pendingSessionHint.legacyProfile.nombre_trabajador;
+
     setRegistrarLlaveLoading(true);
     setError("");
+
     try {
-      const numeroId = pendingUsuario.numero_identificacion || pendingUsuario.cedula || pendingUsuario.id || cedula;
-      const nombre = pendingUsuario.nombre || pendingUsuario.nombres || pendingUsuario.nombre_trabajador || "";
-      await registerWebAuthn({ numero_identificacion: numeroId, nombre });
+      const verificationPayload = await registerWebAuthn({
+        numero_identificacion: numeroIdentificacion,
+        nombre,
+      });
+
       setShowRegistrarLlaveModal(false);
-      handleUsuarioAutenticado({
-        nombre: pendingUsuario.nombre,
-        empresa: empresaFromId(pendingUsuario.empresa_id),
-        numero_identificacion: pendingUsuario.numero_identificacion
-      }, pendingUsuario.empresa_id);
-      setPendingUsuario(null);
+
+      const authenticatedSession = await signIn({
+        hintSession: mergeAuthSessions(
+          normalizeAuthSession(verificationPayload, {
+            source: "/webauthn/register/verify",
+            defaultKind: "worker",
+            authenticatedByDefault: true,
+          }),
+          pendingSessionHint
+        ),
+        source: "webauthn-register",
+      });
+
+      setPendingSessionHint(null);
+      await finalizeAuthenticatedSession(authenticatedSession);
     } catch {
       setError("No se pudo registrar la nueva llave de acceso en este dispositivo.");
       setShowRegistrarLlaveModal(false);
-      setPendingUsuario(null);
+      setPendingSessionHint(null);
     } finally {
       setRegistrarLlaveLoading(false);
     }
@@ -298,72 +390,86 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
 
   const handleCancelarRegistroLlave = () => {
     setShowRegistrarLlaveModal(false);
-    setPendingUsuario(null);
+    setPendingSessionHint(null);
     setError("Debes registrar una llave de acceso para continuar.");
   };
 
-  /**
-   * Gestiona el envío del PIN tanto en modo creación ('crear') como en verificación ('verificar').
-   * Al tener éxito, llama a handleUsuarioAutenticado y limpia el estado pendiente.
-   */
   const handlePinSubmit = async () => {
-    if (!pendingUsuario) return;
-    const numeroId = pendingUsuario.numero_identificacion || cedula;
-    setPinError('');
-
-    if (!/^\d{4,8}$/.test(pinInput)) {
-      setPinError('El PIN debe ser numérico de 4 a 8 dígitos.');
+    if (!pendingSessionHint) {
       return;
     }
 
-    if (pinModo === 'crear') {
-      if (pinInput !== pinConfirm) {
-        setPinError('Los PINes no coinciden.');
+    const numeroIdentificacion = pendingSessionHint.user.documentId || cedula.trim();
+    setPinError("");
+
+    if (!/^\d{4,8}$/.test(pinInput)) {
+      setPinError("El PIN debe ser numérico de 4 a 8 dígitos.");
+      return;
+    }
+
+    if (pinModo === "crear" && pinInput !== pinConfirm) {
+      setPinError("Los PINes no coinciden.");
+      return;
+    }
+
+    setPinLoading(true);
+
+    try {
+      const pinResponse =
+        pinModo === "crear"
+          ? await api.post(
+              "/auth/pin/set",
+              {
+                numero_identificacion: numeroIdentificacion,
+                pin: pinInput,
+              },
+              { skipAuthHandling: true }
+            )
+          : await api.post(
+              "/auth/pin/verify",
+              {
+                numero_identificacion: numeroIdentificacion,
+                pin: pinInput,
+              },
+              { skipAuthHandling: true }
+            );
+
+      const normalizedPinSession =
+        pinModo === "crear"
+          ? normalizePinSetResponse(pinResponse.data)
+          : normalizePinVerifyResponse(pinResponse.data);
+
+      if (!normalizedPinSession.authFlow.success) {
+        setPinError(
+          normalizedPinSession.authFlow.errorMessage ||
+            (pinModo === "crear"
+              ? "No se pudo guardar el PIN."
+              : "PIN incorrecto. Inténtalo de nuevo.")
+        );
         return;
       }
-      setPinLoading(true);
-      try {
-        const res = await axios.post(`${API_BASE_URL}/auth/pin/set`, { numero_identificacion: numeroId, pin: pinInput });
-        if (res.data.success) {
-          setShowPinModal(false);
-          setPendingUsuario(null);
-          handleUsuarioAutenticado({
-            nombre: pendingUsuario.nombre,
-            empresa: empresaFromId(pendingUsuario.empresa_id),
-            numero_identificacion: numeroId
-          }, pendingUsuario.empresa_id);
-        } else {
-          setPinError(res.data.error || 'No se pudo guardar el PIN.');
-        }
-      } catch (e) {
-        setPinError('Error de conexión al guardar el PIN.');
-      } finally {
-        setPinLoading(false);
+
+      setShowPinModal(false);
+      setPendingSessionHint(null);
+
+      const authenticatedSession = await signIn({
+        hintSession: mergeAuthSessions(normalizedPinSession, pendingSessionHint),
+        source: pinModo === "crear" ? "pin-set" : "pin-verify",
+      });
+
+      await finalizeAuthenticatedSession(authenticatedSession);
+    } catch (requestError) {
+      if (requestError?.response?.status === 401) {
+        setPinError("PIN incorrecto. Inténtalo de nuevo.");
+      } else {
+        setPinError(
+          pinModo === "crear"
+            ? "Error de conexión al guardar el PIN."
+            : "Error de conexión al verificar el PIN."
+        );
       }
-    } else {
-      setPinLoading(true);
-      try {
-        const res = await axios.post(`${API_BASE_URL}/auth/pin/verify`, { numero_identificacion: numeroId, pin: pinInput });
-        if (res.data.success) {
-          setShowPinModal(false);
-          setPendingUsuario(null);
-          handleUsuarioAutenticado({
-            nombre: pendingUsuario.nombre,
-            empresa: empresaFromId(pendingUsuario.empresa_id),
-            numero_identificacion: numeroId
-          }, pendingUsuario.empresa_id);
-        } else {
-          setPinError('PIN incorrecto. Inténtalo de nuevo.');
-        }
-      } catch (e) {
-        if (e.response?.status === 401) {
-          setPinError('PIN incorrecto. Inténtalo de nuevo.');
-        } else {
-          setPinError('Error de conexión al verificar el PIN.');
-        }
-      } finally {
-        setPinLoading(false);
-      }
+    } finally {
+      setPinLoading(false);
     }
   };
 
@@ -390,7 +496,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           className="input"
           type="text"
           value={cedula}
-          onChange={e => setCedula(e.target.value)}
+          onChange={(event) => setCedula(event.target.value)}
           placeholder="Número de identificación"
           style={isLite ? { background: "#f7faff", border: "1.5px solid #c5d5ea" } : undefined}
         />
@@ -417,7 +523,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           fontSize: 16,
           fontWeight: 500,
           letterSpacing: 0.5,
-          cursor: "pointer"
+          cursor: "pointer",
         }}
         onClick={() => {
           setShowAdminModal(true);
@@ -431,12 +537,15 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
         <div
           style={{
             position: "fixed",
-            top: 0, left: 0, right: 0, bottom: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             background: "rgba(31,38,135,0.13)",
             zIndex: 10000,
             display: "flex",
             alignItems: "center",
-            justifyContent: "center"
+            justifyContent: "center",
           }}
         >
           <div
@@ -451,7 +560,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
               minWidth: 300,
               textAlign: "center",
               position: "relative",
-              fontFamily: "inherit"
+              fontFamily: "inherit",
             }}
           >
             <h3 style={{ marginBottom: 18, color: "#1976d2", fontWeight: 700, letterSpacing: 1 }}>
@@ -476,7 +585,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
                 type={adminShowPass ? "text" : "password"}
                 placeholder="Contraseña"
                 value={adminPass}
-                onChange={e => setAdminPass(e.target.value)}
+                onChange={(event) => setAdminPass(event.target.value)}
                 style={{
                   flex: 1,
                   padding: "12px 44px 12px 14px",
@@ -489,12 +598,16 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
                   outline: "none",
                   minWidth: 0,
                 }}
-                onKeyDown={e => { if (e.key === "Enter") handleAdminLogin(); }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    handleAdminLogin();
+                  }
+                }}
                 autoFocus
               />
               <button
                 type="button"
-                onClick={() => setAdminShowPass(v => !v)}
+                onClick={() => setAdminShowPass((value) => !value)}
                 tabIndex={-1}
                 style={{
                   position: "absolute",
@@ -517,17 +630,33 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
                   transition: "background 0.15s",
                 }}
                 aria-label={adminShowPass ? "Ocultar contraseña" : "Mostrar contraseña"}
-                onMouseDown={e => e.preventDefault()}
+                onMouseDown={(event) => event.preventDefault()}
               >
                 {adminShowPass ? (
-                  // Ojo abierto SVG
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#1976d2"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <ellipse cx="12" cy="12" rx="7" ry="5" />
                     <circle cx="12" cy="12" r="2.5" />
                   </svg>
                 ) : (
-                  // Ojo cerrado SVG
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#1976d2"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-5 0-9.27-3.11-11-7 1.21-2.61 3.36-4.77 6-6.11" />
                     <path d="M1 1l22 22" />
                   </svg>
@@ -548,7 +677,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
                   fontWeight: 600,
                   cursor: "pointer",
                   boxShadow: "0 2px 8px rgba(25,118,210,0.13)",
-                  letterSpacing: 0.5
+                  letterSpacing: 0.5,
                 }}
                 disabled={adminLoading}
               >
@@ -567,7 +696,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
                   fontWeight: 500,
                   cursor: "pointer",
                   boxShadow: "0 2px 8px rgba(25,118,210,0.07)",
-                  letterSpacing: 0.5
+                  letterSpacing: 0.5,
                 }}
                 disabled={adminLoading}
               >
@@ -578,17 +707,20 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           </div>
         </div>
       )}
-      
+
       {showRegistrarLlaveModal && (
         <div
           style={{
             position: "fixed",
-            top: 0, left: 0, right: 0, bottom: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             background: "rgba(31,38,135,0.18)",
             zIndex: 10001,
             display: "flex",
             alignItems: "center",
-            justifyContent: "center"
+            justifyContent: "center",
           }}
         >
           <div
@@ -604,11 +736,21 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
               maxWidth: 360,
               textAlign: "center",
               position: "relative",
-              fontFamily: "inherit"
+              fontFamily: "inherit",
             }}
           >
             <div style={{ marginBottom: 16 }}>
-              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#1976d2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto" }}>
+              <svg
+                width="56"
+                height="56"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#1976d2"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ margin: "0 auto" }}
+              >
                 <path d="M12 11c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z" />
                 <path d="M19 11h-4" />
                 <path d="M15 7v8" />
@@ -616,19 +758,19 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
                 <circle cx="9" cy="11" r="6" />
               </svg>
             </div>
-            
+
             <h3 style={{ marginBottom: 14, color: "#1976d2", fontWeight: 700, fontSize: 18, letterSpacing: 0.5 }}>
               Registrar llave de acceso
             </h3>
-            
+
             <p style={{ color: "#333", fontSize: 14, marginBottom: 8, lineHeight: 1.5 }}>
               No hay llaves de acceso disponibles en este dispositivo.
             </p>
-            
+
             <p style={{ color: "#555", fontSize: 13, marginBottom: 20, lineHeight: 1.5 }}>
               ¿Deseas registrar una nueva llave de acceso (huella dactilar o Face ID) para iniciar sesión desde este dispositivo?
             </p>
-            
+
             <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
               <button
                 className="button"
@@ -645,7 +787,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
                   cursor: registrarLlaveLoading ? "not-allowed" : "pointer",
                   boxShadow: "0 2px 8px rgba(25,118,210,0.18)",
                   letterSpacing: 0.5,
-                  opacity: registrarLlaveLoading ? 0.7 : 1
+                  opacity: registrarLlaveLoading ? 0.7 : 1,
                 }}
               >
                 {registrarLlaveLoading ? "Registrando..." : "Sí, registrar"}
@@ -664,7 +806,7 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
                   fontWeight: 500,
                   cursor: registrarLlaveLoading ? "not-allowed" : "pointer",
                   boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-                  letterSpacing: 0.5
+                  letterSpacing: 0.5,
                 }}
               >
                 Cancelar
@@ -673,31 +815,57 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
           </div>
         </div>
       )}
-      
+
       {showPinModal && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          background: "rgba(31,38,135,0.18)", zIndex: 10002,
-          display: "flex", alignItems: "center", justifyContent: "center"
-        }}>
-          <div style={{
-            background: isLite ? "#fff" : "rgba(255,255,255,0.28)", borderRadius: 18,
-            boxShadow: isLite ? "0 2px 12px rgba(0,0,0,0.10)" : "0 8px 32px 0 rgba(31,38,135,0.37)",
-            backdropFilter: isLite ? undefined : "blur(12px)", WebkitBackdropFilter: isLite ? undefined : "blur(12px)",
-            border: isLite ? "1px solid #e0e0e0" : "1.5px solid rgba(255,255,255,0.35)",
-            padding: "32px 24px", minWidth: 300, maxWidth: 360,
-            textAlign: "center", fontFamily: "inherit"
-          }}>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(31,38,135,0.18)",
+            zIndex: 10002,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              background: isLite ? "#fff" : "rgba(255,255,255,0.28)",
+              borderRadius: 18,
+              boxShadow: isLite ? "0 2px 12px rgba(0,0,0,0.10)" : "0 8px 32px 0 rgba(31,38,135,0.37)",
+              backdropFilter: isLite ? undefined : "blur(12px)",
+              WebkitBackdropFilter: isLite ? undefined : "blur(12px)",
+              border: isLite ? "1px solid #e0e0e0" : "1.5px solid rgba(255,255,255,0.35)",
+              padding: "32px 24px",
+              minWidth: 300,
+              maxWidth: 360,
+              textAlign: "center",
+              fontFamily: "inherit",
+            }}
+          >
             <div style={{ marginBottom: 14 }}>
-              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#1976d2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto" }}>
+              <svg
+                width="52"
+                height="52"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#1976d2"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ margin: "0 auto" }}
+              >
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </div>
             <h3 style={{ marginBottom: 8, color: "#1976d2", fontWeight: 700, fontSize: 18 }}>
-              {pinModo === 'crear' ? 'Crea tu PIN de acceso' : 'Ingresa tu PIN'}
+              {pinModo === "crear" ? "Crea tu PIN de acceso" : "Ingresa tu PIN"}
             </h3>
-            {pinModo === 'crear' && (
+            {pinModo === "crear" && (
               <p style={{ color: "#555", fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>
                 Este dispositivo usará un PIN en lugar de huella dactilar. Elige un PIN de 4 a 8 dígitos.
               </p>
@@ -707,20 +875,31 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength={8}
-              placeholder={pinModo === 'crear' ? 'Nuevo PIN (4-8 dígitos)' : 'Tu PIN'}
+              placeholder={pinModo === "crear" ? "Nuevo PIN (4-8 dígitos)" : "Tu PIN"}
               value={pinInput}
-              onChange={e => setPinInput(e.target.value.replace(/\D/g, ''))}
-              onKeyDown={e => { if (e.key === 'Enter') handlePinSubmit(); }}
+              onChange={(event) => setPinInput(event.target.value.replace(/\D/g, ""))}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  handlePinSubmit();
+                }
+              }}
               style={{
-                width: "100%", boxSizing: "border-box",
-                padding: "12px 14px", border: "1.5px solid #1976d2",
-                borderRadius: 8, fontSize: 20, letterSpacing: 6,
-                textAlign: "center", background: "#f7faff",
-                marginBottom: 12, outline: "none", fontFamily: "inherit"
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "12px 14px",
+                border: "1.5px solid #1976d2",
+                borderRadius: 8,
+                fontSize: 20,
+                letterSpacing: 6,
+                textAlign: "center",
+                background: "#f7faff",
+                marginBottom: 12,
+                outline: "none",
+                fontFamily: "inherit",
               }}
               autoFocus
             />
-            {pinModo === 'crear' && (
+            {pinModo === "crear" && (
               <input
                 type="password"
                 inputMode="numeric"
@@ -728,14 +907,25 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
                 maxLength={8}
                 placeholder="Confirmar PIN"
                 value={pinConfirm}
-                onChange={e => setPinConfirm(e.target.value.replace(/\D/g, ''))}
-                onKeyDown={e => { if (e.key === 'Enter') handlePinSubmit(); }}
+                onChange={(event) => setPinConfirm(event.target.value.replace(/\D/g, ""))}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    handlePinSubmit();
+                  }
+                }}
                 style={{
-                  width: "100%", boxSizing: "border-box",
-                  padding: "12px 14px", border: "1.5px solid #1976d2",
-                  borderRadius: 8, fontSize: 20, letterSpacing: 6,
-                  textAlign: "center", background: "#f7faff",
-                  marginBottom: 12, outline: "none", fontFamily: "inherit"
+                  width: "100%",
+                  boxSizing: "border-box",
+                  padding: "12px 14px",
+                  border: "1.5px solid #1976d2",
+                  borderRadius: 8,
+                  fontSize: 20,
+                  letterSpacing: 6,
+                  textAlign: "center",
+                  background: "#f7faff",
+                  marginBottom: 12,
+                  outline: "none",
+                  fontFamily: "inherit",
                 }}
               />
             )}
@@ -745,21 +935,35 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
                 onClick={handlePinSubmit}
                 disabled={pinLoading}
                 style={{
-                  background: "#1976d2", color: "#fff", border: "none",
-                  borderRadius: 8, padding: "10px 24px", fontSize: 15,
-                  fontWeight: 600, cursor: pinLoading ? "not-allowed" : "pointer",
-                  boxShadow: "0 2px 8px rgba(25,118,210,0.18)", opacity: pinLoading ? 0.7 : 1
+                  background: "#1976d2",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "10px 24px",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  cursor: pinLoading ? "not-allowed" : "pointer",
+                  boxShadow: "0 2px 8px rgba(25,118,210,0.18)",
+                  opacity: pinLoading ? 0.7 : 1,
                 }}
               >
-                {pinLoading ? "Verificando..." : pinModo === 'crear' ? 'Guardar PIN' : 'Ingresar'}
+                {pinLoading ? "Verificando..." : pinModo === "crear" ? "Guardar PIN" : "Ingresar"}
               </button>
               <button
-                onClick={() => { setShowPinModal(false); setPendingUsuario(null); }}
+                onClick={() => {
+                  setShowPinModal(false);
+                  setPendingSessionHint(null);
+                }}
                 disabled={pinLoading}
                 style={{
-                  background: "#f5f5f5", color: "#666", border: "1px solid #ddd",
-                  borderRadius: 8, padding: "10px 20px", fontSize: 15,
-                  fontWeight: 500, cursor: pinLoading ? "not-allowed" : "pointer"
+                  background: "#f5f5f5",
+                  color: "#666",
+                  border: "1px solid #ddd",
+                  borderRadius: 8,
+                  padding: "10px 20px",
+                  fontSize: 15,
+                  fontWeight: 500,
+                  cursor: pinLoading ? "not-allowed" : "pointer",
                 }}
               >
                 Cancelar
@@ -770,21 +974,47 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
       )}
 
       {diagnostico && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          background: "rgba(31,38,135,0.18)", zIndex: 10002,
-          display: "flex", alignItems: "center", justifyContent: "center"
-        }}>
-          <div style={{
-            background: isLite ? "#fff" : "rgba(255,255,255,0.28)", borderRadius: 18,
-            boxShadow: isLite ? "0 2px 12px rgba(0,0,0,0.10)" : "0 8px 32px 0 rgba(31,38,135,0.37)",
-            backdropFilter: isLite ? undefined : "blur(12px)", WebkitBackdropFilter: isLite ? undefined : "blur(12px)",
-            border: isLite ? "1px solid #e0e0e0" : "1.5px solid rgba(255,255,255,0.35)",
-            padding: "32px 24px", minWidth: 300, maxWidth: 370,
-            textAlign: "center", fontFamily: "inherit"
-          }}>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(31,38,135,0.18)",
+            zIndex: 10002,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              background: isLite ? "#fff" : "rgba(255,255,255,0.28)",
+              borderRadius: 18,
+              boxShadow: isLite ? "0 2px 12px rgba(0,0,0,0.10)" : "0 8px 32px 0 rgba(31,38,135,0.37)",
+              backdropFilter: isLite ? undefined : "blur(12px)",
+              WebkitBackdropFilter: isLite ? undefined : "blur(12px)",
+              border: isLite ? "1px solid #e0e0e0" : "1.5px solid rgba(255,255,255,0.35)",
+              padding: "32px 24px",
+              minWidth: 300,
+              maxWidth: 370,
+              textAlign: "center",
+              fontFamily: "inherit",
+            }}
+          >
             <div style={{ marginBottom: 14 }}>
-              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#e65100" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto" }}>
+              <svg
+                width="52"
+                height="52"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#e65100"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ margin: "0 auto" }}
+              >
                 <circle cx="12" cy="12" r="10" />
                 <line x1="12" y1="8" x2="12" y2="12" />
                 <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -797,18 +1027,23 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
               Para solucionar el problema, verifica lo siguiente:
             </p>
             <ol style={{ textAlign: "left", color: "#333", fontSize: 13, lineHeight: 1.8, paddingLeft: 20, marginBottom: 20 }}>
-              {diagnostico.pasos.map((paso, i) => (
-                <li key={i}>{paso}</li>
+              {diagnostico.pasos.map((paso, index) => (
+                <li key={index}>{paso}</li>
               ))}
             </ol>
             <button
               className="button"
               onClick={() => setDiagnostico(null)}
               style={{
-                background: "#e65100", color: "#fff", border: "none",
-                borderRadius: 8, padding: "10px 28px", fontSize: 15,
-                fontWeight: 600, cursor: "pointer",
-                boxShadow: "0 2px 8px rgba(230,81,0,0.18)"
+                background: "#e65100",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                padding: "10px 28px",
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: "pointer",
+                boxShadow: "0 2px 8px rgba(230,81,0,0.18)",
               }}
             >
               Entendido
@@ -836,6 +1071,10 @@ function CedulaIngreso({ onUsuarioEncontrado }) {
       )}
     </div>
   );
+}
+
+function CedulaIngreso(props) {
+  return <CedulaIngresoContent {...props} />;
 }
 
 export default CedulaIngreso;
