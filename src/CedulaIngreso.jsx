@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "./utils/api";
+import api, { isUnauthorizedError } from "./utils/api";
 import {
   authenticateWebAuthn,
   checkWebAuthnSupport,
@@ -309,7 +309,14 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
       });
 
       await finalizeAuthenticatedSession(authenticatedSession);
-    } catch {
+    } catch (error) {
+      if (isUnauthorizedError(error)) {
+        setError(
+          "Registramos tu llave, pero no pudimos abrir sesión en este intento. Inténtalo de nuevo."
+        );
+        return;
+      }
+
       setError("No haces parte de nuestros super héroes.");
     }
   };
@@ -1078,3 +1085,4 @@ function CedulaIngreso(props) {
 }
 
 export default CedulaIngreso;
+
