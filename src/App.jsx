@@ -4,7 +4,7 @@ import "./App.css";
 import InstallPWAButton from "./components/InstallPWAButton";
 import IntroVideo from "./components/IntroVideo";
 import SlowConnectionBanner from "./components/SlowConnectionBanner";
-import { subscribeUser } from "./pushNotifications";
+import { syncPushSubscriptionForAuthenticatedWorker } from "./pushNotifications";
 import { getSessionHomePath } from "./features/auth/adapters/authSessionAdapter";
 import { useAuth } from "./features/auth/hooks/useAuth";
 import { readReturnTo } from "./features/auth/utils/returnTo";
@@ -58,6 +58,10 @@ function App() {
   const [showLiteBanner, setShowLiteBanner] = useState(true);
 
   useEffect(() => {
+    if (!isReady || !isAuthenticated || session?.kind !== "worker") {
+      return;
+    }
+
     const workerId =
       session?.kind === "worker" ? session.user?.documentId || session.user?.id || "" : "";
 
@@ -69,8 +73,8 @@ function App() {
       return;
     }
 
-    subscribeUser(workerId).catch(() => {});
-  }, [session]);
+    syncPushSubscriptionForAuthenticatedWorker(workerId).catch(() => {});
+  }, [isAuthenticated, isReady, session]);
 
   const handleIntroEnd = () => setShowIntro(false);
 

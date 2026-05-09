@@ -7,7 +7,11 @@ import {
   registerWebAuthn,
   WebAuthnError,
 } from "./components/webauthn";
-import { subscribeUser } from "./pushNotifications";
+import {
+  canPromptPushPermission,
+  requestPushPermissionFromUserGesture,
+  syncPushSubscriptionForAuthenticatedWorker,
+} from "./pushNotifications";
 import { useAuth } from "./features/auth/hooks/useAuth";
 import {
   getSessionHomePath,
@@ -88,26 +92,6 @@ function getWorkerLookupErrorMessage(sessionHint) {
   return "";
 }
 
-async function subscribeAuthenticatedWorker(workerUser) {
-  if (
-    typeof window === "undefined" ||
-    !workerUser?.numero_identificacion ||
-    !("Notification" in window) ||
-    !("serviceWorker" in navigator)
-  ) {
-    return;
-  }
-
-  try {
-    const permission = await Notification.requestPermission();
-    if (permission === "granted") {
-      await subscribeUser(workerUser.numero_identificacion).catch(() => {});
-    }
-  } catch {
-    // Push notifications are best-effort and should not block login recovery.
-  }
-}
-
 function CedulaIngresoContent({ onUsuarioEncontrado }) {
   const navigate = useNavigate();
   const { isAuthenticated, isReady, session, signIn } = useAuth();
@@ -156,7 +140,15 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
 
       if (authenticatedSession.kind === "worker") {
         const workerUser = toWorkerCompatibilityUser(authenticatedSession);
-        await subscribeAuthenticatedWorker(workerUser);
+        const workerDocumentId = workerUser?.numero_identificacion ?? "";
+
+        if (workerDocumentId && canPromptPushPermission()) {
+          if (Notification.permission === "default") {
+            await requestPushPermissionFromUserGesture();
+          }
+
+          await syncPushSubscriptionForAuthenticatedWorker(workerDocumentId);
+        }
 
         if (onUsuarioEncontrado) {
           onUsuarioEncontrado(workerUser);
