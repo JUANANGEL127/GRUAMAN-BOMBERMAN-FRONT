@@ -114,10 +114,38 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
   const [pinConfirm, setPinConfirm] = useState("");
   const [pinError, setPinError] = useState("");
   const [pinLoading, setPinLoading] = useState(false);
+  const [showPushPromptModal, setShowPushPromptModal] = useState(false);
+  const [pushPromptLoading, setPushPromptLoading] = useState(false);
+  const [pendingPushSession, setPendingPushSession] = useState(null);
 
   const handledSessionRef = useRef("");
   const isMobile = useIsMobile();
   const isLite = sessionStorage.getItem("lite_mode") === "true";
+
+  const continueAfterPushPrompt = useCallback(
+    async (authenticatedSession) => {
+      if (authenticatedSession.kind === "worker") {
+        const workerUser = toWorkerCompatibilityUser(authenticatedSession);
+
+        if (onUsuarioEncontrado) {
+          onUsuarioEncontrado(workerUser);
+          return;
+        }
+
+        navigate("/bienvenida", { replace: true });
+        return;
+      }
+
+      const pendingAdminReturnTo = readReturnTo();
+      const nextAdminPath =
+        pendingAdminReturnTo && pendingAdminReturnTo.startsWith("/administrador")
+          ? consumeReturnTo()
+          : getSessionHomePath(authenticatedSession);
+
+      navigate(nextAdminPath, { replace: true });
+    },
+    [navigate, onUsuarioEncontrado]
+  );
 
   useEffect(() => {
     if (isLite) {
@@ -143,31 +171,61 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
         const workerDocumentId = workerUser?.numero_identificacion ?? "";
 
         if (workerDocumentId && canPromptPushPermission()) {
-          if (Notification.permission === "default") {
-            await requestPushPermissionFromUserGesture();
-          }
-
-          await syncPushSubscriptionForAuthenticatedWorker(workerDocumentId);
+          await syncPushSubscriptionForAuthenticatedWorker(workerDocumentId, {
+            onStatus: (status) => {
+              if (!status?.ok && status?.message) {
+                setError(status.message);
+              }
+            },
+            allowPermissionPrompt: false,
+          });
         }
-
-        if (onUsuarioEncontrado) {
-          onUsuarioEncontrado(workerUser);
-          return;
-        }
-
-        navigate("/bienvenida", { replace: true });
+        await continueAfterPushPrompt(authenticatedSession);
         return;
       }
 
-      const pendingAdminReturnTo = readReturnTo();
-      const nextAdminPath =
-        pendingAdminReturnTo && pendingAdminReturnTo.startsWith("/administrador")
-          ? consumeReturnTo()
-          : getSessionHomePath(authenticatedSession);
-
-      navigate(nextAdminPath, { replace: true });
+      await continueAfterPushPrompt(authenticatedSession);
     },
-    [navigate, onUsuarioEncontrado]
+    [continueAfterPushPrompt]
+  );
+
+  const handlePushPromptChoice = useCallback(
+    async (shouldRequestPermission) => {
+      if (!pendingPushSession || pendingPushSession.kind !== "worker") {
+        setShowPushPromptModal(false);
+        return;
+      }
+
+      setPushPromptLoading(true);
+      const workerUser = toWorkerCompatibilityUser(pendingPushSession);
+      const workerDocumentId = workerUser?.numero_identificacion ?? "";
+
+      try {
+        if (shouldRequestPermission) {
+          await requestPushPermissionFromUserGesture();
+        }
+
+        if (workerDocumentId) {
+          await syncPushSubscriptionForAuthenticatedWorker(workerDocumentId, {
+            onStatus: (status) => {
+              if (!status?.ok && status?.message) {
+                setError(status.message);
+              }
+            },
+            allowPermissionPrompt: false,
+          });
+        }
+      } finally {
+        setPushPromptLoading(false);
+        setShowPushPromptModal(false);
+        const sessionToContinue = pendingPushSession;
+        setPendingPushSession(null);
+        if (sessionToContinue) {
+          await continueAfterPushPrompt(sessionToContinue);
+        }
+      }
+    },
+    [continueAfterPushPrompt, pendingPushSession]
   );
 
   useEffect(() => {
@@ -966,6 +1024,93 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
                 }}
               >
                 Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPushPromptModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(31,38,135,0.18)",
+            zIndex: 10003,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              background: isLite ? "#fff" : "rgba(255,255,255,0.28)",
+              borderRadius: 18,
+              boxShadow: isLite ? "0 2px 12px rgba(0,0,0,0.10)" : "0 8px 32px 0 rgba(31,38,135,0.37)",
+              backdropFilter: isLite ? undefined : "blur(12px)",
+              WebkitBackdropFilter: isLite ? undefined : "blur(12px)",
+              border: isLite ? "1px solid #e0e0e0" : "1.5px solid rgba(255,255,255,0.35)",
+              padding: "28px 22px",
+              minWidth: 300,
+              maxWidth: 380,
+              textAlign: "center",
+              fontFamily: "inherit",
+            }}
+          >
+            <h3 style={{ marginBottom: 10, color: "#1976d2", fontWeight: 700, fontSize: 18 }}>
+              Activar notificaciones
+            </h3>
+            <p style={{ color: "#444", fontSize: 13, marginBottom: 16, lineHeight: 1.45 }}>
+              {typeof Notification !== "undefined" && Notification.permission === "denied"
+                ? "Las notificaciones están bloqueadas en el navegador. Habilitalas en permisos del sitio y volvé a intentar."
+                : "Para recibir avisos en este dispositivo, activá el permiso nativo del navegador."}
+            </p>
+            <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  handlePushPromptChoice(false).catch(() => {});
+                }}
+                disabled={pushPromptLoading}
+                style={{
+                  background: "#f5f5f5",
+                  color: "#555",
+                  border: "1px solid #ddd",
+                  borderRadius: 8,
+                  padding: "10px 16px",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: pushPromptLoading ? "not-allowed" : "pointer",
+                }}
+              >
+                Ahora no
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handlePushPromptChoice(true).catch(() => {});
+                }}
+                disabled={pushPromptLoading}
+                style={{
+                  background: "#1976d2",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "10px 18px",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: pushPromptLoading ? "not-allowed" : "pointer",
+                  opacity: pushPromptLoading ? 0.7 : 1,
+                }}
+              >
+                {pushPromptLoading
+                  ? "Procesando..."
+                  : typeof Notification !== "undefined" && Notification.permission === "denied"
+                    ? "Reintentar"
+                    : "Activar"}
               </button>
             </div>
           </div>

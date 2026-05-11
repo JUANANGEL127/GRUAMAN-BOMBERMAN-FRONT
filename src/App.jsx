@@ -73,7 +73,9 @@ function App() {
       return;
     }
 
-    syncPushSubscriptionForAuthenticatedWorker(workerId).catch(() => {});
+    syncPushSubscriptionForAuthenticatedWorker(workerId, {
+      allowPermissionPrompt: false,
+    }).catch(() => {});
   }, [isAuthenticated, isReady, session]);
 
   const handleIntroEnd = () => setShowIntro(false);
