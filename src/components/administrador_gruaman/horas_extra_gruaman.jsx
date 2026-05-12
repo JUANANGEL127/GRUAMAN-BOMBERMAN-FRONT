@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 function toYMD(date) {
   if (!date) return '';
@@ -88,9 +86,7 @@ function horasExtraGruaman() {
       let data = {};
       let adminError = null;
       try {
-        const res = await axios.post(`${API_BASE_URL}/administrador/admin_horas_extra/buscar`, body, {
-          headers: { "Content-Type": "application/json" }
-        });
+        const res = await api.post("/administrador/admin_horas_extra/buscar", body);
         data = res.data || {};
         const filteredRows = Array.isArray(data.rows)
           ? data.rows.filter(r => (Number(r.empresa_id) === empresaId || (r.raw && Number(r.raw.empresa_id) === empresaId)))
@@ -99,9 +95,7 @@ function horasExtraGruaman() {
         setTotal(filteredRows.length);
         setHasSearched(true);
         try {
-          const resSum = await axios.post(`${API_BASE_URL}/administrador/admin_horas_extra/resumen`, body, {
-            headers: { "Content-Type": "application/json" }
-          });
+          const resSum = await api.post("/administrador/admin_horas_extra/resumen", body);
           setResumenPorMes(resSum.data?.resumen_por_mes || []);
           setPeriodo(resSum.data?.periodo || {});
         } catch (e) {
@@ -137,24 +131,20 @@ function horasExtraGruaman() {
         limit: tipo === "excel" ? 10000 : (filters.limit || 10000)
       };
 
-      const url = `${API_BASE_URL}/administrador/admin_horas_extra/descargar`;
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
+      const resp = await api.post("/administrador/admin_horas_extra/descargar", body, {
+        responseType: "blob",
       });
-      if (!resp.ok) throw new Error(`Error descarga: ${resp.status}`);
-      const buffer = await resp.arrayBuffer();
-      let mime = "application/octet-stream";
-      let filename = "archivo";
-      if (tipo === "excel") {
-        mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        filename = "horas_jornada.xlsx";
-      } else if (tipo === "pdf") {
-        mime = "application/zip";
-        filename = "horas_jornada.zip";
+      if (resp.status < 200 || resp.status >= 300) {
+        throw new Error(`Error descarga: ${resp.status}`);
       }
-      const blob = new Blob([buffer], { type: mime });
+      const contentDisposition = resp.headers?.["content-disposition"] || "";
+      const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
+      const defaultFilename = tipo === "excel" ? "horas_jornada.xlsx" : "horas_jornada.zip";
+      const filename = filenameMatch?.[1] || defaultFilename;
+      const blob = new Blob(
+        [resp.data],
+        { type: resp.headers?.["content-type"] || "application/octet-stream" }
+      );
       const link = document.createElement("a");
       const blobUrl = window.URL.createObjectURL(blob);
       link.href = blobUrl;
@@ -174,7 +164,7 @@ function horasExtraGruaman() {
 
     async function fetchNombres() {
       try {
-        const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
+        const res = await api.get("/datos_basicos");
         if (Array.isArray(res.data.datos)) {
           const datosEmpresa = res.data.datos.filter(d => Number(d.empresa_id) === empresaId);
           setNombresOperarios(datosEmpresa.map(d => d.nombre));
@@ -187,7 +177,7 @@ function horasExtraGruaman() {
     }
     fetchNombres();
 
-    axios.get(`${API_BASE_URL}/obras`)
+    api.get("/obras")
       .then(res => {
         const obrasAll = res.data.obras || [];
         const obras = obrasAll.filter(o => Number(o.empresa_id) === empresaId);
