@@ -87,7 +87,7 @@ function AdminObrasBomberman() {
   const handleToggleActiva = async (id, actual) => {
     setLoading(true);
     try {
-      await api.patch("/admin_obras/estado/${id}", {
+      await api.patch(`/admin_obras/estado/${id}`, {
         activa: !actual
       });
       setObras(obras =>
