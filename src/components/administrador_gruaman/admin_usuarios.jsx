@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+﻿import React, { useEffect, useState } from "react";
+import api from "../../utils/api";
 import "../../styles/permiso_trabajo.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 function capitalizeWords(str) {
   return str.replace(/\b\w/g, l => l.toUpperCase());
@@ -11,7 +10,7 @@ function capitalizeWords(str) {
 const roles = [
   { id: 1, nombre: "Gruaman" },
   { id: 2, nombre: "Bomberman" },
-  { id: 3, nombre: "Técnico" },
+  { id: 3, nombre: "TÃ©cnico" },
   { id: 4, nombre: "SST" }
 ];
 
@@ -35,7 +34,7 @@ function AdminUsuarios() {
     async function fetchTrabajadores() {
       setLoading(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}/admin_usuarios/listar`, {
+        const res = await api.get("/admin_usuarios/listar", {
           params: {
             empresa_id: 1,
             offset,
@@ -66,7 +65,7 @@ function AdminUsuarios() {
     try {
       const nombreFormateado = capitalizeWords(nuevo.nombre.trim());
       const numero_identificacion = nuevo.numero_identificacion.replace(/[.,]/g, "");
-      await axios.post(`${API_BASE_URL}/admin_usuarios/agregar`, {
+      await api.post("/admin_usuarios/agregar", {
         nombre: nombreFormateado,
         empresa_id: 1,
         numero_identificacion,
@@ -85,7 +84,7 @@ function AdminUsuarios() {
   const handleToggleActivo = async (id, actual) => {
     setLoading(true);
     try {
-      await axios.patch(`${API_BASE_URL}/admin_usuarios/estado/${id}`, {
+      await api.patch("/admin_usuarios/estado/${id}", {
         activo: !actual
       });
       setTrabajadores(trabajadores =>
@@ -99,7 +98,7 @@ function AdminUsuarios() {
 
   const handleTogglePin = async (id, actual) => {
     try {
-      await axios.patch(`${API_BASE_URL}/admin_usuarios/pin/${id}`, {
+      await api.patch("/admin_usuarios/pin/${id}", {
         pin_habilitado: !actual
       });
       setTrabajadores(trabajadores =>
@@ -307,7 +306,7 @@ function AdminUsuarios() {
                     </select>
                   </div>
                   <div style={{ marginBottom: 14, position: "relative", zIndex: 1 }}>
-                    <label style={{ fontSize: 14, fontWeight: 500, color: "#222" }}>Número de identificación</label>
+                    <label style={{ fontSize: 14, fontWeight: 500, color: "#222" }}>NÃºmero de identificaciÃ³n</label>
                     <input
                       className="permiso-trabajo-input"
                       type="text"
@@ -383,3 +382,4 @@ function AdminUsuarios() {
 }
 
 export default AdminUsuarios;
+

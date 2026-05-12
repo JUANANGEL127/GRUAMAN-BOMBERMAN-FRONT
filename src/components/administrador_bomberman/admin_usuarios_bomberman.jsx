@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 function capitalizeWords(str) {
   return str.replace(/\b\w/g, l => l.toUpperCase());
@@ -35,7 +33,7 @@ function AdminUsuarios() {
     async function fetchTrabajadores() {
       setLoading(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}/admin_usuarios/listar`, {
+        const res = await api.get(`/admin_usuarios/listar`, {
           params: {
             empresa_id: 2,
             empresa_ids: [2, 5],
@@ -67,7 +65,7 @@ function AdminUsuarios() {
     try {
       const nombreFormateado = capitalizeWords(nuevo.nombre.trim());
       const numero_identificacion = nuevo.numero_identificacion.replace(/[.,]/g, "");
-      await axios.post(`${API_BASE_URL}/admin_usuarios/agregar`, {
+      await api.post(`/admin_usuarios/agregar`, {
         nombre: nombreFormateado,
         empresa_id: 2,
         numero_identificacion,
@@ -86,7 +84,7 @@ function AdminUsuarios() {
   const handleToggleActivo = async (id, actual) => {
     setLoading(true);
     try {
-      await axios.patch(`${API_BASE_URL}/admin_usuarios/estado/${id}`, {
+      await api.patch(`/admin_usuarios/estado/${id}`, {
         activo: !actual
       });
       setTrabajadores(trabajadores =>
@@ -100,7 +98,7 @@ function AdminUsuarios() {
 
   const handleTogglePin = async (id, actual) => {
     try {
-      await axios.patch(`${API_BASE_URL}/admin_usuarios/pin/${id}`, {
+      await api.patch(`/admin_usuarios/pin/${id}`, {
         pin_habilitado: !actual
       });
       setTrabajadores(trabajadores =>

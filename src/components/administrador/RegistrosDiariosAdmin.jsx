@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 /**
  * Normaliza un valor de fecha a una cadena YYYY-MM-DD.
@@ -63,7 +61,7 @@ function RegistrosDiariosAdmin() {
       };
 
       
-      const res = await axios.post(`${API_BASE_URL}/api/buscar`, body);
+      const res = await api.post("/api/buscar", body);
       
       
       setResultados(res.data?.rows || []);
@@ -94,8 +92,8 @@ function RegistrosDiariosAdmin() {
       };
       
       
-      const res = await axios.post(
-        `${API_BASE_URL}/api/descargar`,
+      const res = await api.post(
+        "/api/descargar",
         body,
         { 
           responseType: 'arraybuffer'
@@ -163,7 +161,7 @@ function RegistrosDiariosAdmin() {
   useEffect(() => {
     async function fetchNombres() {
       try {
-        const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
+        const res = await api.get("/datos_basicos");
         if (Array.isArray(res.data.datos)) {
           const nombres = res.data.datos.map(t => t.nombre).filter(Boolean);
           setNombresTrabajadores([...new Set(nombres)].sort());

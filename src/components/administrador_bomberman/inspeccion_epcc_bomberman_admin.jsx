@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 function toYMD(date) {
   if (!date) return '';
@@ -72,7 +70,7 @@ function InspeccionEPCCBombermanAdmin() {
         limit: filters.limit || 50,
         offset: filters.offset || 0
       };
-      const res = await axios.post(`${API_BASE_URL}/inspeccion_epcc_bomberman_admin/buscar`, body);
+      const res = await api.post(`/inspeccion_epcc_bomberman_admin/buscar`, body);
       setResultados(res.data?.rows || []);
       setTotal(res.data?.count || 0);
     } catch (e) {
@@ -98,7 +96,7 @@ function InspeccionEPCCBombermanAdmin() {
         formato: tipo,
         limit: 50000
       };
-      const res = await axios.post(`${API_BASE_URL}/inspeccion_epcc_bomberman_admin/descargar`, body, { responseType: 'blob' });
+      const res = await api.post(`/inspeccion_epcc_bomberman_admin/descargar`, body, { responseType: 'blob' });
       const blob = new Blob([res.data], { type: tipo === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/zip' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -117,7 +115,7 @@ function InspeccionEPCCBombermanAdmin() {
   useEffect(() => {
     async function fetchNombres() {
       try {
-        const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
+        const res = await api.get(`/datos_basicos`);
         if (Array.isArray(res.data.datos)) {
           setNombresOperarios(res.data.datos.filter(d => {
             const id = Number(d.empresa_id);
@@ -132,7 +130,7 @@ function InspeccionEPCCBombermanAdmin() {
     }
     fetchNombres();
 
-    axios.get(`${API_BASE_URL}/obras`)
+    api.get(`/obras`)
       .then(res => {
         const obras = (res.data.obras || []).filter(o => {
           const id = Number(o.empresa_id);
