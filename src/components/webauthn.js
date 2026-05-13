@@ -69,11 +69,46 @@ function buildWebAuthnAttestation(credential) {
  * Custom error used by the login screen to map device/WebAuthn failures to UX states.
  */
 export class WebAuthnError extends Error {
-  constructor(message, code) {
+  constructor(message, code, cause = null) {
     super(message);
     this.name = "WebAuthnError";
     this.code = code;
+    this.cause = cause;
   }
+}
+
+function mapVerifyError(error, fallbackCode = "VERIFY_ERROR") {
+  const status = error?.response?.status;
+  const payload = error?.response?.data ?? {};
+  const message = String(
+    payload?.message ?? payload?.error ?? payload?.detail ?? payload?.mensaje ?? ""
+  ).toLowerCase();
+
+  const legacyCredentialError =
+    status === 400 ||
+    status === 401 ||
+    status === 404 ||
+    status === 409 ||
+    message.includes("invalid credential") ||
+    message.includes("credential not found") ||
+    message.includes("credential is not valid") ||
+    message.includes("rp id") ||
+    message.includes("domain") ||
+    message.includes("origin");
+
+  if (legacyCredentialError) {
+    return new WebAuthnError(
+      "This passkey was created in a previous domain/version.",
+      "LEGACY_CREDENTIAL",
+      error
+    );
+  }
+
+  if (status && status >= 500) {
+    return new WebAuthnError("Unable to verify WebAuthn response with the server.", "SERVER_ERROR", error);
+  }
+
+  return new WebAuthnError("Unable to verify WebAuthn response with the server.", fallbackCode, error);
 }
 
 /**
@@ -128,14 +163,19 @@ export async function registerWebAuthn({ numero_identificacion, nombre = "" }) {
     throw new WebAuthnError("Unable to create a WebAuthn credential.", "UNKNOWN");
   }
 
-  const verifyResponse = await api.post(
-    "/webauthn/register/verify",
-    {
-      numero_identificacion,
-      attestationResponse: buildWebAuthnAttestation(credential),
-    },
-    getAuthRequestConfig()
-  );
+  let verifyResponse;
+  try {
+    verifyResponse = await api.post(
+      "/webauthn/register/verify",
+      {
+        numero_identificacion,
+        attestationResponse: buildWebAuthnAttestation(credential),
+      },
+      getAuthRequestConfig()
+    );
+  } catch (error) {
+    throw mapVerifyError(error, "REGISTER_VERIFY_ERROR");
+  }
 
   return verifyResponse.data;
 }
@@ -216,14 +256,19 @@ export async function authenticateWebAuthn({ numero_identificacion }) {
     throw new WebAuthnError("navigator.credentials.get returned no assertion.", "NO_RESPONSE");
   }
 
-  const verifyResponse = await api.post(
-    "/webauthn/authenticate/verify",
-    {
-      numero_identificacion,
-      assertionResponse: buildWebAuthnAssertion(assertion),
-    },
-    getAuthRequestConfig()
-  );
+  let verifyResponse;
+  try {
+    verifyResponse = await api.post(
+      "/webauthn/authenticate/verify",
+      {
+        numero_identificacion,
+        assertionResponse: buildWebAuthnAssertion(assertion),
+      },
+      getAuthRequestConfig()
+    );
+  } catch (error) {
+    throw mapVerifyError(error, "AUTH_VERIFY_ERROR");
+  }
 
   return verifyResponse.data;
 }

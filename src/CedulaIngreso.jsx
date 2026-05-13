@@ -105,6 +105,7 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminShowPass, setAdminShowPass] = useState(false);
   const [showRegistrarLlaveModal, setShowRegistrarLlaveModal] = useState(false);
+  const [registrarLlaveContexto, setRegistrarLlaveContexto] = useState("sin-llave");
   const [registrarLlaveLoading, setRegistrarLlaveLoading] = useState(false);
   const [pendingSessionHint, setPendingSessionHint] = useState(null);
   const [diagnostico, setDiagnostico] = useState(null);
@@ -121,6 +122,8 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
   const handledSessionRef = useRef("");
   const isMobile = useIsMobile();
   const isLite = sessionStorage.getItem("lite_mode") === "true";
+  const supportFallbackMessage =
+    "Si el problema persiste, usa el botón STP para dejar un mensaje en el grupo de WhatsApp y pedir soporte.";
 
   const continueAfterPushPrompt = useCallback(
     async (authenticatedSession) => {
@@ -145,6 +148,22 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
       navigate(nextAdminPath, { replace: true });
     },
     [navigate, onUsuarioEncontrado]
+  );
+
+  const completeSignInAfterWebAuthn = useCallback(
+    async ({ hintSession, source }) => {
+      try {
+        return await signIn({ hintSession, source });
+      } catch (authError) {
+        if (!isUnauthorizedError(authError)) {
+          throw authError;
+        }
+
+        await new Promise((resolve) => window.setTimeout(resolve, 350));
+        return await signIn({ hintSession, source: `${source}:retry` });
+      }
+    },
+    [signIn]
   );
 
   useEffect(() => {
@@ -335,16 +354,23 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
           }
 
           if (webAuthnError instanceof WebAuthnError && webAuthnError.code === "NO_CREDENTIALS") {
+            setRegistrarLlaveContexto("sin-llave");
             setShowRegistrarLlaveModal(true);
             return;
           }
 
-          setError("No se pudo autenticar. Inténtalo de nuevo.");
+          if (webAuthnError instanceof WebAuthnError && webAuthnError.code === "LEGACY_CREDENTIAL") {
+            setRegistrarLlaveContexto("actualizar");
+            setShowRegistrarLlaveModal(true);
+            return;
+          }
+
+          setError(`No se pudo autenticar. Inténtalo de nuevo. ${supportFallbackMessage}`);
           return;
         }
       }
 
-      const authenticatedSession = await signIn({
+      const authenticatedSession = await completeSignInAfterWebAuthn({
         hintSession: mergeAuthSessions(
           normalizeAuthSession(authVerificationPayload, {
             source: biometriaRegistrada
@@ -362,12 +388,12 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
     } catch (error) {
       if (isUnauthorizedError(error)) {
         setError(
-          "Registramos tu llave, pero no pudimos abrir sesión en este intento. Inténtalo de nuevo."
+          `Se registró la llave, pero la sesión aún no se confirmó. Inténtalo nuevamente en unos segundos. ${supportFallbackMessage}`
         );
         return;
       }
 
-      setError("No haces parte de nuestros super héroes.");
+      setError(`No haces parte de nuestros super héroes. ${supportFallbackMessage}`);
     }
   };
 
@@ -436,10 +462,17 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
 
       setPendingSessionHint(null);
       await finalizeAuthenticatedSession(authenticatedSession);
-    } catch {
-      setError("No se pudo registrar la nueva llave de acceso en este dispositivo.");
-      setShowRegistrarLlaveModal(false);
-      setPendingSessionHint(null);
+    } catch (registrationError) {
+      if (
+        registrationError instanceof WebAuthnError &&
+        registrationError.code === "LEGACY_CREDENTIAL"
+      ) {
+        setError(
+          `Tu llave fue creada en una versión anterior. Debes actualizarla en este dispositivo. ${supportFallbackMessage}`
+        );
+      } else {
+        setError(`No se pudo registrar la nueva llave de acceso en este dispositivo. ${supportFallbackMessage}`);
+      }
     } finally {
       setRegistrarLlaveLoading(false);
     }
@@ -447,8 +480,7 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
 
   const handleCancelarRegistroLlave = () => {
     setShowRegistrarLlaveModal(false);
-    setPendingSessionHint(null);
-    setError("Debes registrar una llave de acceso para continuar.");
+    setError(`Debes actualizar o registrar una llave de acceso para continuar. ${supportFallbackMessage}`);
   };
 
   const handlePinSubmit = async () => {
@@ -817,11 +849,13 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
             </div>
 
             <h3 style={{ marginBottom: 14, color: "#1976d2", fontWeight: 700, fontSize: 18, letterSpacing: 0.5 }}>
-              Registrar llave de acceso
+              {registrarLlaveContexto === "actualizar" ? "Actualizar llave de acceso" : "Registrar llave de acceso"}
             </h3>
 
             <p style={{ color: "#333", fontSize: 14, marginBottom: 8, lineHeight: 1.5 }}>
-              No hay llaves de acceso disponibles en este dispositivo.
+              {registrarLlaveContexto === "actualizar"
+                ? "Tu llave fue creada en una versión anterior. Debes actualizarla en este dispositivo."
+                : "No hay llaves de acceso disponibles en este dispositivo."}
             </p>
 
             <p style={{ color: "#555", fontSize: 13, marginBottom: 20, lineHeight: 1.5 }}>
@@ -847,7 +881,11 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
                   opacity: registrarLlaveLoading ? 0.7 : 1,
                 }}
               >
-                {registrarLlaveLoading ? "Registrando..." : "Sí, registrar"}
+                {registrarLlaveLoading
+                  ? "Registrando..."
+                  : registrarLlaveContexto === "actualizar"
+                  ? "Actualizar llave"
+                  : "Sí, registrar"}
               </button>
               <button
                 className="button"
