@@ -98,7 +98,7 @@ function AdminUsuarios() {
 
   const handleTogglePin = async (id, actual) => {
     try {
-      await api.patch("/admin_usuarios/pin/${id}", {
+      await api.patch(`/admin_usuarios/pin/${id}`, {
         pin_habilitado: !actual
       });
       setTrabajadores(trabajadores =>
