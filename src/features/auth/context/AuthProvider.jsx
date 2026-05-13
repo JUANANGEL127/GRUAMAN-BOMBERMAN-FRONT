@@ -13,7 +13,12 @@ import {
   writeAuthSessionMetadata,
 } from "../storage/authSessionStorage";
 import { AUTH_EVENTS, subscribeAuthEvent } from "../utils/authEvents";
-import { getAuthSession, logoutAuthSession, refreshAuthSession } from "../../../utils/api";
+import {
+  getAuthSession,
+  isUnauthorizedError,
+  logoutAuthSession,
+  refreshAuthSession,
+} from "../../../utils/api";
 
 const AuthContext = createContext(undefined);
 
@@ -72,10 +77,9 @@ export function AuthProvider({ children, autoHydrate = true }) {
     async ({ hintSession = null, reason = "auth/session" } = {}) => {
       dispatch({ type: "HYDRATE_START" });
 
-      try {
-        const response = await getAuthSession({ reason });
+      const resolveAuthenticatedSession = (responseData) => {
         const normalizedSession = mergeAuthSessions(
-          normalizeSessionResponse(response.data),
+          normalizeSessionResponse(responseData),
           hintSession
         );
 
@@ -98,7 +102,26 @@ export function AuthProvider({ children, autoHydrate = true }) {
 
         transitionToAnonymous();
         return ANONYMOUS_AUTH_SESSION;
+      };
+
+      try {
+        const response = await getAuthSession({ reason });
+        return resolveAuthenticatedSession(response.data);
       } catch (error) {
+        if (hintSession && isAuthenticatedAuthSession(hintSession) && isUnauthorizedError(error)) {
+          try {
+            await refreshAuthSession({
+              reason: `${reason}:session-401-refresh`,
+            });
+            const retryResponse = await getAuthSession({
+              reason: `${reason}:after-refresh`,
+            });
+            return resolveAuthenticatedSession(retryResponse.data);
+          } catch {
+            // Keep fail-closed behavior when refresh fallback also fails.
+          }
+        }
+
         transitionToAnonymous(error);
         throw error;
       }

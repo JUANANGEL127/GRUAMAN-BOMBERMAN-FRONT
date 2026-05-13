@@ -15,7 +15,7 @@ import { useIndicadorCentralWorksites } from "../hooks/useIndicadorCentralWorksi
 import "../indicador-central.css";
 
 const INDICADOR_TABS = [
-  { id: "configuracion", label: "Configuraci�n" },
+  { id: "configuracion", label: "Configuración" },
   { id: "ejecucion", label: "Descarga" },
 ];
 
@@ -93,7 +93,7 @@ function IndicadorCentralAdminShell({ adminRole, backPath }) {
           <p className="indicador-central-page__eyebrow">Admin panel</p>
           <h1 className="indicador-central-page__title">Indicador Central</h1>
           <p className="indicador-central-page__subtitle">
-            Configura la generaci�n automatica del informe y descarga en Excel directo desde el formulario, sin pasos intermedios.
+            Configura la generación automatica del informe y descarga en Excel directo desde el formulario, sin pasos intermedios.
           </p>
         </div>
         <a
@@ -104,7 +104,7 @@ function IndicadorCentralAdminShell({ adminRole, backPath }) {
           style={{ color: "#fff" }}
           href={backPath}
         >
-          Volver al men� admin
+          Volver al menú admin
         </a>
       </header>
 

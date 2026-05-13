@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+﻿import React, { useState, useEffect } from "react";
+import api from "../../utils/api";
 import "../../styles/permiso_trabajo.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 function toYMD(date) {
   if (!date) return '';
@@ -15,13 +14,13 @@ function toYMD(date) {
 }
 
 function normalizaFlag(val) {
-  if (val === null || val === undefined || val === "") return "—";
+  if (val === null || val === undefined || val === "") return "â€”";
   if (typeof val === "string") {
-    if (val.toUpperCase() === "SI") return "Sí";
+    if (val.toUpperCase() === "SI") return "SÃ­";
     if (val.toUpperCase() === "NO") return "No";
     if (val.toUpperCase() === "NA") return "N/A";
   }
-  if (typeof val === "boolean") return val ? "Sí" : "No";
+  if (typeof val === "boolean") return val ? "SÃ­" : "No";
   return val;
 }
 
@@ -66,7 +65,7 @@ function InspeccionEPCCAdmins() {
         limit: filters.limit || 50,
         offset: filters.offset || 0
       };
-      const res = await axios.post(`${API_BASE_URL}/inspeccion_EPCC_admins/buscar`, body);
+      const res = await api.post("/inspeccion_EPCC_admins/buscar", body);
       setResultados(res.data?.rows || []);
       setTotal(res.data?.count || 0);
     } catch (e) {
@@ -90,7 +89,7 @@ function InspeccionEPCCAdmins() {
         formato: tipo,
         limit: 50000
       };
-      const res = await axios.post(`${API_BASE_URL}/inspeccion_EPCC_admins/descargar`, body, { responseType: 'blob' });
+      const res = await api.post("/inspeccion_EPCC_admins/descargar", body, { responseType: 'blob' });
       const blob = new Blob([res.data], { type: tipo === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/zip' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -109,7 +108,7 @@ function InspeccionEPCCAdmins() {
   useEffect(() => {
     async function fetchNombres() {
       try {
-        const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
+        const res = await api.get("/datos_basicos");
         if (Array.isArray(res.data.datos)) {
           setNombresOperarios(res.data.datos.filter(d => Number(d.empresa_id) === 1).map(d => d.nombre));
         } else {
@@ -121,7 +120,7 @@ function InspeccionEPCCAdmins() {
     }
     fetchNombres();
 
-    axios.get(`${API_BASE_URL}/obras`)
+    api.get("/obras")
       .then(res => {
         const obras = (res.data.obras || []).filter(o => Number(o.empresa_id) === 1);
         setListaObras(obras);
@@ -144,7 +143,7 @@ function InspeccionEPCCAdmins() {
   const renderBarraBusqueda = (forAction) => (
     <div className="card-section" style={{ marginBottom: 18 }}>
       <div style={{ marginBottom: 10, fontWeight: 600, color: "#222", fontSize: 15 }}>
-        Ingresa uno o más parámetros para filtrar los resultados:
+        Ingresa uno o mÃ¡s parÃ¡metros para filtrar los resultados:
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
@@ -166,14 +165,14 @@ function InspeccionEPCCAdmins() {
           </datalist>
         </div>
         <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-          <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>Cédula</label>
+          <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>CÃ©dula</label>
           <input
             className="permiso-trabajo-input"
             type="text"
             name="cedula"
             value={filters.cedula}
             onChange={handleFilterChange}
-            placeholder="Cédula"
+            placeholder="CÃ©dula"
             style={{ width: "93%", marginBottom: 6 }}
           />
         </div>
@@ -252,7 +251,7 @@ function InspeccionEPCCAdmins() {
   return (
     <div className="form-container">
       <div className="card-section" style={{ marginBottom: 24 }}>
-        <h3 className="card-title">Inspección EPCC - Administrador</h3>
+        <h3 className="card-title">InspecciÃ³n EPCC - Administrador</h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 18, alignItems: "center", marginBottom: 18 }}>
           <button
             className="permiso-trabajo-btn"
@@ -310,18 +309,18 @@ function InspeccionEPCCAdmins() {
                           marginRight: "auto"
                         }}
                       >
-                        <div><strong>Fecha:</strong> {r.fecha ? r.fecha.slice(0, 10) : "—"}</div>
-                        <div><strong>Nombre:</strong> {r.nombre || "—"}</div>
-                        <div><strong>Cédula:</strong> {r.cedula || r.numero_identificacion || "—"}</div>
-                        <div><strong>Empresa:</strong> {r.empresa || "—"}</div>
-                        <div><strong>Obra:</strong> {r.obra || "—"}</div>
-                        <div><strong>Constructora:</strong> {r.constructora || "—"}</div>
+                        <div><strong>Fecha:</strong> {r.fecha ? r.fecha.slice(0, 10) : "â€”"}</div>
+                        <div><strong>Nombre:</strong> {r.nombre || "â€”"}</div>
+                        <div><strong>CÃ©dula:</strong> {r.cedula || r.numero_identificacion || "â€”"}</div>
+                        <div><strong>Empresa:</strong> {r.empresa || "â€”"}</div>
+                        <div><strong>Obra:</strong> {r.obra || "â€”"}</div>
+                        <div><strong>Constructora:</strong> {r.constructora || "â€”"}</div>
                         <button
                           className="permiso-trabajo-btn"
                           style={{ marginTop: 8, fontSize: 13, padding: "4px 10px" }}
                           onClick={() => setOpenId(openId === (r.raw?.id || r.id || idx) ? null : (r.raw?.id || r.id || idx))}
                         >
-                          {openId === (r.raw?.id || r.id || idx) ? "Ocultar detalles" : "Ver más"}
+                          {openId === (r.raw?.id || r.id || idx) ? "Ocultar detalles" : "Ver mÃ¡s"}
                         </button>
                         {openId === (r.raw?.id || r.id || idx) && r.raw && (
                           <div className="detalle" style={{
@@ -338,7 +337,7 @@ function InspeccionEPCCAdmins() {
                                 <strong>{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}:</strong>{" "}
                                 {typeof val === "string" && ["SI", "NO", "NA"].includes(val.toUpperCase())
                                   ? normalizaFlag(val)
-                                  : (val === null || val === undefined || val === "") ? "—" : String(val)}
+                                  : (val === null || val === undefined || val === "") ? "â€”" : String(val)}
                               </div>
                             ))}
                           </div>
@@ -377,3 +376,4 @@ function InspeccionEPCCAdmins() {
 }
 
 export default InspeccionEPCCAdmins;
+

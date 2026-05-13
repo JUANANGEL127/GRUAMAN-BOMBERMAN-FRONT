@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 function capitalizeWords(str) {
   return str.replace(/\b\w/g, l => l.toUpperCase());
@@ -29,7 +27,7 @@ function AdminObrasBomberman() {
     async function fetchObras() {
       setLoading(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}/admin_obras/listar`, {
+        const res = await api.get(`/admin_obras/listar`, {
           params: {
             empresa_id: 2,
             offset,
@@ -61,7 +59,7 @@ function AdminObrasBomberman() {
       const nombreObraFormateado = capitalizeWords(nuevo.nombre_obra.trim());
       const constructoraFormateada = capitalizeWords(nuevo.constructora.trim());
       const ciudadFormateada = capitalizeWords(nuevo.ciudad.trim());
-      await axios.post(`${API_BASE_URL}/admin_obras/agregar`, {
+      await api.post(`/admin_obras/agregar`, {
         nombre_obra: nombreObraFormateado,
         constructora: constructoraFormateada,
         direccion: nuevo.direccion.trim(),
@@ -88,7 +86,7 @@ function AdminObrasBomberman() {
   const handleToggleActiva = async (id, actual) => {
     setLoading(true);
     try {
-      await axios.patch(`${API_BASE_URL}/admin_obras/estado/${id}`, {
+      await api.patch(`/admin_obras/estado/${id}`, {
         activa: !actual
       });
       setObras(obras =>

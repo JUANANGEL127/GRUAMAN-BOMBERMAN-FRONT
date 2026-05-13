@@ -1,8 +1,15 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../features/auth/hooks/useAuth";
 
 function AdministradorBomberman() {
+  const { signOut } = useAuth();
   const navigate = useNavigate();
+
+  const handleSignOut = async() => {
+    //navigateTo('/bienvenida')
+    await signOut();
+  }
 
   return (
     <div className="form-container">
@@ -102,6 +109,13 @@ function AdministradorBomberman() {
             onClick={() => navigate("/indicador-central-admin")}
           >
             Indicador Central
+          </button>
+          <button
+            className="button"
+            style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
+            onClick={handleSignOut}
+          >
+            Cerrar Sesión
           </button>
         </div>
       </div>

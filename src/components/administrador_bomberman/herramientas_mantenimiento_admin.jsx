@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import "../../styles/permiso_trabajo.css";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 const ITEMS_LABELS = {
   copa_bristol_10mm:       'COPA BRISTOL DE 10 MM',
@@ -68,7 +66,7 @@ function HerramientasMantenimientoAdmin() {
         limit: filters.limit || 50,
         offset: filters.offset || 0
       };
-      const res = await axios.post(`${API_BASE_URL}/herramientas_mantenimiento_admin/buscar`, body);
+      const res = await api.post(`/herramientas_mantenimiento_admin/buscar`, body);
       setResultados(res.data?.rows || []);
       setTotal(res.data?.count || 0);
     } catch (e) {
@@ -92,7 +90,7 @@ function HerramientasMantenimientoAdmin() {
         formato: tipo,
         limit: 50000
       };
-      const res = await axios.post(`${API_BASE_URL}/herramientas_mantenimiento_admin/descargar`, body, { responseType: 'blob' });
+      const res = await api.post(`/herramientas_mantenimiento_admin/descargar`, body, { responseType: 'blob' });
       const mime = tipo === 'excel'
         ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         : 'application/zip';
@@ -115,7 +113,7 @@ function HerramientasMantenimientoAdmin() {
   useEffect(() => {
     async function fetchNombres() {
       try {
-        const res = await axios.get(`${API_BASE_URL}/datos_basicos`);
+        const res = await api.get(`/datos_basicos`);
         if (Array.isArray(res.data.datos)) {
           setNombresOperarios(
             res.data.datos.filter(d => Number(d.empresa_id) === 2 || Number(d.empresa_id) === 5).map(d => d.nombre)
@@ -125,7 +123,7 @@ function HerramientasMantenimientoAdmin() {
     }
     fetchNombres();
 
-    axios.get(`${API_BASE_URL}/obras`)
+    api.get(`/obras`)
       .then(res => {
         const obras = (res.data.obras || []).filter(o => Number(o.empresa_id) === 2 || Number(o.empresa_id) === 5);
         setListaObras(obras);
