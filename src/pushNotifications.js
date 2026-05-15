@@ -227,9 +227,18 @@ export async function syncPushSubscriptionForAuthenticatedWorker(
       }
 
       if (!result?.ok) {
-        window.console.error(
-          `[push-sync] ${result?.reason ?? "unknown-error"}: ${result?.message ?? "sync failed"}`
-        );
+        const isRecoverablePermissionMiss =
+          !allowPermissionPrompt && result?.reason === "permission-not-granted";
+
+        if (isRecoverablePermissionMiss) {
+          window.console.warn(
+            `[push-sync] ${result?.reason}: permission still pending explicit user action`
+          );
+        } else {
+          window.console.error(
+            `[push-sync] ${result?.reason ?? "unknown-error"}: ${result?.message ?? "sync failed"}`
+          );
+        }
       }
 
       return result;

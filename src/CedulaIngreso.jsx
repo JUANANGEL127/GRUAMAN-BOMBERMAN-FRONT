@@ -37,6 +37,10 @@ const WEB_AUTHN_DIAGNOSTIC = Object.freeze({
   ],
 });
 
+function shouldShowPushSyncError(status) {
+  return status?.reason !== "permission-not-granted";
+}
+
 function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState(
     typeof window !== "undefined" ? window.innerWidth < 600 : true
@@ -192,7 +196,7 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
         if (workerDocumentId && canPromptPushPermission()) {
           await syncPushSubscriptionForAuthenticatedWorker(workerDocumentId, {
             onStatus: (status) => {
-              if (!status?.ok && status?.message) {
+              if (!status?.ok && status?.message && shouldShowPushSyncError(status)) {
                 setError(status.message);
               }
             },
@@ -227,7 +231,7 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
         if (workerDocumentId) {
           await syncPushSubscriptionForAuthenticatedWorker(workerDocumentId, {
             onStatus: (status) => {
-              if (!status?.ok && status?.message) {
+              if (!status?.ok && status?.message && shouldShowPushSyncError(status)) {
                 setError(status.message);
               }
             },
