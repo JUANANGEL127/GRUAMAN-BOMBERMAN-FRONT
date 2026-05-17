@@ -21,6 +21,17 @@ export default function HoradaIngreso() {
   const [guardado, setGuardado] = useState(false);
   const [error, setError] = useState("");
 
+  const getErrorMessage = (requestError) => {
+    const apiError = requestError?.response?.data?.error;
+    if (typeof apiError === "string" && apiError.trim()) return apiError;
+    if (typeof apiError?.message === "string" && apiError.message.trim()) return apiError.message;
+
+    const directMessage = requestError?.response?.data?.message;
+    if (typeof directMessage === "string" && directMessage.trim()) return directMessage;
+
+    return "Error de red al guardar";
+  };
+
   useEffect(() => {
     const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
@@ -98,11 +109,7 @@ export default function HoradaIngreso() {
       setGuardado(true);
       setTimeout(() => navigate(-1), 500);
     } catch (e) {
-      setError(
-        e?.response?.data?.error ||
-          e?.response?.data?.message ||
-          "Error de red al guardar"
-      );
+      setError(getErrorMessage(e));
     }
   };
 
