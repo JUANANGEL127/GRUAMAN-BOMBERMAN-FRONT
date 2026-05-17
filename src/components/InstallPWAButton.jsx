@@ -11,8 +11,14 @@ function InstallPWAButton() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [visible, setVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true;
+    setIsInstalled(Boolean(isStandalone));
+
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -20,11 +26,19 @@ function InstallPWAButton() {
     };
     window.addEventListener("beforeinstallprompt", handler);
 
+    const appInstalledHandler = () => {
+      setIsInstalled(true);
+      setVisible(false);
+      setDeferredPrompt(null);
+    };
+    window.addEventListener("appinstalled", appInstalledHandler);
+
     const resizeHandler = () => setIsMobile(window.innerWidth <= 600);
     window.addEventListener("resize", resizeHandler);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("appinstalled", appInstalledHandler);
       window.removeEventListener("resize", resizeHandler);
     };
   }, []);
@@ -37,7 +51,7 @@ function InstallPWAButton() {
     }
   };
 
-  if (!visible || !isMobile) return null;
+  if (!visible || !isMobile || isInstalled) return null;
 
   return (
     <button

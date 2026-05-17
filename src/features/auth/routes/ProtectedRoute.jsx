@@ -8,6 +8,10 @@ import {
   syncPushSubscriptionForAuthenticatedWorker,
 } from "../../../pushNotifications";
 
+function shouldShowPushSyncError(status) {
+  return status?.reason !== "permission-not-granted";
+}
+
 function LoadingRouteScreen() {
   return (
     <div className="App">
@@ -112,7 +116,7 @@ export function ProtectedRoute({ children }) {
           allowPermissionPrompt: false,
         });
 
-        if (!syncResult?.ok) {
+        if (!syncResult?.ok && shouldShowPushSyncError(syncResult)) {
           setPushMessage(syncResult?.message || "No pudimos sincronizar notificaciones en este dispositivo.");
           return;
         }

@@ -21,6 +21,7 @@ import CedulaIngreso from "./CedulaIngreso";
 import BienvenidaSeleccion from "./BienvenidaSeleccion";
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import "./index.css";
+import InstallPWAButton from "./components/InstallPWAButton";
 import PermisoTrabajoAdmin from "./components/administrador_gruaman/permiso_trabajo_admin";
 import ChequeoAlturasAdmin from "./components/administrador_gruaman/chequeo_alturas_admin";
 import ChequeoTorreGruasAdmin from "./components/administrador_gruaman/chequeo_torregruas_admin";
@@ -1097,6 +1098,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           </div>
           <SOSButton />
           <STPButton />
+          <InstallPWAButton />
           <div style={{ position: "relative", zIndex: 1 }}>
             <Routes>
               <Route path="/" element={<App />} />

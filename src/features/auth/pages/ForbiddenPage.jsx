@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import InstallPWAButton from "../../../components/InstallPWAButton";
 import { getSessionHomePath } from "../adapters/authSessionAdapter";
 import { useAuth } from "../hooks/useAuth";
 
@@ -43,7 +42,6 @@ export function ForbiddenPage() {
           </button>
         </div>
       </div>
-      <InstallPWAButton />
     </div>
   );
 }

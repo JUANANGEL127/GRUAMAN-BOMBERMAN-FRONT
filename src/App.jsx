@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import "./App.css";
-import InstallPWAButton from "./components/InstallPWAButton";
 import IntroVideo from "./components/IntroVideo";
-import SlowConnectionBanner from "./components/SlowConnectionBanner";
 import { syncPushSubscriptionForAuthenticatedWorker } from "./pushNotifications";
 import { getSessionHomePath } from "./features/auth/adapters/authSessionAdapter";
 import { useAuth } from "./features/auth/hooks/useAuth";
@@ -55,7 +53,6 @@ function App() {
   const isLiteMode =
     isBrowserEnvironment() && window.sessionStorage.getItem("lite_mode") === "true";
   const [showIntro, setShowIntro] = useState(!isLiteMode);
-  const [showLiteBanner, setShowLiteBanner] = useState(true);
 
   useEffect(() => {
     if (!isReady || !isAuthenticated || session?.kind !== "worker") {
@@ -80,23 +77,6 @@ function App() {
 
   const handleIntroEnd = () => setShowIntro(false);
 
-  const handleSlowDetected = () => {
-    if (!isLiteMode) {
-      setShowLiteBanner(true);
-    }
-  };
-
-  const handleUseLite = () => {
-    if (isBrowserEnvironment()) {
-      window.sessionStorage.setItem("lite_mode", "true");
-    }
-
-    setShowLiteBanner(false);
-    setShowIntro(false);
-  };
-
-  const handleDismissBanner = () => setShowLiteBanner(false);
-
   const redirectTarget =
     isReady && !isHydrating
       ? isAuthenticated
@@ -107,20 +87,12 @@ function App() {
   return (
     <div className="App">
       {showIntro ? (
-        <IntroVideo onVideoEnd={handleIntroEnd} onSlowDetected={handleSlowDetected} />
+        <IntroVideo onVideoEnd={handleIntroEnd} />
       ) : redirectTarget ? (
         <Navigate to={redirectTarget} replace />
       ) : (
         <LoadingScreen />
       )}
-
-      {showLiteBanner && (
-        <SlowConnectionBanner
-          onUseLite={handleUseLite}
-          onDismiss={handleDismissBanner}
-        />
-      )}
-      <InstallPWAButton />
     </div>
   );
 }
