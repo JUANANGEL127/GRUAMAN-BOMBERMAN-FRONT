@@ -84,7 +84,7 @@ function AdminUsuarios() {
   const handleToggleActivo = async (id, actual) => {
     setLoading(true);
     try {
-      await api.patch("/admin_usuarios/estado/${id}", {
+      await api.patch(`/admin_usuarios/estado/${id}`, {
         activo: !actual
       });
       setTrabajadores(trabajadores =>
