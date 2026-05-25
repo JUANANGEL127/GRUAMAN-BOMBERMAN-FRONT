@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./features/auth/hooks/useAuth";
 import { getCompanySlug } from "./features/auth/adapters/authSessionAdapter";
-import { consumeReturnTo } from "./features/auth/utils/returnTo";
 import api from "./utils/api";
 
 function useIsLandscape() {
@@ -216,9 +215,8 @@ function BienvenidaSeleccion({ usuario }) {
           }
         }
 
-        const pendingReturnTo = consumeReturnTo();
         const defaultPath = resolveWorkerLandingPath(usuarioAutenticado, isLite);
-        navigate(pendingReturnTo || defaultPath, { replace: true });
+        navigate(defaultPath, { replace: true });
         return;
       }
 

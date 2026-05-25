@@ -3,6 +3,11 @@ import { Routes, Route, useNavigate } from "react-router-dom";
 import "../../App.css";
 import PQR from "./pqr";
 import Hallazgos from "./hallazgos";
+import { useAuth } from "../../features/auth/hooks/useAuth";
+import {
+  API_CONTROLLED_FORMAT_KEYS,
+  fetchRequiredFormatsStatus,
+} from "../../utils/requiredFormatsStatus";
 
 /**
  * @param {string} usuario
@@ -36,10 +41,25 @@ function getTodayDateStr() {
  */
 function BienvenidaSST() {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const nombre = localStorage.getItem("nombre_trabajador") || "";
   const usuario = nombre || "anonimo";
   const [usados, setUsados] = useState(() => getUsadosFromStorage(usuario));
   const [usuarioActual, setUsuarioActual] = useState(usuario);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchRequiredFormatsStatus()
+      .then((requiredStatus) => {
+        if (cancelled) return;
+        setUsados((prev) => ({ ...prev, ...requiredStatus }));
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [usuarioActual]);
 
   useEffect(() => {
     const fechaHoy = getTodayDateStr();
@@ -67,6 +87,10 @@ function BienvenidaSST() {
   }, [usados, usuarioActual]);
 
   const handleNavigate = (ruta, key) => {
+    if (API_CONTROLLED_FORMAT_KEYS.has(key)) {
+      navigate(ruta);
+      return;
+    }
     setUsados(prev => {
       const nuevos = { ...prev, [key]: true };
       setUsadosToStorage(nuevos, usuarioActual);
@@ -76,6 +100,9 @@ function BienvenidaSST() {
   };
 
   const getButtonClass = (usado) => usado ? "button button-green" : "button";
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <div className="form-container">
@@ -114,6 +141,21 @@ function BienvenidaSST() {
             onClick={() => handleNavigate("/hallazgos", "hallazgos")}
           >
             Hallazgos
+          </button>
+          <button
+            className="button"
+            style={{
+              maxWidth: 320,
+              marginTop: 24,
+              background: "#ff9800",
+              color: "#fff",
+              fontWeight: 600,
+              cursor: "pointer",
+              opacity: 1
+            }}
+            onClick={handleSignOut}
+          >
+            Cerrar sesión
           </button>
         </div>
       </div>
