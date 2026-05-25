@@ -87,10 +87,6 @@ export default function LevelWrapper() {
     }
   }, [worldId, isGamified]);
 
-  useEffect(() => {
-    localStorage.setItem('game_mode', worldId);
-  }, [worldId]);
-
   const FormComponent = FORM_MAP[worldId];
   useEffect(() => {
     if (!FormComponent && !isGamified) {
@@ -104,6 +100,7 @@ export default function LevelWrapper() {
 
   const handleExit = () => {
     localStorage.removeItem('game_mode');
+    localStorage.removeItem('game_mode_completed');
     navigate('/game/world-map', { replace: true });
   };
 
@@ -119,6 +116,7 @@ export default function LevelWrapper() {
     }
 
     if (sectionAnswers['__preamble__'] === 'skip') {
+      localStorage.setItem('game_mode_completed', worldId);
       markWorldComplete(worldId);
       localStorage.removeItem('game_mode');
       sessionStorage.removeItem('lw_answers_' + worldId);
@@ -138,6 +136,7 @@ export default function LevelWrapper() {
     setSubmitError(null);
     try {
       await submitFormData(worldId, merged);
+      localStorage.setItem('game_mode_completed', worldId);
       markWorldComplete(worldId.startsWith('ats-') ? 'ats' : worldId);
       localStorage.removeItem('game_mode');
       sessionStorage.removeItem('lw_answers_' + worldId);

@@ -5,23 +5,12 @@ import IntroVideo from "./components/IntroVideo";
 import { syncPushSubscriptionForAuthenticatedWorker } from "./pushNotifications";
 import { getSessionHomePath } from "./features/auth/adapters/authSessionAdapter";
 import { useAuth } from "./features/auth/hooks/useAuth";
-import { readReturnTo } from "./features/auth/utils/returnTo";
 
 function isBrowserEnvironment() {
   return typeof window !== "undefined";
 }
 
 function resolveAdminLanding(session) {
-  const pendingReturnTo = readReturnTo();
-
-  if (
-    pendingReturnTo &&
-    (pendingReturnTo.startsWith("/administrador") ||
-      pendingReturnTo.startsWith("/indicador-central-admin"))
-  ) {
-    return pendingReturnTo;
-  }
-
   return getSessionHomePath(session);
 }
 

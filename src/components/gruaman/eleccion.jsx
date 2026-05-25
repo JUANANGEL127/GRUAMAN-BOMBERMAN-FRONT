@@ -11,6 +11,11 @@ import ChequeoElevador from "./chequeo_elevador";
 import HoraIngreso from "../compartido/horada_ingreso";
 import HoraSalida from "../compartido/hora_salida";
 import { markWorldComplete } from '../../db/gameProgress';
+import { useAuth } from "../../features/auth/hooks/useAuth";
+import {
+  API_CONTROLLED_FORMAT_KEYS,
+  fetchRequiredFormatsStatus,
+} from "../../utils/requiredFormatsStatus";
 
 /**
  * @param {string} usuario
@@ -65,11 +70,13 @@ const ATS_LIST = [
  */
 function Bienvenida() {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const [atsOpen, setAtsOpen] = useState(false);
 
   useEffect(() => {
-    const worldId = localStorage.getItem('game_mode');
+    const worldId = localStorage.getItem('game_mode_completed');
     if (worldId) {
+      localStorage.removeItem('game_mode_completed');
       localStorage.removeItem('game_mode');
       markWorldComplete(worldId);
       navigate('/game/world-map', { replace: true });
@@ -81,6 +88,20 @@ function Bienvenida() {
   const usuario = nombre || "anonimo";
   const [usados, setUsados] = useState(() => getUsadosFromStorage(usuario));
   const [usuarioActual, setUsuarioActual] = useState(usuario);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchRequiredFormatsStatus()
+      .then((requiredStatus) => {
+        if (cancelled) return;
+        setUsados((prev) => ({ ...prev, ...requiredStatus }));
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [usuarioActual]);
 
   useEffect(() => {
     const fechaHoy = getTodayDateStr();
@@ -118,12 +139,20 @@ function Bienvenida() {
   }, [usados, usuarioActual]);
 
   const handleNavigate = (ruta, key) => {
+    if (API_CONTROLLED_FORMAT_KEYS.has(key)) {
+      navigate(ruta);
+      return;
+    }
     setUsados(prev => {
       const nuevos = { ...prev, [key]: true };
       setUsadosToStorage(nuevos, usuarioActual);
       return nuevos;
     });
     navigate(ruta);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   const getButtonClass = (usado) =>
@@ -283,24 +312,14 @@ function Bienvenida() {
             style={{
               maxWidth: 320,
               marginTop: 24,
-              background: porcentaje === 100 ? "#ff9800" : "#bdbdbd",
+              background: "#ff9800",
               color: "#fff",
               fontWeight: 600,
-              cursor: porcentaje === 100 ? "pointer" : "not-allowed",
-              opacity: porcentaje === 100 ? 1 : 0.7
+              cursor: "pointer",
+              opacity: 1
             }}
-            disabled={porcentaje !== 100}
-            onClick={() => {
-              if (porcentaje === 100) {
-                if (window.confirm("¿Estás seguro que deseas terminar? Esto reiniciará tu progreso.")) {
-                  limpiarUsados(usuarioActual);
-                  setUsados(getUsadosFromStorage(usuarioActual));
-                }
-              }
-            }}
-          >
-            Terminar
-          </button>
+            onClick={handleSignOut}
+          >Cerrar sesión</button>
         </div>
       </div>
     </div>
@@ -326,3 +345,4 @@ function eleccion() {
 }
 
 export default eleccion;
+

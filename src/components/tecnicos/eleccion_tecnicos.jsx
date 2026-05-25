@@ -4,6 +4,10 @@ import "../../App.css";
 import HoradaIngreso from "../compartido/horada_ingreso";
 import HoraSalida from "../compartido/hora_salida";
 import PermisoTrabajo from "../compartido/permiso_trabajo";
+import {
+  API_CONTROLLED_FORMAT_KEYS,
+  fetchRequiredFormatsStatus,
+} from "../../utils/requiredFormatsStatus";
 
 function getUsadosFromStorage(usuario) {
   try {
@@ -34,6 +38,20 @@ function BienvenidaTecnicos() {
   const [usuarioActual] = useState(usuario);
 
   useEffect(() => {
+    let cancelled = false;
+    fetchRequiredFormatsStatus()
+      .then((requiredStatus) => {
+        if (cancelled) return;
+        setUsados((prev) => ({ ...prev, ...requiredStatus }));
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [usuarioActual]);
+
+  useEffect(() => {
     const fechaHoy = getTodayDateStr();
     const fechaGuardada = localStorage.getItem(`tecnicos_usados_fecha_${usuarioActual}`);
     if (fechaGuardada !== fechaHoy) {
@@ -59,6 +77,10 @@ function BienvenidaTecnicos() {
   }, [usados, usuarioActual]);
 
   const handleNavigate = (ruta, key) => {
+    if (API_CONTROLLED_FORMAT_KEYS.has(key)) {
+      navigate(ruta);
+      return;
+    }
     setUsados(prev => {
       const nuevos = { ...prev, [key]: true };
       setUsadosToStorage(nuevos, usuarioActual);

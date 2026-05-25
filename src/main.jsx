@@ -65,20 +65,9 @@ import ForbiddenPage from "./features/auth/pages/ForbiddenPage";
 import { useAuth } from "./features/auth/hooks/useAuth";
 import ProtectedRoute from "./features/auth/routes/ProtectedRoute";
 import RoleGuard from "./features/auth/routes/RoleGuard";
-import { readReturnTo } from "./features/auth/utils/returnTo";
 import { IndicadorCentralAdminPage } from "./features/indicador-central";
 
 function resolveAdminLanding(session) {
-  const pendingReturnTo = readReturnTo();
-
-  if (
-    pendingReturnTo &&
-    (pendingReturnTo.startsWith("/administrador") ||
-      pendingReturnTo.startsWith("/indicador-central-admin"))
-  ) {
-    return pendingReturnTo;
-  }
-
   return getSessionHomePath(session);
 }
 

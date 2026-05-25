@@ -24,7 +24,6 @@ import {
   normalizePinVerifyResponse,
   toWorkerCompatibilityUser,
 } from "./features/auth/adapters/authSessionAdapter";
-import { consumeReturnTo, readReturnTo } from "./features/auth/utils/returnTo";
 
 const WEB_AUTHN_DIAGNOSTIC = Object.freeze({
   titulo: "Este dispositivo no puede usar huella dactilar",
@@ -143,11 +142,7 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
         return;
       }
 
-      const pendingAdminReturnTo = readReturnTo();
-      const nextAdminPath =
-        pendingAdminReturnTo && pendingAdminReturnTo.startsWith("/administrador")
-          ? consumeReturnTo()
-          : getSessionHomePath(authenticatedSession);
+      const nextAdminPath = getSessionHomePath(authenticatedSession);
 
       navigate(nextAdminPath, { replace: true });
     },
