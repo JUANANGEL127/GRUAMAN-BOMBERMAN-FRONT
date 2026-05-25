@@ -1025,6 +1025,7 @@ function CedulaLoginBridge() {
   return (
     <>
       <CedulaIngreso onUsuarioEncontrado={handleUsuarioAutenticado} />
+      <InstallPWAButton />
       {bridgeError ? (
         <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
           <div
@@ -1098,7 +1099,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           </div>
           <SOSButton />
           <STPButton />
-          <InstallPWAButton />
           <div style={{ position: "relative", zIndex: 1 }}>
             <Routes>
               <Route path="/" element={<App />} />

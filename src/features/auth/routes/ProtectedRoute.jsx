@@ -114,6 +114,7 @@ export function ProtectedRoute({ children }) {
       if (workerId) {
         const syncResult = await syncPushSubscriptionForAuthenticatedWorker(workerId, {
           allowPermissionPrompt: false,
+          force: true,
         });
 
         if (!syncResult?.ok && shouldShowPushSyncError(syncResult)) {

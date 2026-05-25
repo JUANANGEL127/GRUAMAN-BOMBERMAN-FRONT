@@ -207,7 +207,7 @@ async function runPushSync(numeroIdentificacion, { allowPermissionPrompt = true 
 
 export async function syncPushSubscriptionForAuthenticatedWorker(
   numeroIdentificacion,
-  { onStatus, allowPermissionPrompt = true } = {}
+  { onStatus, allowPermissionPrompt = true, force = false } = {}
 ) {
   const now = Date.now();
 
@@ -215,7 +215,7 @@ export async function syncPushSubscriptionForAuthenticatedWorker(
     return pushSyncInFlight;
   }
 
-  if (now - lastPushSyncAttemptAt < PUSH_SYNC_RETRY_COOLDOWN_MS) {
+  if (!force && now - lastPushSyncAttemptAt < PUSH_SYNC_RETRY_COOLDOWN_MS) {
     return;
   }
 

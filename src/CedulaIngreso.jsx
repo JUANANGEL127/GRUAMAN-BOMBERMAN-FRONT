@@ -236,6 +236,7 @@ function CedulaIngresoContent({ onUsuarioEncontrado }) {
               }
             },
             allowPermissionPrompt: false,
+            force: true,
           });
         }
       } finally {

@@ -86,6 +86,26 @@ function withCsrfHeader(config = {}) {
   return nextConfig;
 }
 
+function clearCsrfHeader(config = {}) {
+  const headers = config?.headers;
+  if (!headers) return config;
+
+  if (typeof headers.delete === "function") {
+    headers.delete(CSRF_HEADER_NAME);
+    headers.delete(CSRF_HEADER_NAME.toLowerCase());
+    return config;
+  }
+
+  if (typeof headers === "object") {
+    delete headers[CSRF_HEADER_NAME];
+    delete headers[CSRF_HEADER_NAME.toLowerCase()];
+    delete headers["common"]?.[CSRF_HEADER_NAME];
+    delete headers["common"]?.[CSRF_HEADER_NAME.toLowerCase()];
+  }
+
+  return config;
+}
+
 function syncCsrfTokenFromPayload(payload) {
   const token = payload?.csrfToken;
   if (typeof token === "string" && token.trim()) {
@@ -218,7 +238,8 @@ api.interceptors.response.use(
       });
 
       originalRequest._retry = true;
-      return api.request(originalRequest);
+      clearCsrfHeader(originalRequest);
+      return api.request(withCsrfHeader(originalRequest));
     } catch (refreshError) {
       clearAuthStateAndEmit(AUTH_EVENTS.UNAUTHORIZED, {
         path,
