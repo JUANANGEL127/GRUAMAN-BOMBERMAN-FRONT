@@ -14,6 +14,11 @@ import KitLimpieza from "./kit_limpieza";
 import HoraIngreso from "../compartido/horada_ingreso";
 import HoraSalida from "../compartido/hora_salida";
 import { markWorldComplete } from '../../db/gameProgress';
+import { useAuth } from "../../features/auth/hooks/useAuth";
+import {
+  API_CONTROLLED_FORMAT_KEYS,
+  fetchRequiredFormatsStatus,
+} from "../../utils/requiredFormatsStatus";
 
 
 /**
@@ -68,10 +73,12 @@ function isFirstDayOfMonth() {
  */
 function BienvenidaAIC() {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   useEffect(() => {
-    const worldId = localStorage.getItem('game_mode');
+    const worldId = localStorage.getItem('game_mode_completed');
     if (worldId) {
+      localStorage.removeItem('game_mode_completed');
       localStorage.removeItem('game_mode');
       markWorldComplete(worldId);
       navigate('/game/world-map', { replace: true });
@@ -89,6 +96,20 @@ function BienvenidaAIC() {
   const usuario = nombre || "anonimo";
   const [usados, setUsados] = useState(() => getUsadosFromStorage(usuario));
   const [usuarioActual, setUsuarioActual] = useState(usuario);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchRequiredFormatsStatus()
+      .then((requiredStatus) => {
+        if (cancelled) return;
+        setUsados((prev) => ({ ...prev, ...requiredStatus }));
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [usuarioActual]);
 
   useEffect(() => {
     const nuevoUsuario = localStorage.getItem("nombre_trabajador") || "anonimo";
@@ -131,12 +152,20 @@ function BienvenidaAIC() {
   }, [usuarioActual]);
 
   const handleNavigate = (ruta, key) => {
+    if (API_CONTROLLED_FORMAT_KEYS.has(key)) {
+      navigate(ruta);
+      return;
+    }
     setUsados(prev => {
       const nuevos = { ...prev, [key]: true };
       setUsadosToStorage(nuevos, usuarioActual);
       return nuevos;
     });
     navigate(ruta);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   const getButtonClass = (usado) =>
@@ -178,8 +207,11 @@ function BienvenidaAIC() {
       }
     } catch {}
   }
-  // Ajustar usados para barra y color
-  const usadosParaBarra = { ...usados, inventariosobra: inventarioObraVigente ? true : false };
+  // Ajustar usados para barra y color.
+  // API debe tener prioridad como fuente de verdad. El cache mensual local
+  // se conserva como fallback visual para compatibilidad.
+  const inventariosObraCompletado = Boolean(usados.inventariosobra || inventarioObraVigente);
+  const usadosParaBarra = { ...usados, inventariosobra: inventariosObraCompletado };
   const total = 10; // ahora hay 10 formularios
   const completados = Object.values({
     ...usadosParaBarra,
@@ -303,7 +335,7 @@ function BienvenidaAIC() {
             Mensual
           </p>
           <button
-            className={inventarioObraVigente ? "button button-green" : "button"}
+            className={inventariosObraCompletado ? "button button-green" : "button"}
             style={{ maxWidth: 320 }}
             onClick={() => handleNavigate("/inventariosobra", "inventariosobra")}
           >
@@ -322,24 +354,14 @@ function BienvenidaAIC() {
             style={{
               maxWidth: 320,
               marginTop: 24,
-              background: porcentaje === 100 ? "#ff9800" : "#bdbdbd",
+              background: "#ff9800",
               color: "#fff",
               fontWeight: 600,
-              cursor: porcentaje === 100 ? "pointer" : "not-allowed",
-              opacity: porcentaje === 100 ? 1 : 0.7
+              cursor: "pointer",
+              opacity: 1
             }}
-            disabled={porcentaje !== 100}
-            onClick={() => {
-              if (porcentaje === 100) {
-                if (window.confirm("¿Estás seguro que deseas terminar? Esto reiniciará tu progreso.")) {
-                  limpiarUsados(usuarioActual);
-                  setUsados(getUsadosFromStorage(usuarioActual));
-                }
-              }
-            }}
-          >
-            Terminar
-          </button>
+            onClick={handleSignOut}
+          >Cerrar sesión</button>
         </div>
       </div>
     </div>
@@ -367,3 +389,4 @@ function EleccionAIC() {
 }
 
 export default EleccionAIC;
+

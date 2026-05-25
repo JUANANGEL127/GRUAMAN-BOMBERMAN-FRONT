@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { saveReturnTo } from "../utils/returnTo";
 import {
   canPromptPushPermission,
   requestPushPermissionFromUserGesture,
@@ -135,7 +134,6 @@ export function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    saveReturnTo(requestedPath);
     return <Navigate to="/cedula" replace />;
   }
 

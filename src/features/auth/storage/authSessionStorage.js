@@ -20,6 +20,24 @@ const LEGACY_WORKER_AUTH_KEYS = Object.freeze([
 ]);
 
 const LEGACY_ADMIN_AUTH_KEYS = Object.freeze(["admin_rol"]);
+const LEGACY_WORK_CONTEXT_KEYS = Object.freeze([
+  "obra",
+  "obra_id",
+  "constructora",
+  "nombre_proyecto",
+  "selectedCharacter",
+  "game_mode",
+  "game_mode_completed",
+  "bomberman_inventariosobra_respuestas",
+]);
+const LEGACY_WORK_CONTEXT_PREFIXES = Object.freeze([
+  "game_session_",
+  "aic_usados_",
+  "gruaman_usados_",
+  "lideres_usados_",
+  "sst_usados_",
+  "tecnicos_usados_",
+]);
 
 function getLocalStorage() {
   if (typeof window === "undefined") {
@@ -141,6 +159,22 @@ function removeStorageKeys(keys) {
   keys.forEach((key) => storage.removeItem(key));
 }
 
+function removeStorageKeysByPrefix(prefixes) {
+  const storage = getLocalStorage();
+  if (!storage) return;
+
+  const keysToRemove = [];
+  for (let index = 0; index < storage.length; index += 1) {
+    const key = storage.key(index);
+    if (!key) continue;
+    if (prefixes.some((prefix) => key.startsWith(prefix))) {
+      keysToRemove.push(key);
+    }
+  }
+
+  keysToRemove.forEach((key) => storage.removeItem(key));
+}
+
 export function clearLegacyAuthKeys() {
   removeStorageKeys([...LEGACY_WORKER_AUTH_KEYS, ...LEGACY_ADMIN_AUTH_KEYS]);
 }
@@ -154,6 +188,8 @@ export function clearAuthSessionStorage() {
   }
 
   clearLegacyAuthKeys();
+  removeStorageKeys(LEGACY_WORK_CONTEXT_KEYS);
+  removeStorageKeysByPrefix(LEGACY_WORK_CONTEXT_PREFIXES);
 }
 
 export function readCsrfTokenStorage() {

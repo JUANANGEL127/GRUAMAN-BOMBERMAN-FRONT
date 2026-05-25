@@ -1,13 +1,31 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getWorldsByCharacter, getCharacterName } from '../../config/gameConfig';
-import { getCompletedWorlds, computeWorldStatus, markWorldComplete } from '../../db/gameProgress';
+import { getCompletedWorlds, computeWorldStatus } from '../../db/gameProgress';
 import { useAuth } from "../../features/auth/hooks/useAuth";
+import { fetchRequiredFormatsStatus } from "../../utils/requiredFormatsStatus";
 import WorldNode        from './WorldNode';
 import CircleTransition from './CircleTransition';
 import './WorldMap.css';
 
 const TUTORIAL_KEY = 'game_tutorial_seen';
+const WORLD_TO_STATUS_KEY = {
+  "hora-ingreso": "hora_ingreso",
+  "permiso-trabajo": "permiso_trabajo",
+  "planilla-bombeo": "planillabombeo",
+  checklist: "checklist",
+  "herramientas-mantenimiento": "herramientas_mantenimiento",
+  "kit-limpieza": "kit_limpieza",
+  "chequeo-altura": "chequeo_alturas",
+  "inspeccion-epcc-bomberman": "inspeccion_epcc_bomberman",
+  "inventarios-obra": "inventariosobra",
+  "hora-salida": "hora_salida",
+  "chequeo-torregruas": "chequeo_torregruas",
+  "chequeo-elevador": "chequeo_elevador",
+  "inspeccion-epcc": "inspeccion_epcc",
+  "inspeccion-izaje": "inspeccion_izaje",
+  ats: "ats",
+};
 
 /**
  * WorldMap — mapa de mundos estilo Mario Bros
@@ -32,11 +50,43 @@ export default function WorldMap() {
   const completedCount = dailyWorlds.filter(w => completedIds.includes(w.id)).length;
 
   useEffect(() => {
-    const worldId = localStorage.getItem('game_mode');
+    let cancelled = false;
+
+    const syncFromBackend = async () => {
+      try {
+        const status = await fetchRequiredFormatsStatus();
+        if (cancelled) return;
+
+        const completedFromApi = worlds
+          .filter((world) => {
+            const statusKey = WORLD_TO_STATUS_KEY[world.id];
+            return statusKey ? Boolean(status[statusKey]) : false;
+          })
+          .map((world) => world.id);
+
+        setCompletedIds(completedFromApi);
+      } catch {
+        if (!cancelled) {
+          setCompletedIds(getCompletedWorlds());
+        }
+      }
+    };
+
+    syncFromBackend();
+
+    const onFocus = () => syncFromBackend();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [worlds]);
+
+  useEffect(() => {
+    const worldId = localStorage.getItem('game_mode_completed');
     if (worldId) {
+      localStorage.removeItem('game_mode_completed');
       localStorage.removeItem('game_mode');
-      markWorldComplete(worldId);
-      setCompletedIds(getCompletedWorlds());
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
