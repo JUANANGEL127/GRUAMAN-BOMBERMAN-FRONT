@@ -306,7 +306,7 @@ function AdminUsuarios() {
                     </select>
                   </div>
                   <div style={{ marginBottom: 14, position: "relative", zIndex: 1 }}>
-                    <label style={{ fontSize: 14, fontWeight: 500, color: "#222" }}>NÃºmero de identificaciÃ³n</label>
+                    <label style={{ fontSize: 14, fontWeight: 500, color: "#222" }}>Número de identificación</label>
                     <input
                       className="permiso-trabajo-input"
                       type="text"
