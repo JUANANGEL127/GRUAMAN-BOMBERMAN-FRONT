@@ -10,7 +10,7 @@ function capitalizeWords(str) {
 const roles = [
   { id: 1, nombre: "Gruaman" },
   { id: 2, nombre: "Bomberman" },
-  { id: 3, nombre: "TÃ©cnico" },
+  { id: 3, nombre: "Técnico" },
   { id: 4, nombre: "SST" }
 ];
 
