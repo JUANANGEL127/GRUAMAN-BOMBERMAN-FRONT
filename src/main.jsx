@@ -22,6 +22,7 @@ import BienvenidaSeleccion from "./BienvenidaSeleccion";
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import "./index.css";
 import InstallPWAButton from "./components/InstallPWAButton";
+import { HorasExtraPdfJobProvider } from "./components/compartido/HorasExtraPdfJobProvider";
 import PermisoTrabajoAdmin from "./components/administrador_gruaman/permiso_trabajo_admin";
 import ChequeoAlturasAdmin from "./components/administrador_gruaman/chequeo_alturas_admin";
 import ChequeoTorreGruasAdmin from "./components/administrador_gruaman/chequeo_torregruas_admin";
@@ -1092,6 +1093,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
+        <HorasExtraPdfJobProvider>
         <div
           style={{
             minHeight: "100vh",
@@ -1161,6 +1163,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             {/* <Footer /> */}
           </div>
         </div>
+        </HorasExtraPdfJobProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

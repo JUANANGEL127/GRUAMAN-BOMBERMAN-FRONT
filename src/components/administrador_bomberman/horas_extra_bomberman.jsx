@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import api from "../../utils/api";
+import { useHorasExtraPdfDownload } from "../../hooks/useHorasExtraPdfDownload";
 import "../../styles/permiso_trabajo.css";
 
 function toYMD(date) {
@@ -23,7 +24,29 @@ function normalizaFlag(val) {
   return val;
 }
 
-function horasExtraBomberman() {
+function HorasExtraBomberman() {
+  const buildPdfRequestBody = useCallback(
+    (filters) => ({
+      nombre: filters.nombre || "",
+      obra: filters.obra || "",
+      constructora: filters.constructora || "",
+      empresa_ids: [2, 5],
+      fecha_inicio: toYMD(filters.fecha_inicio),
+      fecha_fin: toYMD(filters.fecha_fin),
+      formato: "pdf",
+      modo: "job",
+      limit: filters.limit || 10000,
+    }),
+    [],
+  );
+
+  const {
+    downloadPdf: startHorasExtraPdfDownload,
+    state: pdfDownloadState,
+  } = useHorasExtraPdfDownload({
+    buildRequestBody: buildPdfRequestBody,
+  });
+
   const [activeBar, setActiveBar] = useState("");
   const [filters, setFilters] = useState({
     nombre: "",
@@ -100,7 +123,7 @@ function horasExtraBomberman() {
           );
           setResumenPorMes(resSum.data?.resumen_por_mes || []);
           setPeriodo(resSum.data?.periodo || {});
-        } catch (e) {
+        } catch {
           setResumenPorMes([]);
           setPeriodo({});
         }
@@ -122,6 +145,11 @@ function horasExtraBomberman() {
   };
 
   const handleDescargar = async (tipo) => {
+    if (tipo === "pdf") {
+      startHorasExtraPdfDownload(filters).catch(() => {});
+      return;
+    }
+
     setLoading(true);
     setErrorMessage("");
     try {
@@ -185,9 +213,9 @@ function horasExtraBomberman() {
         } else {
           setNombresOperarios([]);
         }
-      } catch (e) {
-        setNombresOperarios([]);
-      }
+    } catch {
+      setNombresOperarios([]);
+    }
     }
     fetchNombres();
 
@@ -353,8 +381,17 @@ function horasExtraBomberman() {
             className="permiso-trabajo-btn"
             onClick={() => handleDescargar(forAction)}
             style={{ width: "100%", marginTop: 8 }}
+            disabled={forAction === "pdf" && pdfDownloadState.status !== "idle" && pdfDownloadState.status !== "error"}
           >
-            Descargar
+            {forAction === "pdf"
+              ? pdfDownloadState.status === "ready"
+                ? "PDF listo"
+                : pdfDownloadState.status === "error"
+                  ? "Reintentar PDF"
+                  : pdfDownloadState.status !== "idle"
+                    ? "Generando PDF..."
+                    : "Descargar"
+              : "Descargar"}
           </button>
         )}
       </div>
@@ -798,4 +835,4 @@ function horasExtraBomberman() {
   );
 }
 
-export default horasExtraBomberman;
+export default HorasExtraBomberman;

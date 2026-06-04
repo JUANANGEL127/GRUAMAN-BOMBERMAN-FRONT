@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../utils/api";
-import "../../styles/permiso_trabajo.css"; 
+import { todayStrBogota, hourMinuteBogota } from "../../utils/dateUtils";
+import { acquireCurrentGeolocation } from "../../utils/geolocation";
+import "../../styles/permiso_trabajo.css";
 
-/**
- * @returns {{ nombre: string, cedula: string, cargo: string, empresa: string, obra: string }}
- */
 function getDatosTrabajador() {
   return {
     nombre: localStorage.getItem("nombre_trabajador") || "",
@@ -16,36 +15,17 @@ function getDatosTrabajador() {
   };
 }
 
-/** @returns {string} HH:MM:SS string in America/Bogota timezone */
-function getHoraColombia() {
-  return new Date().toLocaleTimeString("es-CO", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-    timeZone: "America/Bogota"
-  });
-}
-
-/**
- * HoraSalida — registra la hora de salida del trabajador y envía mediante POST a /horas_jornada/salida.
- * El nombre del cliente se obtiene de /obras pero no es obligatorio para guardar exitosamente.
- */
 export default function HoraSalida() {
   const navigate = useNavigate();
   const [datos] = useState(getDatosTrabajador());
   const [horaSalida, setHoraSalida] = useState("");
   const [guardado, setGuardado] = useState(false);
   const [error, setError] = useState("");
-  // toLocaleDateString("en-CA") with timeZone avoids UTC+0 devices returning the next day
-  const makeFechaColombia = () => {
-    return new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
-  };
 
   const [generales, setGenerales] = useState({
     cliente: "",
     proyecto: datos.obra,
-    fecha: makeFechaColombia(),
+    fecha: todayStrBogota(),
     operador: datos.nombre,
     cargo: datos.cargo,
   });
@@ -53,23 +33,20 @@ export default function HoraSalida() {
   useEffect(() => {
     const nombre_proyecto = localStorage.getItem("obra") || localStorage.getItem("nombre_proyecto") || "";
     const nombre_operador = localStorage.getItem("nombre_trabajador") || "";
-    const fechaHoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
+    const fechaHoy = todayStrBogota();
     const cargo = localStorage.getItem("cargo_trabajador") || "";
 
     api.get("/obras")
-      .then(res => {
-        let obras = [];
-        if (Array.isArray(res.data.obras)) {
-          obras = res.data.obras;
-        }
-        const obra_seleccionada = obras.find(o => o.nombre_obra === nombre_proyecto);
+      .then((res) => {
+        const obras = Array.isArray(res.data?.obras) ? res.data.obras : [];
+        const obra_seleccionada = obras.find((o) => o.nombre_obra === nombre_proyecto);
         const constructora = obra_seleccionada ? obra_seleccionada.constructora : "";
         setGenerales({
           cliente: constructora,
           proyecto: nombre_proyecto,
           operador: nombre_operador,
           fecha: fechaHoy,
-          cargo: cargo,
+          cargo,
         });
       })
       .catch(() => {
@@ -78,45 +55,50 @@ export default function HoraSalida() {
           proyecto: nombre_proyecto,
           operador: nombre_operador,
           fecha: fechaHoy,
-          cargo: cargo,
+          cargo,
         });
       });
   }, []);
 
   const handleRegistrarHora = () => {
-    setHoraSalida(getHoraColombia());
+    setHoraSalida(`${hourMinuteBogota()}:00`);
   };
 
   const handleGuardar = async () => {
     setError("");
 
-    // cliente is not required by /salida — do not block if /obras fetch failed
-    if (
-      !generales.proyecto ||
-      !generales.fecha ||
-      !generales.operador ||
-      !horaSalida
-    ) {
-      setError("Faltan parámetros obligatorios. Verifica que tu nombre, obra y hora estén cargados.");
+    if (!generales.proyecto || !generales.fecha || !generales.operador || !horaSalida) {
+      setError("Faltan parámetros obligatorios. Verificá que tu nombre, obra y hora estén cargados.");
       return;
     }
 
-    const payload = {
-      nombre_operador: generales.operador,
-      fecha_servicio: generales.fecha,
-      hora_salida: horaSalida.slice(0, 5),
-    };
-
     try {
+      const geo = await acquireCurrentGeolocation();
+      const obraId = Number(localStorage.getItem("obra_id"));
+
+      const payload = {
+        nombre_operador: generales.operador,
+        fecha_servicio: todayStrBogota(),
+        hora_salida: hourMinuteBogota(),
+        lat: geo.lat,
+        lon: geo.lon,
+        accuracy_meters: geo.accuracy_meters,
+        obra_id: Number.isFinite(obraId) && obraId > 0 ? obraId : undefined,
+      };
+
       await api.post("/horas_jornada/salida", payload);
       setGuardado(true);
       setTimeout(() => navigate(-1), 500);
     } catch (e) {
-      setError(
-        e?.response?.data?.error ||
-          e?.response?.data?.message ||
-          "Error de red al guardar"
-      );
+      if (e?.code === 1) return setError("Necesitamos permiso de ubicación para registrar la salida.");
+      if (e?.code === 3) return setError("No pudimos capturar ubicación a tiempo. Reintentá.");
+      if (e?.response?.status === 400) return setError("Faltan coordenadas. Activá ubicación y volvé a intentar.");
+      if (e?.response?.status === 403) {
+        return setError(e?.response?.data?.message || e?.response?.data?.error || "Estás fuera del rango permitido de la obra.");
+      }
+      if (e?.response?.status === 404) return setError("No hay ingreso abierto para cerrar. Evitá reintentos ciegos.");
+
+      setError(e?.response?.data?.error || e?.response?.data?.message || "Error de red al guardar");
     }
   };
 
@@ -136,57 +118,19 @@ export default function HoraSalida() {
         <h2 className="card-title">Registro de hora de salida</h2>
         <div style={{ marginBottom: 16 }}>
           <label style={{ fontWeight: 500 }}>Hora registrada:</label>
-          <div
-            className="input"
-            style={{
-              marginTop: 6,
-              fontSize: 20,
-              background: "rgba(255,255,255,0.22)",
-              borderRadius: "14px",
-              boxShadow: "0 4px 16px 0 rgba(31, 38, 135, 0.18)",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-              border: "1px solid rgba(255,255,255,0.28)",
-              textAlign: "center",
-              color: "#222",
-              fontWeight: 600,
-              minHeight: 48,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              userSelect: "none"
-            }}
-          >
+          <div className="input" style={{ marginTop: 6, fontSize: 20, textAlign: "center", fontWeight: 600, minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center" }}>
             {horaSalida || "--:--:--"}
           </div>
         </div>
-        <button
-          className="button"
-          style={{ marginBottom: 12, width: "100%" }}
-          onClick={handleRegistrarHora}
-          disabled={!!horaSalida}
-        >
+        <button className="button" style={{ marginBottom: 12, width: "100%" }} onClick={handleRegistrarHora} disabled={!!horaSalida}>
           Registrar hora actual
         </button>
       </div>
-      <button
-        className="button"
-        style={{ width: "100%", background: "#1976d2", color: "#fff" }}
-        onClick={handleGuardar}
-        disabled={!horaSalida}
-      >
+      <button className="button" style={{ width: "100%", background: "#1976d2", color: "#fff" }} onClick={handleGuardar} disabled={!horaSalida}>
         Guardar
       </button>
-      {guardado && (
-        <div style={{ color: "#1976d2", marginTop: 16, textAlign: "center", fontWeight: 600 }}>
-          ¡Hora de salida registrada y guardada!
-        </div>
-      )}
-      {error && (
-        <div style={{ color: "#c00", marginTop: 16, textAlign: "center", fontWeight: 600 }}>
-          {error}
-        </div>
-      )}
+      {guardado && <div style={{ color: "#1976d2", marginTop: 16, textAlign: "center", fontWeight: 600 }}>¡Hora de salida registrada y guardada!</div>}
+      {error && <div style={{ color: "#c00", marginTop: 16, textAlign: "center", fontWeight: 600 }}>{error}</div>}
     </div>
   );
 }

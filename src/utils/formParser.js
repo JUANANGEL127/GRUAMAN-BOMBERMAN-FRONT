@@ -12,7 +12,8 @@
  * del localStorage (datos guardados previamente) o usan 'NA' como default.
  */
 import api from "../utils/api";
-import { getCurrentWeekKey, todayStrBogota } from './dateUtils';
+import { getCurrentWeekKey, todayStrBogota, hourMinuteBogota } from './dateUtils';
+import { acquireCurrentGeolocation } from './geolocation';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -1545,8 +1546,7 @@ function buildHoraIngreso() {
 
 function buildHoraSalida() {
   const ctx = getGameContext();
-  const now = new Date();
-  const pad = n => String(n).padStart(2, '0');
+  const obraId = Number(ctx.obraId);
   return {
     nombre_cliente:  ctx.cliente || ctx.proyecto,
     nombre_proyecto: ctx.proyecto,
@@ -1554,7 +1554,8 @@ function buildHoraSalida() {
     nombre_operador: ctx.operador,
     cargo:           ctx.cargo,
     empresa_id:      Number(localStorage.getItem('empresa_id')) || 1,
-    hora_salida:     `${pad(now.getHours())}:${pad(now.getMinutes())}`,
+    hora_salida:     hourMinuteBogota(),
+    obra_id: Number.isFinite(obraId) && obraId > 0 ? obraId : null,
     observaciones:   '',
   };
 }
@@ -2146,6 +2147,14 @@ export async function submitFormData(worldId, answers) {
   if (!endpoint) throw new Error(`No endpoint configured for: ${worldId}`);
 
   const payload = convertAnswersToFormData(worldId, answers);
+  if (worldId === "hora-salida") {
+    const geo = await acquireCurrentGeolocation();
+    payload.lat = geo.lat;
+    payload.lon = geo.lon;
+    payload.accuracy_meters = geo.accuracy_meters;
+    payload.fecha_servicio = todayStrBogota();
+    payload.hora_salida = hourMinuteBogota();
+  }
   persistAnswers(worldId, answers);
 
   await api.post(`${endpoint}`, payload);
