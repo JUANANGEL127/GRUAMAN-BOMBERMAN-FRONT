@@ -26,14 +26,14 @@ function normalizaFlag(val) {
 
 function HorasExtraBomberman() {
   const buildPdfRequestBody = useCallback(
-    (filters) => ({
+    (filters, reportFormat = "pdf") => ({
       nombre: filters.nombre || "",
       obra: filters.obra || "",
       constructora: filters.constructora || "",
       empresa_ids: [2, 5],
       fecha_inicio: toYMD(filters.fecha_inicio),
       fecha_fin: toYMD(filters.fecha_fin),
-      formato: "pdf",
+      formato: reportFormat,
       modo: "job",
       limit: filters.limit || 10000,
     }),
@@ -42,6 +42,7 @@ function HorasExtraBomberman() {
 
   const {
     downloadPdf: startHorasExtraPdfDownload,
+    downloadExcel: startHorasExtraExcelDownload,
     state: pdfDownloadState,
   } = useHorasExtraPdfDownload({
     buildRequestBody: buildPdfRequestBody,
@@ -147,6 +148,11 @@ function HorasExtraBomberman() {
   const handleDescargar = async (tipo) => {
     if (tipo === "pdf") {
       startHorasExtraPdfDownload(filters).catch(() => {});
+      return;
+    }
+
+    if (tipo === "excel") {
+      startHorasExtraExcelDownload(filters).catch(() => {});
       return;
     }
 
@@ -381,17 +387,31 @@ function HorasExtraBomberman() {
             className="permiso-trabajo-btn"
             onClick={() => handleDescargar(forAction)}
             style={{ width: "100%", marginTop: 8 }}
-            disabled={forAction === "pdf" && pdfDownloadState.status !== "idle" && pdfDownloadState.status !== "error"}
+            disabled={
+              (forAction === "pdf" || forAction === "excel") &&
+              pdfDownloadState.status !== "idle" &&
+              pdfDownloadState.status !== "error"
+            }
           >
             {forAction === "pdf"
               ? pdfDownloadState.status === "ready"
                 ? "PDF listo"
                 : pdfDownloadState.status === "error"
                   ? "Reintentar PDF"
-                  : pdfDownloadState.status !== "idle"
+                  : pdfDownloadState.status !== "idle" &&
+                      pdfDownloadState.reportFormat === "pdf"
                     ? "Generando PDF..."
                     : "Descargar"
-              : "Descargar"}
+              : forAction === "excel"
+                ? pdfDownloadState.status === "ready"
+                  ? "Excel listo"
+                  : pdfDownloadState.status === "error"
+                    ? "Reintentar Excel"
+                    : pdfDownloadState.status !== "idle" &&
+                        pdfDownloadState.reportFormat === "excel"
+                      ? "Generando Excel..."
+                      : "Descargar"
+                : "Descargar"}
           </button>
         )}
       </div>

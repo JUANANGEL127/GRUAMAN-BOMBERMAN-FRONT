@@ -1,9 +1,11 @@
 import { useCallback } from "react";
 import { useHorasExtraPdfJob } from "../components/compartido/HorasExtraPdfJobContext";
-import { buildHorasExtraPdfDownloadBody } from "../utils/horasExtraReportDownload";
+import {
+  buildHorasExtraReportDownloadBody,
+} from "../utils/horasExtraReportDownload";
 
 export function useHorasExtraPdfDownload({
-  buildRequestBody = buildHorasExtraPdfDownloadBody,
+  buildRequestBody = buildHorasExtraReportDownloadBody,
   pollIntervalMs = 3000,
   requestTimeoutMs = 45000,
   statusTimeoutMs = 10000,
@@ -17,10 +19,11 @@ export function useHorasExtraPdfDownload({
     clearState,
   } = useHorasExtraPdfJob();
 
-  const downloadPdf = useCallback(
-    async (filters = {}) => {
+  const downloadReport = useCallback(
+    async (filters = {}, reportFormat = "pdf") => {
       return startGlobalHorasExtraPdfDownload({
         filters,
+        reportFormat,
         buildRequestBody,
         pollIntervalMs,
         requestTimeoutMs,
@@ -38,8 +41,20 @@ export function useHorasExtraPdfDownload({
     ],
   );
 
+  const downloadPdf = useCallback(
+    async (filters = {}) => downloadReport(filters, "pdf"),
+    [downloadReport],
+  );
+
+  const downloadExcel = useCallback(
+    async (filters = {}) => downloadReport(filters, "excel"),
+    [downloadReport],
+  );
+
   return {
+    downloadReport,
     downloadPdf,
+    downloadExcel,
     downloadReadyFile,
     retryLastDownload,
     clearState,

@@ -1,6 +1,7 @@
 import api from "./api";
 
 const DEFAULT_PDF_FILE_NAME = "horas_jornada.pdf";
+const DEFAULT_XLSX_FILE_NAME = "horas_jornada.xlsx";
 const DEFAULT_POLL_INTERVAL_MS = 3000;
 const DEFAULT_REQUEST_TIMEOUT_MS = 45000;
 const DEFAULT_ERROR_MESSAGE =
@@ -13,6 +14,17 @@ function sanitizeFileNameSegment(value) {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+function normalizeReportFormat(reportFormat = "pdf") {
+  const format = String(reportFormat || "pdf").trim().toLowerCase();
+  return format === "excel" || format === "xlsx" ? "excel" : "pdf";
+}
+
+function getDefaultFileName(reportFormat = "pdf") {
+  return normalizeReportFormat(reportFormat) === "excel"
+    ? DEFAULT_XLSX_FILE_NAME
+    : DEFAULT_PDF_FILE_NAME;
 }
 
 function triggerBrowserDownload(blobData, fileName) {
@@ -123,12 +135,7 @@ function getReadableAxiosMessage(error, fallbackMessage) {
           return text || fallbackMessage || DEFAULT_ERROR_MESSAGE;
         }
       })
-      .catch(
-        () =>
-          error?.message ||
-          fallbackMessage ||
-          DEFAULT_ERROR_MESSAGE,
-      );
+      .catch(() => error?.message || fallbackMessage || DEFAULT_ERROR_MESSAGE);
   }
 
   return Promise.resolve(
@@ -140,14 +147,35 @@ function getReadableAxiosMessage(error, fallbackMessage) {
   );
 }
 
+function resolveStatusMessage(status, fallbackMessage = "") {
+  switch (status) {
+    case "pending":
+      return fallbackMessage || "Solicitud recibida";
+    case "processing":
+      return fallbackMessage || "Generando reporte";
+    case "ready":
+      return fallbackMessage || "El reporte está listo para descargar.";
+    case "error":
+    case "failed":
+      return fallbackMessage || "No se pudo generar el reporte.";
+    default:
+      return fallbackMessage || "Generando reporte de horas extra...";
+  }
+}
+
 function normalizeJobStatus(payload, fallbackJob = {}) {
   const status = String(payload?.status || fallbackJob?.status || "")
     .trim()
     .toLowerCase();
 
+  const reportFormat = normalizeReportFormat(
+    payload?.reportFormat || fallbackJob?.reportFormat || "pdf",
+  );
+
   return {
     jobId: String(payload?.jobId || fallbackJob?.jobId || "").trim(),
     status: status || "pending",
+    reportFormat,
     message:
       payload?.message ||
       fallbackJob?.message ||
@@ -162,23 +190,9 @@ function normalizeJobStatus(payload, fallbackJob = {}) {
   };
 }
 
-function resolveStatusMessage(status, fallbackMessage = "") {
-  switch (status) {
-    case "pending":
-      return fallbackMessage || "Solicitud recibida";
-    case "processing":
-      return fallbackMessage || "Generando PDF";
-    case "ready":
-      return fallbackMessage || "El PDF está listo para descargar.";
-    case "error":
-    case "failed":
-      return fallbackMessage || "No se pudo generar el PDF.";
-    default:
-      return fallbackMessage || "Generando reporte de horas extra...";
-  }
-}
+function buildHorasExtraReportRequestBody(filters = {}, reportFormat = "pdf") {
+  const format = normalizeReportFormat(reportFormat);
 
-function buildHorasExtraPdfRequestBody(filters = {}) {
   return {
     nombre: filters.nombre || "",
     obra: filters.obra || "",
@@ -186,7 +200,7 @@ function buildHorasExtraPdfRequestBody(filters = {}) {
     empresa_id: Number(filters.empresa_id) || 1,
     fecha_inicio: filters.fecha_inicio || "",
     fecha_fin: filters.fecha_fin || "",
-    formato: "pdf",
+    formato: format,
     modo: "job",
     limit: filters.limit || 10000,
   };
@@ -219,7 +233,7 @@ async function getBlob(
   });
 }
 
-async function requestHorasExtraPdfStart(
+async function requestHorasExtraReportStart(
   client,
   requestBody,
   timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
@@ -233,11 +247,17 @@ async function requestHorasExtraPdfStart(
     signal,
   );
 
-  const contentType = String(response?.headers?.["content-type"] || "").toLowerCase();
+  const contentType = String(
+    response?.headers?.["content-type"] || "",
+  ).toLowerCase();
   const payload = await readBlobPayload(response?.data);
+  const requestedFormat = normalizeReportFormat(requestBody?.formato || "pdf");
 
   if (payload && typeof payload === "object") {
-    const normalizedJob = normalizeJobStatus(payload);
+    const normalizedJob = normalizeJobStatus(payload, {
+      reportFormat: requestedFormat,
+    });
+
     if (normalizedJob.jobId) {
       return {
         kind: "job",
@@ -249,14 +269,19 @@ async function requestHorasExtraPdfStart(
     throw new Error(
       payload?.message ||
         payload?.error ||
-        "No se pudo iniciar la generación del PDF.",
+        "No se pudo iniciar la generacion del reporte.",
     );
   }
 
-  if (contentType.includes("application/pdf") || contentType.includes("octet-stream") || response?.data instanceof Blob) {
+  if (
+    contentType.includes("application/pdf") ||
+    contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") ||
+    contentType.includes("octet-stream") ||
+    response?.data instanceof Blob
+  ) {
     return {
       kind: "file",
-      fileName: extractFileName(response, DEFAULT_PDF_FILE_NAME),
+      fileName: extractFileName(response, getDefaultFileName(requestedFormat)),
       response,
     };
   }
@@ -264,7 +289,7 @@ async function requestHorasExtraPdfStart(
   throw new Error("La respuesta del servidor no fue compatible con la descarga.");
 }
 
-export async function getHorasExtraPdfJobStatus(
+export async function getHorasExtraReportJobStatus(
   jobId,
   {
     client = api,
@@ -287,7 +312,7 @@ export async function getHorasExtraPdfJobStatus(
   return normalizeJobStatus(payload, { jobId, statusUrl: url });
 }
 
-export async function downloadHorasExtraPdfJobFile(
+export async function downloadHorasExtraReportJobFile(
   jobId,
   {
     client = api,
@@ -309,7 +334,7 @@ export async function downloadHorasExtraPdfJobFile(
     throw new Error(
       payload?.message ||
         payload?.error ||
-        "No se pudo descargar el PDF generado.",
+        "No se pudo descargar el reporte generado.",
     );
   }
 
@@ -321,11 +346,12 @@ export async function downloadHorasExtraPdfJobFile(
   };
 }
 
-export async function downloadHorasExtraPdfReport(
+export async function downloadHorasExtraReport(
   filters = {},
   {
     client = api,
-    buildRequestBody = buildHorasExtraPdfRequestBody,
+    reportFormat = "pdf",
+    buildRequestBody = buildHorasExtraReportRequestBody,
     pollIntervalMs = DEFAULT_POLL_INTERVAL_MS,
     requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
     statusTimeoutMs = 10000,
@@ -334,7 +360,9 @@ export async function downloadHorasExtraPdfReport(
     signal,
   } = {},
 ) {
-  const requestBody = buildRequestBody(filters);
+  const normalizedReportFormat = normalizeReportFormat(reportFormat);
+  const requestBody = buildRequestBody(filters, normalizedReportFormat);
+
   const emitProgress = (nextState) => {
     if (typeof onProgress === "function") {
       onProgress(nextState);
@@ -344,6 +372,7 @@ export async function downloadHorasExtraPdfReport(
   emitProgress({
     status: "starting",
     message: "Generando reporte de horas extra...",
+    reportFormat: normalizedReportFormat,
   });
 
   try {
@@ -351,7 +380,7 @@ export async function downloadHorasExtraPdfReport(
       throw new Error("La descarga fue cancelada.");
     }
 
-    const startResult = await requestHorasExtraPdfStart(
+    const startResult = await requestHorasExtraReportStart(
       client,
       requestBody,
       requestTimeoutMs,
@@ -362,8 +391,9 @@ export async function downloadHorasExtraPdfReport(
       triggerBrowserDownload(startResult.response?.data, startResult.fileName);
       emitProgress({
         status: "done",
-        message: "El PDF se descargó correctamente.",
+        message: "El reporte se descargó correctamente.",
         fileName: startResult.fileName,
+        reportFormat: normalizedReportFormat,
       });
       return {
         kind: "file",
@@ -380,6 +410,7 @@ export async function downloadHorasExtraPdfReport(
       message: resolveStatusMessage(currentJob.status, currentJob.message),
       statusUrl: currentJob.statusUrl,
       downloadUrl: currentJob.downloadUrl,
+      reportFormat: currentJob.reportFormat || normalizedReportFormat,
     });
 
     while (true) {
@@ -390,13 +421,13 @@ export async function downloadHorasExtraPdfReport(
       pollAttempts += 1;
       if (pollAttempts > maxPollAttempts) {
         throw new Error(
-          "No se pudo confirmar el estado del PDF a tiempo. Intentá nuevamente.",
+          "No se pudo confirmar el estado del reporte a tiempo. Intentá nuevamente.",
         );
       }
 
       let statusResult;
       try {
-        statusResult = await getHorasExtraPdfJobStatus(currentJob.jobId, {
+        statusResult = await getHorasExtraReportJobStatus(currentJob.jobId, {
           client,
           statusUrl: currentJob.statusUrl,
           timeoutMs: statusTimeoutMs,
@@ -410,10 +441,10 @@ export async function downloadHorasExtraPdfReport(
           emitProgress({
             status: currentJob.status || "pending",
             jobId: currentJob.jobId,
-            message:
-              "El PDF sigue generándose...",
+            message: "El reporte sigue generándose...",
             statusUrl: currentJob.statusUrl,
             downloadUrl: currentJob.downloadUrl,
+            reportFormat: currentJob.reportFormat || normalizedReportFormat,
           });
 
           await new Promise((resolve) => {
@@ -441,6 +472,7 @@ export async function downloadHorasExtraPdfReport(
         message: resolvedMessage,
         statusUrl: currentJob.statusUrl,
         downloadUrl: currentJob.downloadUrl,
+        reportFormat: currentJob.reportFormat || normalizedReportFormat,
       });
 
       if (currentJob.status === "ready") {
@@ -450,6 +482,7 @@ export async function downloadHorasExtraPdfReport(
           statusUrl: currentJob.statusUrl,
           downloadUrl: currentJob.downloadUrl,
           message: resolvedMessage,
+          reportFormat: currentJob.reportFormat || normalizedReportFormat,
         };
       }
 
@@ -475,6 +508,7 @@ export async function downloadHorasExtraPdfReport(
       status: "error",
       message: readableMessage,
       error,
+      reportFormat: normalizedReportFormat,
     });
 
     const normalizedError =
@@ -484,11 +518,42 @@ export async function downloadHorasExtraPdfReport(
   }
 }
 
-export function buildHorasExtraPdfDownloadBody(filters = {}) {
-  return buildHorasExtraPdfRequestBody(filters);
+export async function downloadHorasExtraPdfReport(filters = {}, options = {}) {
+  return downloadHorasExtraReport(filters, {
+    ...options,
+    reportFormat: "pdf",
+  });
 }
 
-export function buildHorasExtraPdfFileName(request = {}) {
+export async function downloadHorasExtraExcelReport(
+  filters = {},
+  options = {},
+) {
+  return downloadHorasExtraReport(filters, {
+    ...options,
+    reportFormat: "excel",
+  });
+}
+
+export function buildHorasExtraReportDownloadBody(
+  filters = {},
+  reportFormat = "pdf",
+) {
+  return buildHorasExtraReportRequestBody(filters, reportFormat);
+}
+
+export function buildHorasExtraPdfDownloadBody(filters = {}) {
+  return buildHorasExtraReportRequestBody(filters, "pdf");
+}
+
+export function buildHorasExtraExcelDownloadBody(filters = {}) {
+  return buildHorasExtraReportRequestBody(filters, "excel");
+}
+
+export function buildHorasExtraReportFileName(
+  request = {},
+  reportFormat = "pdf",
+) {
   const segments = ["horas", "jornada"];
 
   if (request?.fecha_inicio) {
@@ -503,8 +568,18 @@ export function buildHorasExtraPdfFileName(request = {}) {
     segments.push(request.nombre);
   }
 
+  const extension = normalizeReportFormat(reportFormat) === "excel" ? "xlsx" : "pdf";
+
   return `${segments
     .map(sanitizeFileNameSegment)
     .filter(Boolean)
-    .join("-")}.pdf`;
+    .join("-")}.${extension}`;
+}
+
+export function buildHorasExtraPdfFileName(request = {}) {
+  return buildHorasExtraReportFileName(request, "pdf");
+}
+
+export function buildHorasExtraExcelFileName(request = {}) {
+  return buildHorasExtraReportFileName(request, "excel");
 }

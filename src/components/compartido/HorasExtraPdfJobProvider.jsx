@@ -9,8 +9,8 @@ import { HorasExtraPdfJobContext } from "./HorasExtraPdfJobContext";
 import ReportDownloadStatusCard from "./ReportDownloadStatusCard";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import {
-  downloadHorasExtraPdfJobFile,
-  downloadHorasExtraPdfReport,
+  downloadHorasExtraReport,
+  downloadHorasExtraReportJobFile,
 } from "../../utils/horasExtraReportDownload";
 
 const INITIAL_STATE = {
@@ -21,27 +21,11 @@ const INITIAL_STATE = {
   downloadUrl: "",
   statusUrl: "",
   fileName: "",
+  reportFormat: "pdf",
   error: null,
 };
 
 const TERMINAL_STATUSES = new Set(["ready", "done", "error", "failed"]);
-
-function normalizeState(nextState = {}) {
-  return {
-    visible: nextState.visible ?? true,
-    status: nextState.status || "idle",
-    message: normalizeMessage(nextState.message),
-    jobId: nextState.jobId || "",
-    downloadUrl: nextState.downloadUrl || "",
-    statusUrl: nextState.statusUrl || "",
-    fileName: nextState.fileName || "",
-    error: nextState.error || null,
-  };
-}
-
-function normalizeClearState() {
-  return INITIAL_STATE;
-}
 
 function normalizeMessage(value) {
   if (typeof value === "string") return value;
@@ -60,6 +44,20 @@ function normalizeMessage(value) {
   return value ? String(value) : "";
 }
 
+function normalizeState(nextState = {}) {
+  return {
+    visible: nextState.visible ?? true,
+    status: nextState.status || "idle",
+    message: normalizeMessage(nextState.message),
+    jobId: nextState.jobId || "",
+    downloadUrl: nextState.downloadUrl || "",
+    statusUrl: nextState.statusUrl || "",
+    fileName: nextState.fileName || "",
+    reportFormat: nextState.reportFormat || "pdf",
+    error: nextState.error || null,
+  };
+}
+
 function resolveVisible(prevVisible, nextState) {
   if (Object.prototype.hasOwnProperty.call(nextState, "visible")) {
     return Boolean(nextState.visible);
@@ -73,6 +71,10 @@ function resolveVisible(prevVisible, nextState) {
   return Boolean(prevVisible);
 }
 
+function normalizeClearState() {
+  return INITIAL_STATE;
+}
+
 export function HorasExtraPdfJobProvider({ children }) {
   const { isAuthenticated } = useAuth();
   const [state, setState] = useState(INITIAL_STATE);
@@ -83,9 +85,7 @@ export function HorasExtraPdfJobProvider({ children }) {
 
   useEffect(() => {
     mountedRef.current = true;
-    console.log("[HorasExtraPdfJobProvider] effect mount");
     return () => {
-      console.log("[HorasExtraPdfJobProvider] effect unmount");
       mountedRef.current = false;
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -94,26 +94,15 @@ export function HorasExtraPdfJobProvider({ children }) {
   }, []);
 
   const updateState = useCallback((nextState) => {
-    console.log("[HorasExtraPdfJobProvider] updateState called", {
-      mounted: mountedRef.current,
-      nextState,
-    });
     if (!mountedRef.current) return;
-    setState((prev) => {
-      const next = normalizeState({
+
+    setState((prev) =>
+      normalizeState({
         ...prev,
         ...nextState,
         visible: resolveVisible(prev.visible, nextState),
-      });
-      console.log("[HorasExtraPdfJobProvider] state update", {
-        prevStatus: prev?.status,
-        nextStatus: next.status,
-        prevVisible: prev?.visible,
-        nextVisible: next.visible,
-        nextState,
-      });
-      return next;
-    });
+      }),
+    );
   }, []);
 
   const clearState = useCallback(() => {
@@ -121,6 +110,7 @@ export function HorasExtraPdfJobProvider({ children }) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
+
     activeRequestIdRef.current += 1;
     lastRequestRef.current = null;
     setState(normalizeClearState());
@@ -155,12 +145,12 @@ export function HorasExtraPdfJobProvider({ children }) {
     updateState({
       visible: true,
       status: "processing",
-      message: "Descargando PDF final...",
+      message: "Descargando archivo final...",
       error: null,
     });
 
     try {
-      const result = await downloadHorasExtraPdfJobFile(state.jobId, {
+      const result = await downloadHorasExtraReportJobFile(state.jobId, {
         downloadUrl: state.downloadUrl || undefined,
         fallbackFileName: state.fileName || undefined,
         timeoutMs: lastRequestRef.current?.requestTimeoutMs || 45000,
@@ -169,53 +159,41 @@ export function HorasExtraPdfJobProvider({ children }) {
 
       if (requestId !== activeRequestIdRef.current) return result;
 
-      updateState({
-        visible: false,
-        status: "done",
-        message: "El PDF se descargó correctamente.",
-        jobId: state.jobId,
-        downloadUrl: state.downloadUrl,
-        statusUrl: state.statusUrl,
-        fileName: result.fileName || state.fileName || "",
-        error: null,
-      });
-
+      clearState();
       return result;
     } catch (error) {
       if (requestId !== activeRequestIdRef.current) {
         throw error;
       }
 
-      console.error("[horas-extra-pdf] ready file download error", error);
-
       updateState({
         visible: true,
         status: "error",
         message:
           error?.message ||
-          "No se pudo descargar el PDF generado. Intentá nuevamente.",
+          "No se pudo descargar el archivo generado. Intentá nuevamente.",
         error,
         jobId: state.jobId,
         downloadUrl: state.downloadUrl,
         statusUrl: state.statusUrl,
         fileName: state.fileName,
+        reportFormat: state.reportFormat,
       });
 
       throw error;
     }
-  }, [state, updateState]);
+  }, [clearState, state, updateState]);
 
   const startHorasExtraPdfDownload = useCallback(
     async ({
       filters = {},
+      reportFormat = "pdf",
       buildRequestBody,
       pollIntervalMs = 3000,
       requestTimeoutMs = 45000,
       statusTimeoutMs = 10000,
       maxPollAttempts = 120,
     } = {}) => {
-      console.debug("[horas-extra-pdf] start request", { filters });
-
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -225,6 +203,7 @@ export function HorasExtraPdfJobProvider({ children }) {
       activeRequestIdRef.current = requestId;
       lastRequestRef.current = {
         filters,
+        reportFormat,
         buildRequestBody,
         pollIntervalMs,
         requestTimeoutMs,
@@ -240,21 +219,21 @@ export function HorasExtraPdfJobProvider({ children }) {
         downloadUrl: "",
         statusUrl: "",
         fileName: "",
+        reportFormat,
         error: null,
       });
 
       try {
-        const result = await downloadHorasExtraPdfReport(filters, {
+        const result = await downloadHorasExtraReport(filters, {
           buildRequestBody,
+          reportFormat,
           pollIntervalMs,
           requestTimeoutMs,
           statusTimeoutMs,
           maxPollAttempts,
           signal: abortControllerRef.current.signal,
-    onProgress: (nextProgress) => {
+          onProgress: (nextProgress) => {
             if (requestId !== activeRequestIdRef.current) return;
-
-            console.debug("[horas-extra-pdf] progress", nextProgress);
 
             updateState({
               ...nextProgress,
@@ -269,21 +248,16 @@ export function HorasExtraPdfJobProvider({ children }) {
           updateState({
             visible: true,
             status: "ready",
-            message: result.message || "PDF listo para descargar.",
+            message: result.message || "El reporte está listo para descargar.",
             jobId: result.jobId || "",
             statusUrl: result.statusUrl || "",
             downloadUrl: result.downloadUrl || "",
             fileName: "",
+            reportFormat: result.reportFormat || reportFormat,
             error: null,
           });
         } else if (result?.kind === "file") {
-          updateState({
-            visible: false,
-            status: "done",
-            message: "El PDF se descargó correctamente.",
-            fileName: result.fileName || "",
-            error: null,
-          });
+          clearState();
         }
 
         return result;
@@ -292,8 +266,6 @@ export function HorasExtraPdfJobProvider({ children }) {
           throw error;
         }
 
-        console.error("[horas-extra-pdf] download error", error);
-
         updateState({
           visible: true,
           status: "error",
@@ -301,12 +273,13 @@ export function HorasExtraPdfJobProvider({ children }) {
             error?.message ||
             "No se pudo generar el reporte de horas extra. Intentá nuevamente.",
           error,
+          reportFormat,
         });
 
         throw error;
       }
     },
-    [updateState],
+    [clearState, updateState],
   );
 
   const retryLastDownload = useCallback(async () => {
@@ -322,14 +295,14 @@ export function HorasExtraPdfJobProvider({ children }) {
       retryLastDownload,
       clearState,
     }),
-    [clearState, downloadReadyFile, retryLastDownload, startHorasExtraPdfDownload, state],
+    [
+      clearState,
+      downloadReadyFile,
+      retryLastDownload,
+      startHorasExtraPdfDownload,
+      state,
+    ],
   );
-
-  console.log("[HorasExtraPdfJobProvider] render", {
-    status: state.status,
-    visible: state.visible,
-    jobId: state.jobId,
-  });
 
   return (
     <HorasExtraPdfJobContext.Provider value={contextValue}>
