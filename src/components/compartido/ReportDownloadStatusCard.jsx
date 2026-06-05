@@ -24,16 +24,18 @@ function getCardStyles(status) {
   };
 }
 
-function getStatusLabel(status) {
+function getStatusLabel(status, reportFormat = "pdf") {
+  const isExcel = String(reportFormat || "pdf").trim().toLowerCase() === "excel";
+
   switch (status) {
     case "starting":
       return "Generando reporte...";
     case "pending":
       return "Solicitud recibida";
     case "processing":
-      return "Generando PDF";
+      return isExcel ? "Generando Excel" : "Generando PDF";
     case "ready":
-      return "PDF listo";
+      return isExcel ? "Excel listo" : "PDF listo";
     case "done":
       return "Descarga completada";
     case "error":
@@ -63,6 +65,7 @@ function normalizeMessage(value) {
 function ReportDownloadStatusCard({
   status = "idle",
   message = "",
+  reportFormat = "pdf",
   onRetry,
   onDownloadNow,
   onDismiss,
@@ -130,7 +133,7 @@ function ReportDownloadStatusCard({
             wordBreak: "break-word",
           }}
         >
-          {getStatusLabel(status)}
+          {getStatusLabel(status, reportFormat)}
         </div>
 
         {safeMessage && (

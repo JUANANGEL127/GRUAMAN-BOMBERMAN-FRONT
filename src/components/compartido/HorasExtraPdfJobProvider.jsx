@@ -325,6 +325,7 @@ export function HorasExtraPdfJobProvider({ children }) {
             <ReportDownloadStatusCard
               status={state.status}
               message={state.message}
+              reportFormat={state.reportFormat}
               onRetry={retryLastDownload}
               onDownloadNow={downloadReadyFile}
               onDismiss={dismissCard}
