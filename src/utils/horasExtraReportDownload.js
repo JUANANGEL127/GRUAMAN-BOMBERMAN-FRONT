@@ -241,7 +241,7 @@ async function requestHorasExtraReportStart(
 ) {
   const response = await postBlob(
     client,
-    "/administrador/admin_horas_extra/descargar",
+    "/administrador/admin_horas_extra/report-jobs",
     requestBody,
     timeoutMs,
     signal,
