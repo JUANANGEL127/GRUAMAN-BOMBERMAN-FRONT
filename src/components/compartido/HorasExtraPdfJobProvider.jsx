@@ -153,6 +153,7 @@ export function HorasExtraPdfJobProvider({ children }) {
       const result = await downloadHorasExtraReportJobFile(state.jobId, {
         downloadUrl: state.downloadUrl || undefined,
         fallbackFileName: state.fileName || undefined,
+        reportFormat: state.reportFormat || "pdf",
         timeoutMs: lastRequestRef.current?.requestTimeoutMs || 45000,
         signal: abortControllerRef.current.signal,
       });
@@ -252,7 +253,7 @@ export function HorasExtraPdfJobProvider({ children }) {
             jobId: result.jobId || "",
             statusUrl: result.statusUrl || "",
             downloadUrl: result.downloadUrl || "",
-            fileName: "",
+            fileName: result.fileName || "",
             reportFormat: result.reportFormat || reportFormat,
             error: null,
           });

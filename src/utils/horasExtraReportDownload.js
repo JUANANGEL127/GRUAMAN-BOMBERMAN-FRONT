@@ -27,6 +27,25 @@ function getDefaultFileName(reportFormat = "pdf") {
     : DEFAULT_PDF_FILE_NAME;
 }
 
+function normalizeDownloadedFileName(fileName, reportFormat = "pdf") {
+  const normalizedFormat = normalizeReportFormat(reportFormat);
+  const safeFileName = String(fileName || "").trim();
+  const defaultName = getDefaultFileName(normalizedFormat);
+
+  if (!safeFileName) {
+    return defaultName;
+  }
+
+  const baseNameMatch = safeFileName.match(/^(.*?)(\.[^.]+)?$/);
+  const baseName = baseNameMatch?.[1] || safeFileName;
+
+  if (normalizedFormat === "excel") {
+    return `${baseName}.xlsx`;
+  }
+
+  return `${baseName}.pdf`;
+}
+
 function triggerBrowserDownload(blobData, fileName) {
   if (typeof window === "undefined") return;
 
@@ -169,7 +188,6 @@ function normalizeJobStatus(payload, fallbackJob = {}) {
     .toLowerCase();
 
   const reportFormat = normalizeReportFormat(
-    // backend may use either `reportFormat` or `format` — accept both
     payload?.reportFormat || payload?.format || fallbackJob?.reportFormat || fallbackJob?.format || "pdf",
   );
 
@@ -320,6 +338,7 @@ export async function downloadHorasExtraReportJobFile(
     downloadUrl,
     timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
     fallbackFileName = DEFAULT_PDF_FILE_NAME,
+    reportFormat = "pdf",
     signal,
   } = {},
 ) {
@@ -339,7 +358,8 @@ export async function downloadHorasExtraReportJobFile(
     );
   }
 
-  const fileName = extractFileName(response, fallbackFileName);
+  const extractedFileName = extractFileName(response, fallbackFileName);
+  const fileName = normalizeDownloadedFileName(extractedFileName, reportFormat);
   triggerBrowserDownload(response?.data, fileName);
   return {
     fileName,
@@ -551,7 +571,7 @@ export function buildHorasExtraExcelDownloadBody(filters = {}) {
   return buildHorasExtraReportRequestBody(filters, "excel");
 }
 
-export function buildHorasExtraReportFileName(
+function buildHorasExtraReportFileName(
   request = {},
   reportFormat = "pdf",
 ) {
