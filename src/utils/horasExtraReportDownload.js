@@ -169,7 +169,8 @@ function normalizeJobStatus(payload, fallbackJob = {}) {
     .toLowerCase();
 
   const reportFormat = normalizeReportFormat(
-    payload?.reportFormat || fallbackJob?.reportFormat || "pdf",
+    // backend may use either `reportFormat` or `format` — accept both
+    payload?.reportFormat || payload?.format || fallbackJob?.reportFormat || fallbackJob?.format || "pdf",
   );
 
   return {
