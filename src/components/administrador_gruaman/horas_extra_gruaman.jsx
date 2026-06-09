@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import api from "../../utils/api";
+import { useHorasExtraPdfDownload } from "../../hooks/useHorasExtraPdfDownload";
 import "../../styles/permiso_trabajo.css";
 
 function toYMD(date) {
@@ -29,7 +30,30 @@ const EMPRESAS = [
   { id: 4, label: "SST" }
 ];
 
-function horasExtraGruaman() {
+function HorasExtraGruaman() {
+  const buildPdfRequestBody = useCallback(
+    (filters, reportFormat = "pdf") => ({
+      nombre: filters.nombre || "",
+      obra: filters.obra || "",
+      constructora: filters.constructora || "",
+      empresa_id: Number(filters.empresa_id) || 1,
+      fecha_inicio: toYMD(filters.fecha_inicio),
+      fecha_fin: toYMD(filters.fecha_fin),
+      formato: reportFormat,
+      modo: "job",
+      limit: filters.limit || 10000,
+    }),
+    [],
+  );
+
+  const {
+    downloadPdf: startHorasExtraPdfDownload,
+    downloadExcel: startHorasExtraExcelDownload,
+    state: pdfDownloadState,
+  } = useHorasExtraPdfDownload({
+    buildRequestBody: buildPdfRequestBody,
+  });
+
   const [activeBar, setActiveBar] = useState("");
   const [filters, setFilters] = useState({
     nombre: "",
@@ -98,7 +122,7 @@ function horasExtraGruaman() {
           const resSum = await api.post("/administrador/admin_horas_extra/resumen", body);
           setResumenPorMes(resSum.data?.resumen_por_mes || []);
           setPeriodo(resSum.data?.periodo || {});
-        } catch (e) {
+        } catch {
           setResumenPorMes([]);
           setPeriodo({});
         }
@@ -118,6 +142,16 @@ function horasExtraGruaman() {
   };
 
   const handleDescargar = async (tipo) => {
+    if (tipo === "pdf") {
+      startHorasExtraPdfDownload(filters).catch(() => {});
+      return;
+    }
+
+    if (tipo === "excel") {
+      startHorasExtraExcelDownload(filters).catch(() => {});
+      return;
+    }
+
     setLoading(true);
     try {
       const body = {
@@ -153,7 +187,9 @@ function horasExtraGruaman() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(blobUrl);
-    } catch (e) {
+    } catch (error) {
+      console.error("No se pudo descargar el reporte de horas extra", error);
+      setErrorMessage("No se pudo descargar el archivo. Intentá nuevamente.");
     } finally {
       setLoading(false);
     }
@@ -171,7 +207,7 @@ function horasExtraGruaman() {
         } else {
           setNombresOperarios([]);
         }
-      } catch (e) {
+      } catch {
         setNombresOperarios([]);
       }
     }
@@ -326,8 +362,33 @@ function horasExtraGruaman() {
             Buscar
           </button>
         ) : (
-          <button className="permiso-trabajo-btn" onClick={() => handleDescargar(forAction)} style={{ width: "100%", marginTop: 8 }}>
-            Descargar
+          <button
+            className="permiso-trabajo-btn"
+            onClick={() => handleDescargar(forAction)}
+            style={{ width: "100%", marginTop: 8 }}
+            disabled={
+              (forAction === "pdf" || forAction === "excel") &&
+              pdfDownloadState.status !== "idle" &&
+              pdfDownloadState.status !== "error"
+            }
+          >
+            {forAction === "pdf"
+              ? pdfDownloadState.status === "ready"
+                ? "PDF listo"
+                : pdfDownloadState.status === "error"
+                  ? "Reintentar PDF"
+                  : pdfDownloadState.status !== "idle" && pdfDownloadState.reportFormat === "pdf"
+                    ? "Generando PDF..."
+                    : "Descargar"
+              : forAction === "excel"
+                ? pdfDownloadState.status === "ready"
+                  ? "Excel listo"
+                  : pdfDownloadState.status === "error"
+                    ? "Reintentar Excel"
+                    : pdfDownloadState.status !== "idle" && pdfDownloadState.reportFormat === "excel"
+                      ? "Generando Excel..."
+                      : "Descargar"
+                : "Descargar"}
           </button>
         )}
       </div>
@@ -544,4 +605,4 @@ function horasExtraGruaman() {
   );
 }
 
-export default horasExtraGruaman;
+export default HorasExtraGruaman;

@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./features/auth/hooks/useAuth";
 import { getCompanySlug } from "./features/auth/adapters/authSessionAdapter";
 import api from "./utils/api";
+import { acquireCurrentGeolocation } from "./utils/geolocation";
 
 function useIsLandscape() {
   const [landscape, setLandscape] = useState(() => {
@@ -73,15 +74,15 @@ function resolveWorkerLandingPath(usuario, isLite) {
 }
 
 /**
- * Pantalla posterior a la autenticación donde el trabajador selecciona su obra activa.
+ * Pantalla posterior a la autenticaciÃ³n donde el trabajador selecciona su obra activa.
  *
- * Obtiene la lista de obras activas desde la API, solicita la geolocalización y
- * valida la posición del trabajador respecto al sitio seleccionado antes de navegar
- * al flujo de juego o a la pantalla lite de selección de formularios.
+ * Obtiene la lista de obras activas desde la API, solicita la geolocalizaciÃ³n y
+ * valida la posiciÃ³n del trabajador respecto al sitio seleccionado antes de navegar
+ * al flujo de juego o a la pantalla lite de selecciÃ³n de formularios.
  *
  * @param {Object} props
  * @param {{ nombre?: string, empresa?: string, numero_identificacion?: string, cargo?: string }} [props.usuario]
- *   Datos del trabajador autenticado retornados por CedulaIngreso o rehidratados desde la sesión.
+ *   Datos del trabajador autenticado retornados por CedulaIngreso o rehidratados desde la sesiÃ³n.
  */
 function BienvenidaSeleccion({ usuario }) {
   const { session } = useAuth();
@@ -94,7 +95,7 @@ function BienvenidaSeleccion({ usuario }) {
   const [obraBusqueda, setObraBusqueda] = useState("");
   const [listaObras, setListaObras] = useState([]);
   const [obraIdSeleccionada, setObraIdSeleccionada] = useState("");
-  const [ubicacion, setUbicacion] = useState({ lat: null, lon: null });
+  const [ubicacion, setUbicacion] = useState({ lat: null, lon: null, accuracy_meters: null });
   const [gpsEstado, setGpsEstado] = useState("idle");
   const [error, setError] = useState("");
   const [mostrarBocadillo, setMostrarBocadillo] = useState(true);
@@ -135,27 +136,18 @@ function BienvenidaSeleccion({ usuario }) {
     }
   }, [usuarioAutenticado]);
 
-  const requestGPS = () => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setGpsEstado("error");
-      setError("Este dispositivo no soporta geolocalización.");
-      return;
-    }
-
+  const requestGPS = async () => {
     setGpsEstado("cargando");
     setError("");
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUbicacion({ lat: position.coords.latitude, lon: position.coords.longitude });
-        setGpsEstado("ok");
-      },
-      () => {
-        setUbicacion({ lat: null, lon: null });
-        setGpsEstado("error");
-        setError("No se pudo obtener tu ubicación. Activa el GPS e intenta de nuevo.");
-      },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
-    );
+    try {
+      const coords = await acquireCurrentGeolocation();
+      setUbicacion(coords);
+      setGpsEstado("ok");
+    } catch {
+      setUbicacion({ lat: null, lon: null, accuracy_meters: null });
+      setGpsEstado("error");
+      setError("No se pudo obtener tu ubicación. Activa el GPS e intenta de nuevo.");
+    }
   };
 
   const handleObraChange = (event) => {
@@ -178,7 +170,7 @@ function BienvenidaSeleccion({ usuario }) {
     }
 
     setObraIdSeleccionada("");
-    setUbicacion({ lat: null, lon: null });
+    setUbicacion({ lat: null, lon: null, accuracy_meters: null });
     setGpsEstado("idle");
     setError("");
     try {
@@ -199,6 +191,7 @@ function BienvenidaSeleccion({ usuario }) {
           obra_id: obraIdSeleccionada,
           lat: coords.lat,
           lon: coords.lon,
+          accuracy_meters: coords.accuracy_meters,
         }
       );
 
@@ -223,15 +216,15 @@ function BienvenidaSeleccion({ usuario }) {
       const distancia = response.data?.distancia;
       setError(
         distancia
-          ? `Estás a ${distancia >= 1000 ? `${(distancia / 1000).toFixed(1)} km` : `${distancia} m`} de la obra. Debes estar a menos de 500 m.`
-          : "No se encuentra en la ubicación seleccionada."
+          ? `EstÃ¡s a ${distancia >= 1000 ? `${(distancia / 1000).toFixed(1)} km` : `${distancia} m`} de la obra. Debes estar a menos de 500 m.`
+          : "No se encuentra en la ubicaciÃ³n seleccionada."
       );
     } catch (requestError) {
       const distancia = requestError.response?.data?.distancia;
       setError(
         distancia
-          ? `Estás a ${distancia >= 1000 ? `${(distancia / 1000).toFixed(1)} km` : `${distancia} m`} de la obra. Debes estar a menos de 500 m.`
-          : "No se encuentra en la ubicación seleccionada."
+          ? `EstÃ¡s a ${distancia >= 1000 ? `${(distancia / 1000).toFixed(1)} km` : `${distancia} m`} de la obra. Debes estar a menos de 500 m.`
+          : "No se encuentra en la ubicaciÃ³n seleccionada."
       );
     }
   };
@@ -245,7 +238,7 @@ function BienvenidaSeleccion({ usuario }) {
 
     if (ubicacion.lat === null || ubicacion.lon === null) {
       if (typeof navigator === "undefined" || !navigator.geolocation) {
-        setError("Este dispositivo no soporta geolocalización.");
+        setError("Este dispositivo no soporta geolocalizaciÃ³n.");
         return;
       }
 
@@ -259,7 +252,7 @@ function BienvenidaSeleccion({ usuario }) {
         },
         () => {
           setGpsEstado("error");
-          setError("No se pudo obtener tu ubicación. Activa el GPS e intenta de nuevo.");
+          setError("No se pudo obtener tu ubicaciÃ³n. Activa el GPS e intenta de nuevo.");
         },
         { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
       );
@@ -323,7 +316,7 @@ function BienvenidaSeleccion({ usuario }) {
             }}
           >
             <div>Bienvenido</div>
-            <div style={{ marginTop: "4px" }}>Super héroe</div>
+            <div style={{ marginTop: "4px" }}>Super hÃ©roe</div>
             <div style={{ marginTop: "4px", fontWeight: 600, fontSize: "1.25rem" }}>
               {usuarioAutenticado?.nombre || ""}
             </div>
@@ -402,3 +395,6 @@ function BienvenidaSeleccion({ usuario }) {
 }
 
 export default BienvenidaSeleccion;
+
+
+

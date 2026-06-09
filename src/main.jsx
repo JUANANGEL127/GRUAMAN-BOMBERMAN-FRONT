@@ -22,6 +22,7 @@ import BienvenidaSeleccion from "./BienvenidaSeleccion";
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import "./index.css";
 import InstallPWAButton from "./components/InstallPWAButton";
+import { HorasExtraPdfJobProvider } from "./components/compartido/HorasExtraPdfJobProvider";
 import PermisoTrabajoAdmin from "./components/administrador_gruaman/permiso_trabajo_admin";
 import ChequeoAlturasAdmin from "./components/administrador_gruaman/chequeo_alturas_admin";
 import ChequeoTorreGruasAdmin from "./components/administrador_gruaman/chequeo_torregruas_admin";
@@ -69,6 +70,32 @@ import { IndicadorCentralAdminPage } from "./features/indicador-central";
 
 function resolveAdminLanding(session) {
   return getSessionHomePath(session);
+}
+
+const WHATSAPP_GROUPS = {
+  sos: {
+    bomberman: {
+      cundinamarca: "https://chat.whatsapp.com/J3GqgX5SvOUAnPp30mB1ab?mode=gi_c",
+      antioquia: "https://chat.whatsapp.com/EDHaafxQQtcIDsxrm0plMR?mode=gi_c",
+      atlantico: "https://chat.whatsapp.com/DkkCKXpMxPj751BoltbLBq?mode=gi_c",
+    },
+    gruaman: "https://chat.whatsapp.com/F9SaM1zAVuw5EoS7SKQ6rK?mode=gi_c",
+  },
+  stp: {
+    bomberman: {
+      cundinamarca: "https://chat.whatsapp.com/EuGdXTpgNkO2u4E4Nh9Ywz",
+      antioquia: "https://chat.whatsapp.com/K91CrlZsoHX7vd7uSq0Kja",
+      atlantico: "https://chat.whatsapp.com/IGt87LKD8WwEUjy4dGv1jM",
+    },
+    gruaman: "https://chat.whatsapp.com/FUZyTMGqpXu36uXHhUIAWh",
+  },
+};
+
+function resolveWhatsAppGroupUrl(type, role, region) {
+  const roleConfig = WHATSAPP_GROUPS?.[type]?.[role];
+  if (!roleConfig) return "";
+  if (typeof roleConfig === "string") return roleConfig;
+  return roleConfig?.[region] || "";
 }
 
 
@@ -159,10 +186,11 @@ function useDraggable(defaultPos) {
  */
 function SOSButton() {
   const isMobile = useIsMobile();
-    const [mensaje, setMensaje] = React.useState("");
+  const [mensaje, setMensaje] = React.useState("");
   const [showModal, setShowModal] = React.useState(false);
   const [showRegionModal, setShowRegionModal] = React.useState(false);
   const [showRoleModal, setShowRoleModal] = React.useState(false);
+  const [selectedRole, setSelectedRole] = React.useState("bomberman");
   const { pos: sosPos, onPointerDown: sosDown, onPointerMove: sosMove, onPointerUp: sosUp, onClickCapture: sosClickCapture } =
     useDraggable(() => ({ x: 14, y: window.innerHeight - 144 }));
 
@@ -232,13 +260,12 @@ function SOSButton() {
 
   const handleRole = (role) => {
     setShowRoleModal(false);
-    if (role === "bomberman") {
-      setShowRegionModal(true);
+    if (role === "gruaman") {
+      handleRegion(resolveWhatsAppGroupUrl("sos", "gruaman", "cundinamarca"));
       return;
     }
-    if (role === "gruaman") {
-      handleRegion('https://chat.whatsapp.com/F9SaM1zAVuw5EoS7SKQ6rK?mode=gi_c');
-    }
+    setSelectedRole(role);
+    setShowRegionModal(true);
   };
 
   /**
@@ -248,6 +275,11 @@ function SOSButton() {
    */
   const handleRegion = (regionUrl) => {
     setShowRegionModal(false);
+    if (!regionUrl) {
+      setMensaje("Grupo no configurado para esta región.");
+      setTimeout(() => setMensaje(""), 3000);
+      return;
+    }
     const { usuario, obra } = getUsuarioObra();
     const mensajeRegion = `Soy ${usuario || "un usuario"} en la obra ${obra || "desconocida"}, tuve un accidente o incidente`;
     if (navigator.clipboard) {
@@ -387,21 +419,21 @@ function SOSButton() {
           <button
             className="permiso-trabajo-btn"
             style={{ background: "#1976d2", color: "#fff", minWidth: 160, fontWeight: 600 }}
-            onClick={() => handleRegion('https://chat.whatsapp.com/J3GqgX5SvOUAnPp30mB1ab?mode=gi_c')}
+            onClick={() => handleRegion(resolveWhatsAppGroupUrl("sos", selectedRole, "cundinamarca"))}
           >
             Cundinamarca
           </button>
           <button
             className="permiso-trabajo-btn"
             style={{ background: "#1976d2", color: "#fff", minWidth: 160, fontWeight: 600 }}
-            onClick={() => handleRegion('https://chat.whatsapp.com/EDHaafxQQtcIDsxrm0plMR?mode=gi_c')}
+            onClick={() => handleRegion(resolveWhatsAppGroupUrl("sos", selectedRole, "antioquia"))}
           >
             Antioquia
           </button>
           <button
             className="permiso-trabajo-btn"
             style={{ background: "#1976d2", color: "#fff", minWidth: 160, fontWeight: 600 }}
-            onClick={() => handleRegion('https://chat.whatsapp.com/DkkCKXpMxPj751BoltbLBq?mode=gi_c')}
+            onClick={() => handleRegion(resolveWhatsAppGroupUrl("sos", selectedRole, "atlantico"))}
           >
             Atlantico
           </button>
@@ -510,6 +542,7 @@ function STPButton() {
   const [mensaje, setMensaje] = React.useState("");
   const [showRegionModalSTP, setShowRegionModalSTP] = React.useState(false);
   const [showRoleModalSTP, setShowRoleModalSTP] = React.useState(false);
+  const [selectedRoleSTP, setSelectedRoleSTP] = React.useState("bomberman");
   const { pos: stpPos, onPointerDown: stpDown, onPointerMove: stpMove, onPointerUp: stpUp, onClickCapture: stpClickCapture } =
     useDraggable(() => ({ x: window.innerWidth - 78, y: window.innerHeight - 144 }));
 
@@ -574,13 +607,12 @@ function STPButton() {
 
   const handleRoleSTP = (role) => {
     setShowRoleModalSTP(false);
-    if (role === "bomberman") {
-      setShowRegionModalSTP(true);
+    if (role === "gruaman") {
+      handleRegionSTP(resolveWhatsAppGroupUrl("stp", "gruaman", "cundinamarca"));
       return;
     }
-    if (role === "gruaman") {
-      handleRegionSTP('https://chat.whatsapp.com/F9SaM1zAVuw5EoS7SKQ6rK?mode=gi_c');
-    }
+    setSelectedRoleSTP(role);
+    setShowRegionModalSTP(true);
   };
 
   /**
@@ -590,6 +622,11 @@ function STPButton() {
    */
   const handleRegionSTP = (regionUrl) => {
     setShowRegionModalSTP(false);
+    if (!regionUrl) {
+      setMensaje("Grupo no configurado para esta región.");
+      setTimeout(() => setMensaje(""), 3000);
+      return;
+    }
     const { usuario, obra } = getUsuarioObra();
     const mensajeRegion = `Soy ${usuario || "un usuario"} en la obra ${obra || "desconocida"}, tuve un paro en obra, necesito asistencia`;
     if (navigator.clipboard) {
@@ -748,21 +785,21 @@ function STPButton() {
             <button
               className="permiso-trabajo-btn"
               style={{ background: "#1976d2", color: "#fff", minWidth: 160, fontWeight: 600 }}
-              onClick={() => handleRegionSTP('https://chat.whatsapp.com/J3GqgX5SvOUAnPp30mB1ab?mode=gi_c')}
+              onClick={() => handleRegionSTP(resolveWhatsAppGroupUrl("stp", selectedRoleSTP, "cundinamarca"))}
             >
               Cundinamarca
             </button>
             <button
               className="permiso-trabajo-btn"
               style={{ background: "#1976d2", color: "#fff", minWidth: 160, fontWeight: 600 }}
-              onClick={() => handleRegionSTP('https://chat.whatsapp.com/EDHaafxQQtcIDsxrm0plMR?mode=gi_c')}
+              onClick={() => handleRegionSTP(resolveWhatsAppGroupUrl("stp", selectedRoleSTP, "antioquia"))}
             >
               Antioquia
             </button>
             <button
               className="permiso-trabajo-btn"
               style={{ background: "#1976d2", color: "#fff", minWidth: 160, fontWeight: 600 }}
-              onClick={() => handleRegionSTP('https://chat.whatsapp.com/DkkCKXpMxPj751BoltbLBq?mode=gi_c')}
+              onClick={() => handleRegionSTP(resolveWhatsAppGroupUrl("stp", selectedRoleSTP, "atlantico"))}
             >
               Atlantico
             </button>
@@ -1056,6 +1093,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
+        <HorasExtraPdfJobProvider>
         <div
           style={{
             minHeight: "100vh",
@@ -1125,6 +1163,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             {/* <Footer /> */}
           </div>
         </div>
+        </HorasExtraPdfJobProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

@@ -48,3 +48,17 @@ export function isSunday() {
 export function todayStrBogota() {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
 }
+
+/**
+ * Returns current time in HH:mm format using America/Bogota timezone.
+ *
+ * @returns {string}
+ */
+export function hourMinuteBogota() {
+  return new Date().toLocaleTimeString("en-GB", {
+    timeZone: "America/Bogota",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
