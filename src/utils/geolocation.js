@@ -27,7 +27,13 @@ export function acquireCurrentGeolocation(options = {}) {
           captured_at: new Date().toISOString(),
         });
       },
-      (error) => reject(error),
+      (error) => {
+        console.error("[geolocation] Failed to acquire current position:", {
+          code: error?.code,
+          message: error?.message,
+        });
+        reject(error);
+      },
       {
         enableHighAccuracy,
         timeout: timeoutMs,

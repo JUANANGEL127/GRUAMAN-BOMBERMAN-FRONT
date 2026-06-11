@@ -74,6 +74,14 @@ export default function HoraSalida() {
 
     try {
       const geo = await acquireCurrentGeolocation();
+      console.log("[hora_salida] GPS sample:", geo);
+
+      if (!Number.isFinite(geo?.lat) || !Number.isFinite(geo?.lon)) {
+        console.error("[hora_salida] Invalid GPS sample, aborting submit:", geo);
+        setError("No pudimos obtener coordenadas válidas. Activá ubicación y volvé a intentar.");
+        return;
+      }
+
       const obraId = Number(localStorage.getItem("obra_id"));
 
       const payload = {
@@ -86,10 +94,17 @@ export default function HoraSalida() {
         obra_id: Number.isFinite(obraId) && obraId > 0 ? obraId : undefined,
       };
 
+      console.log("[hora_salida] Payload before POST /horas_jornada/salida:", payload);
+      console.log("[hora_salida] Request includes lat/lon:", {
+        hasLat: Number.isFinite(payload.lat),
+        hasLon: Number.isFinite(payload.lon),
+      });
+
       await api.post("/horas_jornada/salida", payload);
       setGuardado(true);
       setTimeout(() => navigate(-1), 500);
     } catch (e) {
+      console.error("[hora_salida] Failed to register salida:", e);
       if (e?.code === 1) return setError("Necesitamos permiso de ubicación para registrar la salida.");
       if (e?.code === 3) return setError("No pudimos capturar ubicación a tiempo. Reintentá.");
       if (e?.response?.status === 400) return setError("Faltan coordenadas. Activá ubicación y volvé a intentar.");

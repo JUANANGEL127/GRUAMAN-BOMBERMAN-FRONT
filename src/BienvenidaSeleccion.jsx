@@ -69,7 +69,7 @@ function resolveWorkerLandingPath(usuario, isLite) {
   if (empresa === "GyE") return "/eleccion";
   if (empresa === "Lideres") return "/eleccion_lideres";
   if (empresa === "SST") return "/eleccion_sst";
-  if (empresa === "Tecnicos") return "/eleccion_tecnicos";
+  if (empresa === "Técnico") return "/eleccion_tecnicos";
   return "/eleccionaic";
 }
 
