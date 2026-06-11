@@ -4,7 +4,7 @@ export const AUTH_CSRF_COOKIE_NAME = "gm_csrf";
 const COMPANY_SLUG_BY_ID = Object.freeze({
   1: "GyE",
   2: "AIC",
-  3: "Tecnicos",
+  3: "Técnico",
   4: "SST",
   5: "Lideres",
 });
@@ -18,7 +18,7 @@ const COMPANY_ALIAS_MAP = Object.freeze({
   "bomber man": "AIC",
   "bomber-man": "AIC",
   aic: "AIC",
-  tecnicos: "Tecnicos",
+  tecnicos: "Técnico",
   sst: "SST",
   lideres: "Lideres",
   "lider bomba" : "Lideres"

@@ -8,6 +8,38 @@ import { markWorldComplete } from '../../db/gameProgress';
 import { getTimerConfig } from '../../utils/questionTypes';
 import './LevelWrapper.css';
 
+function resolveSubmitErrorMessage(err) {
+  const gpsCode = err?.code;
+  const gpsMessage = String(err?.message || '');
+  const backendDetail = err?.response?.data?.detalle || err?.response?.data?.error || null;
+
+  if (gpsCode === 1) {
+    return 'No pudimos obtener tu ubicación. Activá los permisos de GPS e intentá de nuevo.';
+  }
+
+  if (gpsCode === 2) {
+    return 'No se pudo determinar tu ubicación. Probá nuevamente con el GPS activo.';
+  }
+
+  if (gpsCode === 3) {
+    return 'El GPS tardó demasiado en responder. Reintentá con mejor señal.';
+  }
+
+  if (gpsMessage === 'GEOLOCATION_NOT_SUPPORTED') {
+    return 'Este dispositivo no soporta geolocalización.';
+  }
+
+  if (gpsMessage === 'NO_VALID_GPS_COORDINATES') {
+    return 'No pudimos obtener coordenadas válidas. Activá la ubicación y volvé a intentar.';
+  }
+
+  if (backendDetail) {
+    return `Error del servidor: ${backendDetail}`;
+  }
+
+  return 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.';
+}
+
 /**
  * Mapea los identificadores de mundo (worldId) a sus componentes de formulario
  * cargados de forma diferida (lazy).
@@ -143,10 +175,8 @@ export default function LevelWrapper() {
       setMissionDone(true);
       setTimeout(() => navigate('/game/world-map', { replace: true }), 1800);
     } catch (err) {
-      const detalle = err?.response?.data?.detalle || err?.response?.data?.error || null;
-      setSubmitError(detalle
-        ? `Error del servidor: ${detalle}`
-        : 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.');
+      console.error('[LevelWrapper] Failed to submit mission:', err);
+      setSubmitError(resolveSubmitErrorMessage(err));
       setSubmitting(false);
     }
   }, [sectionIdx, gamifiedSections, worldId, navigate]);

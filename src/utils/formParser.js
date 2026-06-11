@@ -2149,11 +2149,23 @@ export async function submitFormData(worldId, answers) {
   const payload = convertAnswersToFormData(worldId, answers);
   if (worldId === "hora-salida") {
     const geo = await acquireCurrentGeolocation();
+    console.log("[formParser][hora-salida] GPS sample:", geo);
+
+    if (!Number.isFinite(geo?.lat) || !Number.isFinite(geo?.lon)) {
+      console.error("[formParser][hora-salida] Invalid GPS sample, aborting submit:", geo);
+      throw new Error("NO_VALID_GPS_COORDINATES");
+    }
+
     payload.lat = geo.lat;
     payload.lon = geo.lon;
     payload.accuracy_meters = geo.accuracy_meters;
     payload.fecha_servicio = todayStrBogota();
     payload.hora_salida = hourMinuteBogota();
+    console.log("[formParser][hora-salida] Payload before POST /horas_jornada/salida:", payload);
+    console.log("[formParser][hora-salida] Request includes lat/lon:", {
+      hasLat: Number.isFinite(payload.lat),
+      hasLon: Number.isFinite(payload.lon),
+    });
   }
   persistAnswers(worldId, answers);
 
