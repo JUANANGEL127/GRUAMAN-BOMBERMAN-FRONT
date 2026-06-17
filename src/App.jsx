@@ -2,12 +2,25 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import "./App.css";
 import IntroVideo from "./components/IntroVideo";
+import { useCampaign } from "./features/campaigns";
 import { syncPushSubscriptionForAuthenticatedWorker } from "./pushNotifications";
 import { getSessionHomePath } from "./features/auth/adapters/authSessionAdapter";
 import { useAuth } from "./features/auth/hooks/useAuth";
 
 function isBrowserEnvironment() {
   return typeof window !== "undefined";
+}
+
+function isLiteModeEnabled() {
+  if (!isBrowserEnvironment()) {
+    return false;
+  }
+
+  try {
+    return window.sessionStorage.getItem("lite_mode") === "true";
+  } catch {
+    return false;
+  }
 }
 
 function resolveAdminLanding(session) {
@@ -39,9 +52,8 @@ function LoadingScreen() {
 
 function App() {
   const { isAuthenticated, isHydrating, isReady, session } = useAuth();
-  const isLiteMode =
-    isBrowserEnvironment() && window.sessionStorage.getItem("lite_mode") === "true";
-  const [showIntro, setShowIntro] = useState(!isLiteMode);
+  const { hasActiveCampaign, isLoading: isCampaignLoading } = useCampaign();
+  const [showIntro, setShowIntro] = useState(() => !isLiteModeEnabled());
 
   useEffect(() => {
     if (!isReady || !isAuthenticated || session?.kind !== "worker") {
@@ -64,6 +76,14 @@ function App() {
     }).catch(() => {});
   }, [isAuthenticated, isReady, session]);
 
+  useEffect(() => {
+    if (!hasActiveCampaign) {
+      return;
+    }
+
+    setShowIntro(false);
+  }, [hasActiveCampaign]);
+
   const handleIntroEnd = () => setShowIntro(false);
 
   const redirectTarget =
@@ -72,10 +92,13 @@ function App() {
         ? resolveSessionLanding(session)
         : "/cedula"
       : "";
+  const shouldShowIntro = !hasActiveCampaign && showIntro;
 
   return (
     <div className="App">
-      {showIntro ? (
+      {isCampaignLoading && !hasActiveCampaign ? (
+        <LoadingScreen />
+      ) : shouldShowIntro ? (
         <IntroVideo onVideoEnd={handleIntroEnd} />
       ) : redirectTarget ? (
         <Navigate to={redirectTarget} replace />
