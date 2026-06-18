@@ -1,4 +1,4 @@
-import api from "../../../utils/api";
+﻿import api from "../../../utils/api";
 
 export const INDICADOR_CENTRAL_ENDPOINTS = Object.freeze({
   CONFIGURACION: "/administrador/indicador_central/configuracion",
@@ -41,3 +41,4 @@ export async function getTrabajadores(params = {}) {
   });
   return response.data;
 }
+
