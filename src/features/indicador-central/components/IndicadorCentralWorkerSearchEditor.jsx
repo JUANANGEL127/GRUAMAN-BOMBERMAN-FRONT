@@ -15,6 +15,22 @@ function buildWorkerOptionLabel(worker, getCompanyLabel) {
   return parts.filter(Boolean).join(" · ");
 }
 
+function buildTemporalStatusLabel(worker) {
+  if (worker.excluyeIndicadorCentral && worker.tieneEstadoTemporalActivo) {
+    return "Excluded from indicator central";
+  }
+
+  if (worker.tieneEstadoTemporalActivo) {
+    return "Temporary state active today";
+  }
+
+  if (worker.estadoTemporalActual) {
+    return "Has temporal history";
+  }
+
+  return null;
+}
+
 export function IndicadorCentralWorkerSearchEditor({
   label,
   items,
@@ -79,17 +95,22 @@ export function IndicadorCentralWorkerSearchEditor({
             {loading ? (
               <p className="indicador-central-helper">Buscando trabajadores...</p>
             ) : filteredWorkers.length ? (
-              filteredWorkers.map((worker) => (
-                <button
-                  key={`${worker.value}-${worker.id || worker.document || worker.companyValue || "worker"}`}
-                  type="button"
-                  className="indicador-central-search-result"
-                  onClick={() => addWorker(worker.value)}
-                >
-                  <strong>{worker.name}</strong>
-                  <span>{buildWorkerOptionLabel(worker, getCompanyLabel)}</span>
-                </button>
-              ))
+              filteredWorkers.map((worker) => {
+                const temporalStatusLabel = buildTemporalStatusLabel(worker);
+
+                return (
+                  <button
+                    key={`${worker.value}-${worker.id || worker.document || worker.companyValue || "worker"}`}
+                    type="button"
+                    className="indicador-central-search-result"
+                    onClick={() => addWorker(worker.value)}
+                  >
+                    <strong>{worker.name}</strong>
+                    <span>{buildWorkerOptionLabel(worker, getCompanyLabel)}</span>
+                    {temporalStatusLabel ? <span>{temporalStatusLabel}</span> : null}
+                  </button>
+                );
+              })
             ) : (
               <p className="indicador-central-helper">No encontramos trabajadores con esa búsqueda en las empresas seleccionadas.</p>
             )}

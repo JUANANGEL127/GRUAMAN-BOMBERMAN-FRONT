@@ -101,6 +101,15 @@ function normalizeWorkerOptionItem(item) {
     null
   );
   const document = ensureString(firstNonEmpty(item.numero_identificacion, item.cedula, item.documento));
+  const estadoTemporalActual = isPlainObject(item.estado_temporal_actual) ? item.estado_temporal_actual : null;
+  const tieneEstadoTemporalActivo = toBoolean(
+    firstNonEmpty(item.tiene_estado_temporal_activo, item.tieneEstadoTemporalActivo, estadoTemporalActual?.vigente_hoy),
+    false
+  );
+  const excluyeIndicadorCentral = toBoolean(
+    firstNonEmpty(item.excluye_indicador_central, item.excluyeIndicadorCentral, estadoTemporalActual?.excluye_indicador_central),
+    false
+  );
 
   return {
     value: name,
@@ -109,6 +118,10 @@ function normalizeWorkerOptionItem(item) {
     id: id === null ? null : String(id),
     companyValue: companyId === null ? null : String(companyId),
     document,
+    activo: toBoolean(firstNonEmpty(item.activo), true),
+    estadoTemporalActual,
+    tieneEstadoTemporalActivo,
+    excluyeIndicadorCentral,
   };
 }
 
