@@ -281,7 +281,7 @@ function AdminObrasBomberman() {
                     />
                   </div>
                   <div style={{ marginBottom: 14, position: "relative", zIndex: 1 }}>
-                    <label style={{ fontSize: 14, fontWeight: 500, color: "#222" }}>DirecciÃ³n</label>
+                    <label style={{ fontSize: 14, fontWeight: 500, color: "#222" }}>Dirección</label>
                     <input
                       className="permiso-trabajo-input"
                       type="text"
@@ -299,7 +299,7 @@ function AdminObrasBomberman() {
                       type="text"
                       value={nuevo.ciudad}
                       onChange={e => setNuevo(n => ({ ...n, ciudad: e.target.value }))}
-                      placeholder="Ejemplo: BogotÃ¡"
+                      placeholder="Ejemplo: Bogotá"
                       style={{ width: "98%", marginTop: 4 }}
                       required
                     />

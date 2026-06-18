@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 
@@ -113,6 +113,13 @@ function AdministradorBomberman() {
           <button
             className="button"
             style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
+            onClick={() => navigate("/campaigns-admin")}
+          >
+            Comunicados del héroe
+          </button>
+          <button
+            className="button"
+            style={{ width: 320, minHeight: 44, fontSize: 14, padding: "10px 16px", whiteSpace: "normal" }}
             onClick={handleSignOut}
           >
             Cerrar Sesión
@@ -124,3 +131,5 @@ function AdministradorBomberman() {
 }
 
 export default AdministradorBomberman;
+
+

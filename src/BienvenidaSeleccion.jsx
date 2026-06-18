@@ -74,15 +74,15 @@ function resolveWorkerLandingPath(usuario, isLite) {
 }
 
 /**
- * Pantalla posterior a la autenticaciÃ³n donde el trabajador selecciona su obra activa.
+ * Pantalla posterior a la autenticación donde el trabajador selecciona su obra activa.
  *
- * Obtiene la lista de obras activas desde la API, solicita la geolocalizaciÃ³n y
- * valida la posiciÃ³n del trabajador respecto al sitio seleccionado antes de navegar
- * al flujo de juego o a la pantalla lite de selecciÃ³n de formularios.
+ * Obtiene la lista de obras activas desde la API, solicita la geolocalización y
+ * valida la posición del trabajador respecto al sitio seleccionado antes de navegar
+ * al flujo de juego o a la pantalla lite de selección de formularios.
  *
  * @param {Object} props
  * @param {{ nombre?: string, empresa?: string, numero_identificacion?: string, cargo?: string }} [props.usuario]
- *   Datos del trabajador autenticado retornados por CedulaIngreso o rehidratados desde la sesiÃ³n.
+ *   Datos del trabajador autenticado retornados por CedulaIngreso o rehidratados desde la sesión.
  */
 function BienvenidaSeleccion({ usuario }) {
   const { session } = useAuth();
@@ -216,15 +216,15 @@ function BienvenidaSeleccion({ usuario }) {
       const distancia = response.data?.distancia;
       setError(
         distancia
-          ? `EstÃ¡s a ${distancia >= 1000 ? `${(distancia / 1000).toFixed(1)} km` : `${distancia} m`} de la obra. Debes estar a menos de 500 m.`
-          : "No se encuentra en la ubicaciÃ³n seleccionada."
+          ? `Estás a ${distancia >= 1000 ? `${(distancia / 1000).toFixed(1)} km` : `${distancia} m`} de la obra. Debes estar a menos de 500 m.`
+          : "No se encuentra en la ubicación seleccionada."
       );
     } catch (requestError) {
       const distancia = requestError.response?.data?.distancia;
       setError(
         distancia
-          ? `EstÃ¡s a ${distancia >= 1000 ? `${(distancia / 1000).toFixed(1)} km` : `${distancia} m`} de la obra. Debes estar a menos de 500 m.`
-          : "No se encuentra en la ubicaciÃ³n seleccionada."
+          ? `Estás a ${distancia >= 1000 ? `${(distancia / 1000).toFixed(1)} km` : `${distancia} m`} de la obra. Debes estar a menos de 500 m.`
+          : "No se encuentra en la ubicación seleccionada."
       );
     }
   };
@@ -238,7 +238,7 @@ function BienvenidaSeleccion({ usuario }) {
 
     if (ubicacion.lat === null || ubicacion.lon === null) {
       if (typeof navigator === "undefined" || !navigator.geolocation) {
-        setError("Este dispositivo no soporta geolocalizaciÃ³n.");
+        setError("Este dispositivo no soporta geolocalización.");
         return;
       }
 
@@ -252,7 +252,7 @@ function BienvenidaSeleccion({ usuario }) {
         },
         () => {
           setGpsEstado("error");
-          setError("No se pudo obtener tu ubicaciÃ³n. Activa el GPS e intenta de nuevo.");
+          setError("No se pudo obtener tu ubicación. Activa el GPS e intenta de nuevo.");
         },
         { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
       );
@@ -316,7 +316,7 @@ function BienvenidaSeleccion({ usuario }) {
             }}
           >
             <div>Bienvenido</div>
-            <div style={{ marginTop: "4px" }}>Super hÃ©roe</div>
+            <div style={{ marginTop: "4px" }}>Super héroe</div>
             <div style={{ marginTop: "4px", fontWeight: 600, fontSize: "1.25rem" }}>
               {usuarioAutenticado?.nombre || ""}
             </div>
@@ -395,6 +395,4 @@ function BienvenidaSeleccion({ usuario }) {
 }
 
 export default BienvenidaSeleccion;
-
-
 

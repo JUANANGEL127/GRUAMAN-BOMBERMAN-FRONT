@@ -16,11 +16,11 @@ function toYMD(date) {
 }
 
 const descripcionOpciones = [
-  "ASCENSO Y DESCENSO DE TORRE GRÃšA",
+  "ASCENSO Y DESCENSO DE TORRE GRÚA",
   "ALISTAMIENTO DE BOMBA",
-  "ARMADO DE TUBERÃA",
+  "ARMADO DE TUBERÍA",
   "BOMBEO DE CONCRETO",
-  "IZAJE DE CARGAS CON TORRE GRUA (OperaciÃ³n torre grua)",
+  "IZAJE DE CARGAS CON TORRE GRUA (Operación torre grua)",
   "VERIFICACION Y/O MANTENIMIENTO ELECTRICO MECANICO",
   "MONTAJE DE TORRE GRUA / ELEVADOR DE CARGA",
   "DESMONTAJE DE TORRE GRUA / ELEVADOR DE CARGA",
@@ -28,13 +28,13 @@ const descripcionOpciones = [
 ];
 
 function normalizaFlag(val) {
-  if (val === null || val === undefined || val === "") return "â€”";
+  if (val === null || val === undefined || val === "") return "—";
   if (typeof val === "string") {
-    if (val.toUpperCase() === "SI") return "SÃ­";
+    if (val.toUpperCase() === "SI") return "Sí";
     if (val.toUpperCase() === "NO") return "No";
     if (val.toUpperCase() === "NA") return "N/A";
   }
-  if (typeof val === "boolean") return val ? "SÃ­" : "No";
+  if (typeof val === "boolean") return val ? "Sí" : "No";
   return val;
 }
 
@@ -195,7 +195,7 @@ function PermisoTrabajoAdmin() {
   const renderBarraBusqueda = (forAction) => (
     <div className="card-section" style={{ marginBottom: 18 }}>
       <div style={{ marginBottom: 10, fontWeight: 600, color: "#222", fontSize: 15 }}>
-        Ingresa uno o mÃ¡s parÃ¡metros para filtrar los resultados:
+        Ingresa uno o más parámetros para filtrar los resultados:
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
@@ -234,14 +234,14 @@ function PermisoTrabajoAdmin() {
           </datalist>
         </div>
         <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-          <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>CÃ©dula</label>
+          <label style={{ fontSize: 13, color: "#222", marginBottom: 2 }}>Cédula</label>
           <input
             className="permiso-trabajo-input"
             type="text"
             name="cedula"
             value={filters.cedula}
             onChange={handleFilterChange}
-            placeholder="CÃ©dula"
+            placeholder="Cédula"
             style={{ width: "93%", marginBottom: 6 }}
             disabled={loading}
           />
@@ -380,18 +380,18 @@ function PermisoTrabajoAdmin() {
                           marginRight: "auto"
                         }}
                       >
-                        <div><strong>Fecha:</strong> {r.fecha ? r.fecha.slice(0, 10) : "â€”"}</div>
-                        <div><strong>Nombre:</strong> {r.nombre || "â€”"}</div>
-                        <div><strong>CÃ©dula:</strong> {r.cedula || r.numero_identificacion || "â€”"}</div>
-                        <div><strong>Empresa:</strong> {r.empresa || "â€”"}</div>
-                        <div><strong>Obra:</strong> {r.obra || "â€”"}</div>
-                        <div><strong>Constructora:</strong> {r.constructora || "â€”"}</div>
+                        <div><strong>Fecha:</strong> {r.fecha ? r.fecha.slice(0, 10) : "—"}</div>
+                        <div><strong>Nombre:</strong> {r.nombre || "—"}</div>
+                        <div><strong>Cédula:</strong> {r.cedula || r.numero_identificacion || "—"}</div>
+                        <div><strong>Empresa:</strong> {r.empresa || "—"}</div>
+                        <div><strong>Obra:</strong> {r.obra || "—"}</div>
+                        <div><strong>Constructora:</strong> {r.constructora || "—"}</div>
                         <button
                           className="permiso-trabajo-btn"
                           style={{ marginTop: 8, fontSize: 13, padding: "4px 10px" }}
                           onClick={() => setOpenId(openId === (r.raw?.id || r.id || idx) ? null : (r.raw?.id || r.id || idx))}
                         >
-                          {openId === (r.raw?.id || r.id || idx) ? "Ocultar detalles" : "Ver mÃ¡s"}
+                          {openId === (r.raw?.id || r.id || idx) ? "Ocultar detalles" : "Ver más"}
                         </button>
                         {openId === (r.raw?.id || r.id || idx) && r.raw && (
                           <div className="detalle" style={{
@@ -408,7 +408,7 @@ function PermisoTrabajoAdmin() {
                                 <strong>{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}:</strong>{" "}
                                 {typeof val === "string" && ["SI", "NO", "NA"].includes(val.toUpperCase())
                                   ? normalizaFlag(val)
-                                  : (val === null || val === undefined || val === "") ? "â€”" : String(val)}
+                                  : (val === null || val === undefined || val === "") ? "—" : String(val)}
                               </div>
                             ))}
                           </div>
