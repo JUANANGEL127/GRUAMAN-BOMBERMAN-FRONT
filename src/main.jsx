@@ -66,6 +66,7 @@ import ForbiddenPage from "./features/auth/pages/ForbiddenPage";
 import { useAuth } from "./features/auth/hooks/useAuth";
 import ProtectedRoute from "./features/auth/routes/ProtectedRoute";
 import RoleGuard from "./features/auth/routes/RoleGuard";
+import { CampaignCarryoverHost, CampaignProvider, CampaignsAdminPage } from "./features/campaigns";
 import { IndicadorCentralAdminPage } from "./features/indicador-central";
 
 function resolveAdminLanding(session) {
@@ -1093,6 +1094,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
+        <CampaignProvider>
         <HorasExtraPdfJobProvider>
         <div
           style={{
@@ -1155,6 +1157,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                   element={<RoleGuard allowedKinds={["admin"]} allowedAdminRoles={["gruaman", "bomberman"]} />}
                 >
                   <Route path="indicador-central-admin" element={<IndicadorCentralAdminPage />} />
+                  <Route path="campaigns-admin" element={<CampaignsAdminPage />} />
                 </Route>
               </Route>
 
@@ -1162,8 +1165,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             </Routes>
             {/* <Footer /> */}
           </div>
+          <CampaignCarryoverHost />
         </div>
         </HorasExtraPdfJobProvider>
+        </CampaignProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
