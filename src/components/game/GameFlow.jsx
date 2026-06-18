@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import RotateScreen from "./RotateScreen";
 import StoryIntro from "./StoryIntro";
@@ -11,11 +11,37 @@ import { useAuth } from "../../features/auth/hooks/useAuth";
 import {
   getCampaignPromoDisplayState,
   markCampaignPromoDisplayed,
+  setCampaignPromoCarryoverOpen,
+  setCampaignPromoSuppressNextMapDisplay,
 } from "../../features/campaigns/storage/campaignPromoSessionStorage";
 
-function CampaignStoryIntroTakeover({ campaign, onClose, closeLabel }) {
+function CampaignStoryIntroTakeover({
+  campaign,
+  onClose,
+  closeLabel,
+  countdownDurationMs = 0,
+}) {
   const imageUrl = campaign?.imageUrl;
   const title = typeof campaign?.title === "string" ? campaign.title.trim() : "Campaña activa";
+  const [progressPercent, setProgressPercent] = useState(100);
+
+  useEffect(() => {
+    if (!countdownDurationMs || countdownDurationMs <= 0) {
+      setProgressPercent(100);
+      return undefined;
+    }
+
+    const startedAt = Date.now();
+    const intervalId = window.setInterval(() => {
+      const elapsedMs = Date.now() - startedAt;
+      const nextProgress = Math.max(0, 100 - (elapsedMs / countdownDurationMs) * 100);
+      setProgressPercent(nextProgress);
+    }, 100);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [countdownDurationMs]);
 
   if (!imageUrl) {
     return null;
@@ -39,6 +65,29 @@ function CampaignStoryIntroTakeover({ campaign, onClose, closeLabel }) {
         padding: 16,
       }}
     >
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: 6,
+          background: "rgba(255, 255, 255, 0.12)",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            width: `${progressPercent}%`,
+            background: "linear-gradient(90deg, #ef4444 0%, #f97316 100%)",
+            boxShadow: "0 0 18px rgba(239, 68, 68, 0.6)",
+            transition: "width 100ms linear",
+          }}
+        />
+      </div>
+
       <button
         type="button"
         onClick={(event) => {
@@ -54,7 +103,7 @@ function CampaignStoryIntroTakeover({ campaign, onClose, closeLabel }) {
           borderRadius: 999,
           width: 44,
           height: 44,
-          background: "rgba(15, 23, 42, 0.62)",
+          background: "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)",
           color: "#fff",
           fontSize: 24,
           fontWeight: 700,
@@ -64,7 +113,7 @@ function CampaignStoryIntroTakeover({ campaign, onClose, closeLabel }) {
           justifyContent: "center",
           padding: 0,
           lineHeight: 1,
-          boxShadow: "0 10px 28px rgba(0, 0, 0, 0.35)",
+          boxShadow: "0 12px 28px rgba(185, 28, 28, 0.45)",
         }}
         aria-label={closeLabel}
       >
@@ -165,6 +214,8 @@ function GameFlow({ step }) {
     }
 
     autoAdvanceTimerRef.current = window.setTimeout(() => {
+      setCampaignPromoSuppressNextMapDisplay(session, false);
+      setCampaignPromoCarryoverOpen(session, true);
       setIsCampaignTakeoverVisible(false);
       setCovering(true);
     }, storyIntroDurationMs);
@@ -193,6 +244,8 @@ function GameFlow({ step }) {
   const handleCampaignTakeoverClose = () => {
     window.clearTimeout(autoAdvanceTimerRef.current);
     autoAdvanceTimerRef.current = null;
+    setCampaignPromoSuppressNextMapDisplay(session, true);
+    setCampaignPromoCarryoverOpen(session, false);
     setIsCampaignTakeoverVisible(false);
     setCovering(true);
   };
@@ -216,6 +269,7 @@ function GameFlow({ step }) {
           campaign={activeCampaign}
           onClose={handleCampaignTakeoverClose}
           closeLabel="Cerrar campaña y continuar al mapa"
+          countdownDurationMs={storyIntroDurationMs}
         />
       ) : null}
     </>

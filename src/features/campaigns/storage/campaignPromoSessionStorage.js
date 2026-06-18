@@ -1,4 +1,6 @@
 const CAMPAIGN_PROMO_SESSION_STORAGE_PREFIX = "campaigns.workerPromo.v1";
+const CAMPAIGN_PROMO_CARRYOVER_SUFFIX = ":carryover-open";
+const CAMPAIGN_PROMO_SUPPRESS_NEXT_MAP_SUFFIX = ":suppress-next-map";
 export const CAMPAIGN_PROMO_DISPLAY_LIMIT = 4;
 
 function isBrowserEnvironment() {
@@ -94,6 +96,26 @@ export function getCampaignPromoSessionStorageKey(session) {
   return getNormalizedSessionIdentity(session);
 }
 
+function getCampaignPromoCarryoverStorageKey(session) {
+  const baseStorageKey = getCampaignPromoSessionStorageKey(session);
+
+  if (!baseStorageKey) {
+    return "";
+  }
+
+  return `${baseStorageKey}${CAMPAIGN_PROMO_CARRYOVER_SUFFIX}`;
+}
+
+function getCampaignPromoSuppressNextMapStorageKey(session) {
+  const baseStorageKey = getCampaignPromoSessionStorageKey(session);
+
+  if (!baseStorageKey) {
+    return "";
+  }
+
+  return `${baseStorageKey}${CAMPAIGN_PROMO_SUPPRESS_NEXT_MAP_SUFFIX}`;
+}
+
 export function getCampaignPromoDisplayState(session) {
   const storageKey = getCampaignPromoSessionStorageKey(session);
   const record = readDisplayRecord(storageKey);
@@ -140,6 +162,60 @@ export function markCampaignPromoDisplayed(session) {
     remaining: Math.max(CAMPAIGN_PROMO_DISPLAY_LIMIT - nextCount, 0),
     canDisplay: nextCount < CAMPAIGN_PROMO_DISPLAY_LIMIT,
   };
+}
+
+export function isCampaignPromoCarryoverOpen(session) {
+  const storage = getSessionStorage();
+  const storageKey = getCampaignPromoCarryoverStorageKey(session);
+
+  if (!storage || !storageKey) {
+    return false;
+  }
+
+  return storage.getItem(storageKey) === "true";
+}
+
+export function setCampaignPromoCarryoverOpen(session, isOpen) {
+  const storage = getSessionStorage();
+  const storageKey = getCampaignPromoCarryoverStorageKey(session);
+
+  if (!storage || !storageKey) {
+    return;
+  }
+
+  if (isOpen) {
+    storage.setItem(storageKey, "true");
+    return;
+  }
+
+  storage.removeItem(storageKey);
+}
+
+export function shouldSuppressNextCampaignPromoMapDisplay(session) {
+  const storage = getSessionStorage();
+  const storageKey = getCampaignPromoSuppressNextMapStorageKey(session);
+
+  if (!storage || !storageKey) {
+    return false;
+  }
+
+  return storage.getItem(storageKey) === "true";
+}
+
+export function setCampaignPromoSuppressNextMapDisplay(session, shouldSuppress) {
+  const storage = getSessionStorage();
+  const storageKey = getCampaignPromoSuppressNextMapStorageKey(session);
+
+  if (!storage || !storageKey) {
+    return;
+  }
+
+  if (shouldSuppress) {
+    storage.setItem(storageKey, "true");
+    return;
+  }
+
+  storage.removeItem(storageKey);
 }
 
 export function clearCampaignPromoDisplayStateByKey(storageKey) {

@@ -1,10 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { useCampaign } from "../context/CampaignProvider";
 import {
   getCampaignPromoDisplayState,
+  isCampaignPromoCarryoverOpen,
   markCampaignPromoDisplayed,
+  setCampaignPromoCarryoverOpen,
+  setCampaignPromoSuppressNextMapDisplay,
+  shouldSuppressNextCampaignPromoMapDisplay,
 } from "../storage/campaignPromoSessionStorage";
 
 const ADMIN_ROUTE_PREFIXES = ["/administrador", "/campaigns-admin", "/indicador-central-admin"];
@@ -62,7 +66,7 @@ function CampaignFullscreenOverlay({ campaign, onClose, closeLabel }) {
           borderRadius: 999,
           width: 44,
           height: 44,
-          background: "rgba(15, 23, 42, 0.62)",
+          background: "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)",
           color: "#fff",
           fontSize: 24,
           fontWeight: 700,
@@ -72,7 +76,7 @@ function CampaignFullscreenOverlay({ campaign, onClose, closeLabel }) {
           justifyContent: "center",
           padding: 0,
           lineHeight: 1,
-          boxShadow: "0 10px 28px rgba(0, 0, 0, 0.35)",
+          boxShadow: "0 12px 28px rgba(185, 28, 28, 0.45)",
         }}
         aria-label={closeLabel}
       >
@@ -141,13 +145,26 @@ export function CampaignCarryoverHost() {
     }
 
     const displayState = getCampaignPromoDisplayState(session);
+    const shouldResumeCarryover = isCampaignPromoCarryoverOpen(session);
+    const shouldSuppressNextMapDisplay = shouldSuppressNextCampaignPromoMapDisplay(session);
 
-    if (!displayState.canDisplay) {
+    if (!displayState.canDisplay && !shouldResumeCarryover) {
       setIsVisible(false);
       return;
     }
 
+    if (shouldResumeCarryover) {
+      setIsVisible(true);
+      return;
+    }
+
     if (!enteredWorldMap) {
+      return;
+    }
+
+    if (shouldSuppressNextMapDisplay) {
+      setCampaignPromoSuppressNextMapDisplay(session, false);
+      setIsVisible(false);
       return;
     }
 
@@ -165,6 +182,7 @@ export function CampaignCarryoverHost() {
   ]);
 
   const handleClose = () => {
+    setCampaignPromoCarryoverOpen(session, false);
     setIsVisible(false);
   };
 
