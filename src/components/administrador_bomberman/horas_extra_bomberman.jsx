@@ -35,7 +35,6 @@ function HorasExtraBomberman() {
       fecha_fin: toYMD(filters.fecha_fin),
       formato: reportFormat,
       modo: "job",
-      limit: filters.limit || 10000,
     }),
     [],
   );

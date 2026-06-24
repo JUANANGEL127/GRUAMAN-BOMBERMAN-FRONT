@@ -221,7 +221,6 @@ function buildHorasExtraReportRequestBody(filters = {}, reportFormat = "pdf") {
     fecha_fin: filters.fecha_fin || "",
     formato: format,
     modo: "job",
-    limit: filters.limit || 10000,
   };
 }
 
